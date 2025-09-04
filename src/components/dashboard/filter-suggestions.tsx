@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
 import type { Filters } from '@/types';
+import { useTranslation } from 'react-i18next';
 
 interface FilterSuggestionsProps {
   onApplyFilters: (newFilters: Partial<Filters>) => void;
 }
 
 const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<InitialSearchFilters[]>([]);
   const { toast } = useToast();
@@ -31,8 +33,8 @@ const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
       console.error('Error generating suggestions:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Could not generate AI suggestions.',
+        title: t('error'),
+        description: t('ai_suggestions_error'),
       });
     } finally {
       setLoading(false);
@@ -48,8 +50,8 @@ const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
       version: suggestion.version || 'all',
     });
      toast({
-        title: 'Filters Applied',
-        description: `Showing results for ${suggestion.manufacturer} ${suggestion.model}.`,
+        title: t('filters_applied'),
+        description: t('showing_results_for', { manufacturer: suggestion.manufacturer, model: suggestion.model }),
       });
   };
 
@@ -62,10 +64,10 @@ const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
           ) : (
             <Wand2 className="mr-2 h-4 w-4" />
           )}
-          Get AI Suggestions
+          {t('get_ai_suggestions')}
         </Button>
         <p className="text-sm text-muted-foreground hidden md:block">
-          Click to get popular filter suggestions based on trends.
+          {t('get_ai_suggestions_description')}
         </p>
       </div>
 

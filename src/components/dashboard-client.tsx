@@ -13,6 +13,7 @@ import FilterSuggestions from './dashboard/filter-suggestions';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardClientProps {
   initialData: Sale[];
@@ -20,6 +21,7 @@ interface DashboardClientProps {
 }
 
 const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions }) => {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<Filters>({
     state: 'all',
     city: 'all',
@@ -31,8 +33,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions 
   });
 
   const handleExport = () => {
-    // Placeholder for export functionality
-    alert('Exporting reports is a planned feature.');
+    alert(t('export_planned_feature'));
   };
   
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {

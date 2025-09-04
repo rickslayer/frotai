@@ -1,7 +1,6 @@
 'use client';
 
 import type { FC, ReactNode } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -13,6 +12,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CircleUser, Download } from 'lucide-react';
 import { Separator } from '../ui/separator';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from './language-switcher';
 
 interface DashboardHeaderProps {
   onExport: () => void;
@@ -20,15 +21,18 @@ interface DashboardHeaderProps {
 }
 
 const DashboardHeader: FC<DashboardHeaderProps> = ({ onExport, children }) => {
+  const { t } = useTranslation();
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
       {children}
       <div className='flex-1'>
-        <h1 className="text-lg font-semibold md:text-xl">Dashboard</h1>
+        <h1 className="text-lg font-semibold md:text-xl">{t('dashboard')}</h1>
       </div>
+      <LanguageSwitcher />
       <Button variant="outline" size="sm" onClick={onExport}>
         <Download className="mr-2 h-4 w-4" />
-        Export
+        {t('export')}
       </Button>
       <Separator orientation="vertical" className="h-8" />
       <DropdownMenu>
@@ -39,12 +43,12 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ onExport, children }) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuLabel>{t('my_account')}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Settings</DropdownMenuItem>
-          <DropdownMenuItem>Support</DropdownMenuItem>
+          <DropdownMenuItem>{t('settings')}</DropdownMenuItem>
+          <DropdownMenuItem>{t('support')}</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <DropdownMenuItem>{t('logout')}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

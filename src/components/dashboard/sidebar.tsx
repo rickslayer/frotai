@@ -2,7 +2,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { Car, MapPin, Calendar, GripVertical, SlidersHorizontal } from 'lucide-react';
+import { Car, MapPin, Calendar, SlidersHorizontal } from 'lucide-react';
 import type { FilterOptions, Filters } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +12,8 @@ import { Calendar as CalendarIcon } from '@/components/ui/calendar';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { ScrollArea } from '../ui/scroll-area';
+import { useTranslation } from 'react-i18next';
+import { ptBR } from 'date-fns/locale';
 
 interface DashboardSidebarProps {
   filters: Filters;
@@ -20,6 +22,8 @@ interface DashboardSidebarProps {
 }
 
 const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions }) => {
+  const { t, i18n } = useTranslation();
+  
   const handleSelectChange = (key: keyof Filters, value: string) => {
     const newFilters: Partial<Filters> = {[key]: value};
     if (key === 'state') newFilters.city = 'all';
@@ -49,31 +53,31 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
       <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
         <Link href="/" className="flex items-center gap-3 font-semibold text-primary">
           <Car className="h-6 w-6" />
-          <span className="text-lg text-foreground">Vehicle Insights</span>
+          <span className="text-lg text-foreground">Frota.AI</span>
         </Link>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-4">
-          <h2 className="mb-4 text-lg font-semibold tracking-tight">Filters</h2>
+          <h2 className="mb-4 text-lg font-semibold tracking-tight">{t('filters')}</h2>
           <Accordion type="multiple" defaultValue={['location', 'vehicle', 'time']} className="w-full">
             <AccordionItem value="location">
               <AccordionTrigger>
                 <div className='flex items-center gap-2'>
-                  <MapPin className="h-4 w-4" /> Location
+                  <MapPin className="h-4 w-4" /> {t('location')}
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4 pt-4">
                 <Select value={filters.state} onValueChange={(value) => handleSelectChange('state', value)}>
-                  <SelectTrigger><SelectValue placeholder="Select State" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All States</SelectItem>
+                    <SelectItem value="all">{t('all_states')}</SelectItem>
                     {filterOptions.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={filters.city} onValueChange={(value) => handleSelectChange('city', value)}>
-                  <SelectTrigger><SelectValue placeholder="Select City" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Cities</SelectItem>
+                    <SelectItem value="all">{t('all_cities')}</SelectItem>
                     {filterOptions.cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -82,35 +86,35 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
             <AccordionItem value="vehicle">
               <AccordionTrigger>
                 <div className='flex items-center gap-2'>
-                  <SlidersHorizontal className="h-4 w-4" /> Vehicle
+                  <SlidersHorizontal className="h-4 w-4" /> {t('vehicle')}
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4 pt-4">
                 <Select value={filters.manufacturer} onValueChange={(value) => handleSelectChange('manufacturer', value)}>
-                  <SelectTrigger><SelectValue placeholder="Select Manufacturer" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Manufacturers</SelectItem>
+                    <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
                     {filterOptions.manufacturers.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
                  <Select value={filters.category} onValueChange={(value) => handleSelectChange('category', value)}>
-                  <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('select_category')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="all">{t('all_categories')}</SelectItem>
                     {filterOptions.categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={filters.model} onValueChange={(value) => handleSelectChange('model', value)}>
-                  <SelectTrigger><SelectValue placeholder="Select Model" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('select_model')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Models</SelectItem>
+                    <SelectItem value="all">{t('all_models')}</SelectItem>
                     {filterOptions.models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={filters.version} onValueChange={(value) => handleSelectChange('version', value)}>
-                  <SelectTrigger><SelectValue placeholder="Select Version" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('select_version')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Versions</SelectItem>
+                    <SelectItem value="all">{t('all_versions')}</SelectItem>
                     {filterOptions.versions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -119,7 +123,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
             <AccordionItem value="time">
               <AccordionTrigger>
                 <div className='flex items-center gap-2'>
-                  <Calendar className="h-4 w-4" /> Time Period
+                  <Calendar className="h-4 w-4" /> {t('time_period')}
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-4">
@@ -133,13 +137,13 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                       {filters.dateRange.from ? (
                         filters.dateRange.to ? (
                           <>
-                            {format(filters.dateRange.from, 'LLL dd, y')} - {format(filters.dateRange.to, 'LLL dd, y')}
+                            {format(filters.dateRange.from, 'LLL dd, y', { locale: i18n.language === 'pt' ? ptBR : undefined })} - {format(filters.dateRange.to, 'LLL dd, y', { locale: i18n.language === 'pt' ? ptBR : undefined })}
                           </>
                         ) : (
-                          format(filters.dateRange.from, 'LLL dd, y')
+                          format(filters.dateRange.from, 'LLL dd, y', { locale: i18n.language === 'pt' ? ptBR : undefined })
                         )
                       ) : (
-                        <span>Pick a date range</span>
+                        <span>{t('pick_date_range')}</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -149,6 +153,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                       selected={filters.dateRange}
                       onSelect={handleDateChange}
                       initialFocus
+                      locale={i18n.language === 'pt' ? ptBR : undefined}
                     />
                   </PopoverContent>
                 </Popover>
@@ -159,7 +164,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
       </ScrollArea>
        <div className="mt-auto p-4 border-t">
         <Button variant="ghost" className="w-full justify-center" onClick={clearFilters}>
-          Clear All Filters
+          {t('clear_all_filters')}
         </Button>
       </div>
     </div>

@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'Vehicle Insights Hub',
-  description: 'Search and analyze vehicle model data by region.',
+  title: 'Frota.AI',
+  description: 'Pesquise e analise dados de modelos de veículos por região.',
 };
 
 export default function RootLayout({
@@ -21,7 +22,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className={cn('font-body antialiased', 'min-h-screen bg-background font-sans')}>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
         <Toaster />
       </body>
     </html>

@@ -17,19 +17,22 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import type { Sale } from '@/types';
+import { useTranslation } from 'react-i18next';
 
 interface TopModelsChartProps {
   data: Sale[];
 }
 
-const chartConfig = {
-  sales: {
-    label: 'Sales',
-    color: 'hsl(var(--accent))',
-  },
-} satisfies ChartConfig;
-
 const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
+  const { t } = useTranslation();
+
+  const chartConfig = {
+    sales: {
+      label: t('sales'),
+      color: 'hsl(var(--accent))',
+    },
+  } satisfies ChartConfig;
+
   const chartData = useMemo(() => {
     const modelSales = data.reduce((acc, item) => {
       const key = `${item.manufacturer} ${item.model}`;
@@ -48,8 +51,8 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Top Selling Models</CardTitle>
-        <CardDescription>Top 7 models by sales volume.</CardDescription>
+        <CardTitle>{t('top_selling_models')}</CardTitle>
+        <CardDescription>{t('top_selling_models_description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -81,7 +84,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
           </BarChart>
           ) : (
             <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
-              No data available.
+              {t('no_data_available')}
             </div>
           )}
         </ChartContainer>
