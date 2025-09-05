@@ -1,5 +1,4 @@
-import type { Vehicle, FilterOptions } from '@/types';
-import { parseVehicleData } from './data-parser';
+import type { Vehicle } from '@/types';
 import fs from 'fs';
 import path from 'path';
 
@@ -64,35 +63,31 @@ export function getFleetData(): Vehicle[] {
     return fleetData;
   }
 
-  const dataFileNames = ['infos.txt', 'infos.TXT'];
-  let foundFilePath: string | null = null;
+  const dataDir = path.join(process.cwd(), 'src', 'data');
+  let allVehicles: Vehicle[] = [];
 
-  for (const fileName of dataFileNames) {
-      const dataFilePath = path.join(process.cwd(), fileName);
-      try {
-          fs.accessSync(dataFilePath, fs.constants.R_OK);
-          foundFilePath = dataFilePath;
-          break;
-      } catch (e) {
-          // File not found, try the next one
-      }
-  }
-  
-  if (foundFilePath) {
-    console.log(`Real data file found at '${foundFilePath}'. Parsing...`);
-    try {
-      const fileContent = fs.readFileSync(foundFilePath, 'utf8');
-      fleetData = parseVehicleData(fileContent);
-      console.log(`Successfully parsed ${fleetData.length} records from real data.`);
-    } catch (error) {
-      console.error(`Error parsing real data file '${foundFilePath}'. Falling back to mock data.`, error);
-      fleetData = generateMockFleetData();
+  try {
+    const files = fs.readdirSync(dataDir);
+    const jsonFiles = files.filter(file => file.endsWith('.json'));
+
+    if (jsonFiles.length > 0) {
+      console.log(`Found ${jsonFiles.length} JSON file(s) in src/data. Parsing...`);
+      jsonFiles.forEach(file => {
+        const filePath = path.join(dataDir, file);
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        const vehicles: Vehicle[] = JSON.parse(fileContent);
+        allVehicles = allVehicles.concat(vehicles);
+      });
+      console.log(`Successfully parsed ${allVehicles.length} total records from JSON files.`);
+      fleetData = allVehicles;
+    } else {
+      throw new Error("No JSON files found.");
     }
-  } else {
-    // If the file doesn't exist or there's an error reading it, use mock data
-    console.warn("Real data file not found. Falling back to mock data.");
-    fleetData = generateMockFleetData();
+  } catch (error) {
+    console.warn("Could not read or parse JSON data from src/data. Falling back to mock data.", error);
+    allVehicles = generateMockFleetData();
   }
 
+  fleetData = allVehicles;
   return fleetData;
 }
