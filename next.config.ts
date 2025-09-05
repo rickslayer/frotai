@@ -24,15 +24,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  webpack: (config, { isServer }) => {
-    // Adiciona uma regra para lidar com arquivos SVG
-    config.module.rules.push({
-      test: /\.svg$/,
-      use: ['@svgr/webpack'],
-    });
-
-    return config;
-  },
 };
 
 export default nextConfig;
