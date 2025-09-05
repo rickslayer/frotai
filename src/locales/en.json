@@ -50,5 +50,7 @@
   "generate_analysis": "Generate Analysis",
   "generating_analysis": "Generating...",
   "analysis_error": "Could not generate analysis.",
-  "analysis_placeholder": "Click 'Generate Analysis' to get an AI-powered summary of the current chart data."
+  "analysis_placeholder": "Click 'Generate Analysis' to get an AI-powered summary of the current chart data.",
+  "fleet_age_distribution": "Fleet Age Distribution",
+  "fleet_age_distribution_description": "Distribution of vehicles by age group."
 }

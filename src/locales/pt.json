@@ -50,5 +50,7 @@
   "generate_analysis": "Gerar Análise",
   "generating_analysis": "Gerando...",
   "analysis_error": "Não foi possível gerar a análise.",
-  "analysis_placeholder": "Clique em 'Gerar Análise' para obter um resumo do gráfico atual com tecnologia de IA."
+  "analysis_placeholder": "Clique em 'Gerar Análise' para obter um resumo do gráfico atual com tecnologia de IA.",
+  "fleet_age_distribution": "Distribuição de Idade da Frota",
+  "fleet_age_distribution_description": "Distribuição de veículos por faixa de idade."
 }

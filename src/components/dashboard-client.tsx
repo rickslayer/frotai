@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -13,26 +14,15 @@ import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-
-function getDynamicFilterOptions(data: Vehicle[]): FilterOptions {
-  const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
-  const models = [...new Set(data.map(item => item.model))].sort();
-  const versions = [...new Set(data.map(item => item.version))].sort();
-  const states = [...new Set(data.map(item => item.state))].sort();
-  const cities = [...new Set(data.map(item => item.city))].sort();
-  const categories = [...new Set(data.map(item => item.category))].sort() as FilterOptions['categories'];
-  const years = [...new Set(data.map(item => item.year))].sort((a, b) => b - a);
-
-  return { manufacturers, models, versions, states, cities, categories, years };
-}
-
+import FleetAgeDistributionChart from './dashboard/fleet-age-distribution-chart';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
   allFilterOptions: FilterOptions;
+  dynamicFilterOptions: FilterOptions;
 }
 
-const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptions }) => {
+const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptions: initialAllFilterOptions, dynamicFilterOptions: initialDynamicFilterOptions }) => {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<Filters>({
     state: 'all',
@@ -43,6 +33,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptio
     category: 'all',
     year: 'all',
   });
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleExport = () => {
     alert(t('export_planned_feature'));
@@ -50,6 +41,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptio
   
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => ({...prev, ...newFilters}));
+    setIsSheetOpen(false);
   }, []);
 
   const filteredData = useMemo(() => {
@@ -68,6 +60,20 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptio
     });
   }, [initialData, filters]);
 
+  // This function is defined outside because it doesn't depend on `filters`
+  const getDynamicFilterOptions = (data: Vehicle[]): FilterOptions => {
+    const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
+    const models = [...new Set(data.map(item => item.model))].sort();
+    const versions = [...new Set(data.map(item => item.version))].sort();
+    const states = [...new Set(data.map(item => item.state))].sort();
+    const cities = [...new Set(data.map(item => item.city))].sort();
+    const categories = [...new Set(data.map(item => item.category))].sort() as FilterOptions['categories'];
+    const years = [...new Set(data.map(item => item.year))].sort((a, b) => b - a);
+    return { manufacturers, models, versions, states, cities, categories, years };
+  }
+
+  const allFilterOptions = useMemo(() => initialAllFilterOptions, [initialAllFilterOptions]);
+
   const dynamicFilterOptions = useMemo(() => {
     let partiallyFilteredData = initialData;
     if (filters.state !== 'all') {
@@ -81,7 +87,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptio
     }
 
     return getDynamicFilterOptions(partiallyFilteredData);
-  }, [initialData, filters]);
+  }, [initialData, filters.state, filters.manufacturer, filters.model]);
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
@@ -95,7 +101,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptio
       </div>
       <div className="flex flex-col">
         <DashboardHeader onExport={handleExport}>
-           <Sheet>
+           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon" className="shrink-0 lg:hidden">
                 <Menu className="h-5 w-5" />
@@ -120,6 +126,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptio
           <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
             <FleetByYearChart data={filteredData} />
             <TopModelsChart data={filteredData} />
+            <FleetAgeDistributionChart data={filteredData} />
           </div>
         </main>
       </div>

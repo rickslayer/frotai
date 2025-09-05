@@ -1,3 +1,4 @@
+
 import DashboardClient from "@/components/dashboard-client";
 import { getFleetData } from "@/lib/data";
 import type { Vehicle, FilterOptions } from "@/types";
@@ -16,11 +17,16 @@ function getFilterOptions(data: Vehicle[]): FilterOptions {
 
 export default function Home() {
   const fleetData = getFleetData();
-  const filterOptions = getFilterOptions(fleetData);
+  const allFilterOptions = getFilterOptions(fleetData);
+  const dynamicFilterOptions = getFilterOptions(fleetData);
 
   return (
     <main>
-      <DashboardClient initialData={fleetData} allFilterOptions={filterOptions} />
+      <DashboardClient 
+        initialData={fleetData} 
+        allFilterOptions={allFilterOptions} 
+        dynamicFilterOptions={dynamicFilterOptions}
+      />
     </main>
   );
 }
