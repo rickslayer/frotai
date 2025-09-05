@@ -24,9 +24,10 @@ const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
     setLoading(true);
     setSuggestions([]);
     try {
+      // In a real app, this data would come from the database or user context
       const result = await generateInitialSearchFilters({
-        userLocation: 'São Paulo, Brazil',
-        recentSearchHistory: 'Searched for Toyota Corolla and Honda Civic',
+        userRegion: 'Sudeste',
+        commonModels: ['Strada', 'Onix', 'Polo', 'HB20', 'Corolla', 'Compass'],
       });
       setSuggestions(result);
     } catch (error) {
@@ -47,18 +48,17 @@ const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
       city: suggestion.city || 'all',
       manufacturer: suggestion.manufacturer || 'all',
       model: suggestion.model || 'all',
-      version: suggestion.version || 'all',
     });
      toast({
         title: t('filters_applied'),
-        description: t('showing_results_for', { manufacturer: suggestion.manufacturer, model: suggestion.model }),
+        description: t('showing_results_for_suggestion', { description: suggestion.description }),
       });
   };
 
   return (
     <div>
       <div className="flex items-center gap-4">
-        <Button onClick={handleGetSuggestions} disabled={loading} variant="outline" size="sm">
+        <Button onClick={handleGetSuggestions} disabled={loading} variant="default" size="sm">
           {loading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
@@ -79,8 +79,8 @@ const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
               onClick={() => applySuggestion(s)}
               className="transform transition-transform hover:scale-105"
             >
-              <Badge variant="secondary" className="cursor-pointer px-3 py-1 text-sm">
-                {`${s.manufacturer} ${s.model} in ${s.city}`}
+              <Badge variant="secondary" className="cursor-pointer px-3 py-1.5 text-sm font-normal">
+                {s.description}
               </Badge>
             </button>
           ))}

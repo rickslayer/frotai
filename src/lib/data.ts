@@ -1,5 +1,4 @@
-import type { Sale, FilterOptions } from '@/types';
-import { subMonths, format } from 'date-fns';
+import type { Vehicle, FilterOptions } from '@/types';
 
 const manufacturers = ['Fiat', 'Chevrolet', 'Volkswagen', 'Hyundai', 'Toyota', 'Jeep', 'Renault', 'Honda'];
 const models = {
@@ -20,39 +19,36 @@ const locations = [
   { state: 'Bahia', cities: ['Salvador', 'Feira de Santana', 'Vitória da Conquista'] },
 ];
 
-const categories = ['Sedan' , 'SUV' , 'Hatchback' , 'Pickup' , 'Van' , 'Truck'];
+let fleetData: Vehicle[] = [];
 
-let salesData: Sale[] = [];
-
-function generateMockSalesData(): Sale[] {
-  if (salesData.length > 0) {
-    return salesData;
+function generateMockFleetData(): Vehicle[] {
+  if (fleetData.length > 0) {
+    return fleetData;
   }
   
-  const data: Sale[] = [];
-  const today = new Date();
+  const data: Vehicle[] = [];
+  const currentYear = new Date().getFullYear();
   let idCounter = 1;
 
-  for (let i = 0; i < 24; i++) { // 24 months of data
-    const date = subMonths(today, i);
-    
+  // Generate data for the last 15 years
+  for (let year = currentYear; year > currentYear - 15; year--) {
     locations.forEach(location => {
       location.cities.forEach(city => {
         manufacturers.forEach(manufacturer => {
           // @ts-ignore
           models[manufacturer].forEach(modelInfo => {
             modelInfo.versions.forEach(version => {
-              // Ensure each combination has at least one entry per month
               data.push({
                 id: (idCounter++).toString(),
                 manufacturer,
                 model: modelInfo.name,
                 version,
+                // @ts-ignore
                 category: modelInfo.category,
                 state: location.state,
                 city,
-                quantity: Math.floor(Math.random() * 50) + 5, // Base sales
-                date: format(date, 'yyyy-MM-dd'),
+                quantity: Math.floor(Math.random() * (currentYear - year + 1) * 10) + 10, // Older cars are more numerous
+                year,
               });
             });
           });
@@ -61,27 +57,22 @@ function generateMockSalesData(): Sale[] {
     });
   }
 
-  // Add some random peaks
-  for (let i = 0; i < data.length / 10; i++) {
-    const randomIndex = Math.floor(Math.random() * data.length);
-    data[randomIndex].quantity += Math.floor(Math.random() * 100) + 20;
-  }
-  
-  salesData = data;
+  fleetData = data;
   return data;
 }
 
-export function getSalesData(): Sale[] {
-  return generateMockSalesData();
+export function getFleetData(): Vehicle[] {
+  return generateMockFleetData();
 }
 
-export function getFilterOptions(data: Sale[]): FilterOptions {
+export function getFilterOptions(data: Vehicle[]): FilterOptions {
   const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
   const models = [...new Set(data.map(item => item.model))].sort();
   const versions = [...new Set(data.map(item => item.version))].sort();
   const states = [...new Set(data.map(item => item.state))].sort();
   const cities = [...new Set(data.map(item => item.city))].sort();
-  const categories = [...new Set(data.map(item => item.category))].sort();
+  const categories = [...new Set(data.map(item => item.category))].sort() as FilterOptions['categories'];
+  const years = [...new Set(data.map(item => item.year))].sort((a, b) => b - a);
 
-  return { manufacturers, models, versions, states, cities, categories };
+  return { manufacturers, models, versions, states, cities, categories, years };
 }

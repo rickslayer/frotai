@@ -2,25 +2,25 @@
 
 import type { FC } from 'react';
 import React, { useState, useMemo, useCallback } from 'react';
-import { isWithinInterval, parseISO } from 'date-fns';
-import type { Sale, FilterOptions, Filters } from '@/types';
+import type { Vehicle, FilterOptions, Filters } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
-import SalesOverTimeChart from './dashboard/sales-over-time-chart';
+import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import TopModelsChart from './dashboard/top-models-chart';
 import FilterSuggestions from './dashboard/filter-suggestions';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { getFilterOptions } from '@/lib/data';
 
 interface DashboardClientProps {
-  initialData: Sale[];
+  initialData: Vehicle[];
   filterOptions: FilterOptions;
 }
 
-const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions }) => {
+const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions: initialFilterOptions }) => {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<Filters>({
     state: 'all',
@@ -29,7 +29,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions 
     model: 'all',
     version: 'all',
     category: 'all',
-    dateRange: { from: undefined, to: undefined },
+    year: 'all',
   });
 
   const handleExport = () => {
@@ -42,14 +42,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions 
 
   const filteredData = useMemo(() => {
     return initialData.filter(item => {
-      const { state, city, manufacturer, model, version, category, dateRange } = filters;
-      const itemDate = parseISO(item.date);
+      const { state, city, manufacturer, model, version, category, year } = filters;
       
-      const dateInRange =
-        !dateRange.from || !dateRange.to
-          ? true
-          : isWithinInterval(itemDate, { start: dateRange.from, end: dateRange.to });
-
       return (
         (state === 'all' || item.state === state) &&
         (city === 'all' || item.city === city) &&
@@ -57,27 +51,29 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions 
         (model === 'all' || item.model === model) &&
         (version === 'all' || item.version === version) &&
         (category === 'all' || item.category === category) &&
-        dateInRange
+        (year === 'all' || item.year === year)
       );
     });
   }, [initialData, filters]);
 
-  const cityOptions = useMemo(() => {
-    if (filters.state === 'all') return filterOptions.cities;
-    return [...new Set(initialData.filter(d => d.state === filters.state).map(d => d.city))].sort();
-  }, [filters.state, initialData, filterOptions.cities]);
+  const dynamicFilterOptions = useMemo(() => {
+    // We pass the initial full data to getFilterOptions so that filter options
+    // for a specific filter don't disappear when that filter is applied.
+    // E.g. if we filter by a specific manufacturer, we still want to see all
+    // other manufacturers in the dropdown.
+    let partiallyFilteredData = initialData;
+    if (filters.state !== 'all') {
+      partiallyFilteredData = partiallyFilteredData.filter(item => item.state === filters.state);
+    }
+    if (filters.manufacturer !== 'all') {
+      partiallyFilteredData = partiallyFilteredData.filter(item => item.manufacturer === filters.manufacturer);
+    }
+    if (filters.model !== 'all') {
+      partiallyFilteredData = partiallyFilteredData.filter(item => item.model === filters.model);
+    }
 
-  const modelOptions = useMemo(() => {
-    if (filters.manufacturer === 'all') return filterOptions.models;
-    return [...new Set(initialData.filter(d => d.manufacturer === filters.manufacturer).map(d => d.model))].sort();
-  }, [filters.manufacturer, initialData, filterOptions.models]);
-
-  const versionOptions = useMemo(() => {
-    if (filters.model === 'all') return filterOptions.versions;
-    return [...new Set(initialData.filter(d => d.model === filters.model).map(d => d.version))].sort();
-  }, [filters.model, initialData, filterOptions.versions]);
-
-  const dynamicFilterOptions = { ...filterOptions, cities: cityOptions, models: modelOptions, versions: versionOptions };
+    return getFilterOptions(partiallyFilteredData);
+  }, [initialData, filters]);
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
@@ -86,6 +82,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions 
           filters={filters}
           onFilterChange={handleFilterChange}
           filterOptions={dynamicFilterOptions}
+          allFilterOptions={initialFilterOptions}
         />
       </div>
       <div className="flex flex-col">
@@ -102,20 +99,19 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions 
                   filters={filters}
                   onFilterChange={handleFilterChange}
                   filterOptions={dynamicFilterOptions}
+                  allFilterOptions={initialFilterOptions}
                 />
             </SheetContent>
           </Sheet>
         </DashboardHeader>
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-          <FilterSuggestions onApplyFilters={handleFilterChange} />
+        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
+          <div className="bg-background p-4 rounded-lg border">
+            <FilterSuggestions onApplyFilters={handleFilterChange} />
+          </div>
           <StatCards data={filteredData} />
           <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-            <div className="xl:col-span-2">
-              <SalesOverTimeChart data={filteredData} />
-            </div>
-            <div>
-              <TopModelsChart data={filteredData} />
-            </div>
+            <FleetByYearChart data={filteredData} />
+            <TopModelsChart data={filteredData} />
           </div>
         </main>
       </div>

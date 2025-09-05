@@ -2,24 +2,24 @@
 
 import type { FC } from 'react';
 import { useMemo } from 'react';
-import type { Sale } from '@/types';
+import type { Vehicle } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Car, MapPin } from 'lucide-react';
+import { Car, MapPin, Users2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface StatCardsProps {
-  data: Sale[];
+  data: Vehicle[];
 }
 
 const StatCards: FC<StatCardsProps> = ({ data }) => {
   const { t } = useTranslation();
 
-  const { totalSales, topModel, topRegion } = useMemo(() => {
+  const { totalVehicles, topModel, topRegion } = useMemo(() => {
     if (!data.length) {
-      return { totalSales: 0, topModel: 'N/A', topRegion: 'N/A' };
+      return { totalVehicles: 0, topModel: 'N/A', topRegion: 'N/A' };
     }
 
-    const totalSales = data.reduce((sum, item) => sum + item.quantity, 0);
+    const totalVehicles = data.reduce((sum, item) => sum + item.quantity, 0);
 
     const modelSales = data.reduce((acc, item) => {
       const key = `${item.manufacturer} ${item.model}`;
@@ -51,39 +51,39 @@ const StatCards: FC<StatCardsProps> = ({ data }) => {
         }
     }
 
-    return { totalSales, topModel, topRegion };
+    return { totalVehicles, topModel, topRegion };
   }, [data]);
 
   return (
     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('total_sales')}</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">{t('total_vehicles')}</CardTitle>
+          <Users2 className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{totalSales.toLocaleString()}</div>
-          <p className="text-xs text-muted-foreground">{t('total_sales_description')}</p>
+          <div className="text-2xl font-bold">{totalVehicles.toLocaleString()}</div>
+          <p className="text-xs text-muted-foreground">{t('total_vehicles_description')}</p>
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('best_selling_model')}</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('main_model')}</CardTitle>
           <Car className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold truncate">{topModel}</div>
-          <p className="text-xs text-muted-foreground">{t('best_selling_model_description')}</p>
+          <p className="text-xs text-muted-foreground">{t('main_model_description')}</p>
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('top_sales_region')}</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('main_region')}</CardTitle>
           <MapPin className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold truncate">{topRegion}</div>
-          <p className="text-xs text-muted-foreground">{t('top_sales_region_description')}</p>
+          <p className="text-xs text-muted-foreground">{t('main_region_description')}</p>
         </CardContent>
       </Card>
     </div>

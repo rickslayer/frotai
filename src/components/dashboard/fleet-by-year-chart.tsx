@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -22,8 +23,8 @@ import { Button } from '../ui/button';
 import { Loader2, Wand2 } from 'lucide-react';
 import { summarizeChartData, type ChartData } from '@/ai/flows/summarize-chart-data';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Terminal } from 'lucide-react';
+import { Alert, AlertDescription } from '../ui/alert';
+import { Sparkles } from 'lucide-react';
 
 interface FleetByYearChartProps {
   data: Vehicle[];
@@ -75,7 +76,7 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
   }
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col xl:col-span-2">
       <CardHeader>
         <CardTitle>{t('fleet_by_year')}</CardTitle>
         <CardDescription>{t('fleet_by_year_description')}</CardDescription>
@@ -116,30 +117,31 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
           )}
         </ChartContainer>
       </CardContent>
-      <div className="border-t p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold">{t('ai_analysis')}</h3>
-            <Button onClick={handleGenerateAnalysis} disabled={loadingAnalysis || chartData.length === 0} size="sm">
-              {loadingAnalysis ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Wand2 className="mr-2 h-4 w-4" />
-              )}
-              {loadingAnalysis ? t('generating_analysis') : t('generate_analysis')}
-            </Button>
-          </div>
-          {analysis ? (
-             <Alert>
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>Analysis</AlertTitle>
-              <AlertDescription>
-                {analysis}
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t('analysis_placeholder')}</p>
-          )}
+      <CardFooter className="flex-col items-start gap-2 border-t p-4 bg-muted/20">
+        <div className="flex items-center justify-between w-full">
+          <h3 className="text-base font-semibold flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            {t('ai_analysis')}
+          </h3>
+          <Button onClick={handleGenerateAnalysis} disabled={loadingAnalysis || chartData.length === 0} size="sm" variant="outline">
+            {loadingAnalysis ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Wand2 className="mr-2 h-4 w-4" />
+            )}
+            {loadingAnalysis ? t('generating_analysis') : t('generate_analysis')}
+          </Button>
         </div>
+        {analysis ? (
+           <Alert variant="default" className="bg-background border-primary/50 text-sm">
+            <AlertDescription>
+              {analysis}
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t('analysis_placeholder')}</p>
+        )}
+      </CardFooter>
     </Card>
   );
 };

@@ -1,4 +1,4 @@
-export type Sale = {
+export type Vehicle = {
   id: string;
   manufacturer: string;
   model: string;
@@ -7,7 +7,7 @@ export type Sale = {
   state: string;
   city: string;
   quantity: number;
-  date: string; // YYYY-MM-DD
+  year: number;
 };
 
 export type FilterOptions = {
@@ -17,6 +17,7 @@ export type FilterOptions = {
   states: string[];
   cities: string[];
   categories: string[];
+  years: number[];
 };
 
 export type Filters = {
@@ -26,5 +27,5 @@ export type Filters = {
   model: string;
   version: string;
   category: string;
-  dateRange: { from: Date | undefined; to: Date | undefined };
+  year: number | 'all';
 };

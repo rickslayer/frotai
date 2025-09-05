@@ -16,19 +16,19 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import type { Sale } from '@/types';
+import type { Vehicle } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 interface TopModelsChartProps {
-  data: Sale[];
+  data: Vehicle[];
 }
 
 const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
   const { t } = useTranslation();
 
   const chartConfig = {
-    sales: {
-      label: t('sales'),
+    quantity: {
+      label: t('quantity'),
       color: 'hsl(var(--accent))',
     },
   } satisfies ChartConfig;
@@ -41,18 +41,18 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
     }, {} as Record<string, number>);
 
     return Object.entries(modelSales)
-      .map(([model, sales]) => ({ model, sales }))
-      .sort((a, b) => b.sales - a.sales)
+      .map(([model, quantity]) => ({ model, quantity }))
+      .sort((a, b) => b.quantity - a.quantity)
       .slice(0, 7) // Top 7
       .reverse();
 
   }, [data]);
 
   return (
-    <Card>
+    <Card className="xl:col-span-1">
       <CardHeader>
-        <CardTitle>{t('top_selling_models')}</CardTitle>
-        <CardDescription>{t('top_selling_models_description')}</CardDescription>
+        <CardTitle>{t('top_models_by_volume')}</CardTitle>
+        <CardDescription>{t('top_models_by_volume_description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -75,12 +75,12 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
               tickFormatter={(value) => value.slice(0, 15) + (value.length > 15 ? '...' : '')}
               width={100}
             />
-            <XAxis dataKey="sales" type="number" hide />
+            <XAxis dataKey="quantity" type="number" hide />
             <Tooltip
               cursor={{ fill: 'hsl(var(--muted))' }}
               content={<ChartTooltipContent />}
             />
-            <Bar dataKey="sales" layout="vertical" radius={5} fill="var(--color-sales)" />
+            <Bar dataKey="quantity" layout="vertical" radius={5} fill="var(--color-quantity)" />
           </BarChart>
           ) : (
             <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">

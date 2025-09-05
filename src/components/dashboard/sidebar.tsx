@@ -6,34 +6,30 @@ import { Car, MapPin, Calendar, SlidersHorizontal } from 'lucide-react';
 import type { FilterOptions, Filters } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Calendar as CalendarIcon } from '@/components/ui/calendar';
-import { DateRange } from 'react-day-picker';
-import { format } from 'date-fns';
 import { ScrollArea } from '../ui/scroll-area';
 import { useTranslation } from 'react-i18next';
-import { ptBR } from 'date-fns/locale';
 
 interface DashboardSidebarProps {
   filters: Filters;
   onFilterChange: (newFilters: Partial<Filters>) => void;
   filterOptions: FilterOptions;
+  allFilterOptions: FilterOptions;
 }
 
-const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions }) => {
-  const { t, i18n } = useTranslation();
+const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions, allFilterOptions }) => {
+  const { t } = useTranslation();
   
-  const handleSelectChange = (key: keyof Filters, value: string) => {
+  const handleSelectChange = (key: keyof Omit<Filters, 'year'>, value: string) => {
     const newFilters: Partial<Filters> = {[key]: value};
     if (key === 'state') newFilters.city = 'all';
     if (key === 'manufacturer') newFilters.model = 'all';
     if (key === 'model') newFilters.version = 'all';
     onFilterChange(newFilters);
   };
-  
-  const handleDateChange = (dateRange: DateRange | undefined) => {
-    onFilterChange({ dateRange: { from: dateRange?.from, to: dateRange?.to }});
+
+  const handleYearChange = (value: string) => {
+    onFilterChange({ year: value === 'all' ? 'all' : Number(value) });
   }
 
   const clearFilters = () => {
@@ -44,7 +40,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
       model: 'all',
       version: 'all',
       category: 'all',
-      dateRange: { from: undefined, to: undefined },
+      year: 'all',
     });
   };
 
@@ -71,10 +67,10 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_states')}</SelectItem>
-                    {filterOptions.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {allFilterOptions.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Select value={filters.city} onValueChange={(value) => handleSelectChange('city', value)}>
+                <Select value={filters.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={filters.state === 'all'}>
                   <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_cities')}</SelectItem>
@@ -94,24 +90,24 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
-                    {filterOptions.manufacturers.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                    {allFilterOptions.manufacturers.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
                  <Select value={filters.category} onValueChange={(value) => handleSelectChange('category', value)}>
                   <SelectTrigger><SelectValue placeholder={t('select_category')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_categories')}</SelectItem>
-                    {filterOptions.categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {allFilterOptions.categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Select value={filters.model} onValueChange={(value) => handleSelectChange('model', value)}>
+                <Select value={filters.model} onValueChange={(value) => handleSelectChange('model', value)} disabled={filters.manufacturer === 'all'}>
                   <SelectTrigger><SelectValue placeholder={t('select_model')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_models')}</SelectItem>
                     {filterOptions.models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Select value={filters.version} onValueChange={(value) => handleSelectChange('version', value)}>
+                <Select value={filters.version} onValueChange={(value) => handleSelectChange('version', value)} disabled={filters.model === 'all'}>
                   <SelectTrigger><SelectValue placeholder={t('select_version')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_versions')}</SelectItem>
@@ -123,40 +119,17 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
             <AccordionItem value="time">
               <AccordionTrigger>
                 <div className='flex items-center gap-2'>
-                  <Calendar className="h-4 w-4" /> {t('time_period')}
+                  <Calendar className="h-4 w-4" /> {t('manufacturing_year')}
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-4">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <Calendar className="mr-2 h-4 w-4" />
-                      {filters.dateRange.from ? (
-                        filters.dateRange.to ? (
-                          <>
-                            {format(filters.dateRange.from, 'LLL dd, y', { locale: i18n.language === 'pt' ? ptBR : undefined })} - {format(filters.dateRange.to, 'LLL dd, y', { locale: i18n.language === 'pt' ? ptBR : undefined })}
-                          </>
-                        ) : (
-                          format(filters.dateRange.from, 'LLL dd, y', { locale: i18n.language === 'pt' ? ptBR : undefined })
-                        )
-                      ) : (
-                        <span>{t('pick_date_range')}</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarIcon
-                      mode="range"
-                      selected={filters.dateRange}
-                      onSelect={handleDateChange}
-                      initialFocus
-                      locale={i18n.language === 'pt' ? ptBR : undefined}
-                    />
-                  </PopoverContent>
-                </Popover>
+                 <Select value={String(filters.year)} onValueChange={handleYearChange}>
+                  <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t('all_years')}</SelectItem>
+                    {allFilterOptions.years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </AccordionContent>
             </AccordionItem>
           </Accordion>

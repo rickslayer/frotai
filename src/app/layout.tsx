@@ -6,7 +6,7 @@ import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'Frota.AI',
-  description: 'Pesquise e analise dados de modelos de veículos por região.',
+  description: 'Análise de frota de veículos para o mercado de autopeças.',
 };
 
 export default function RootLayout({

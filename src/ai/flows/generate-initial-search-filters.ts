@@ -1,38 +1,28 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for suggesting initial search filters for vehicle searches
- * based on popular trends and historical data.
+ * @fileOverview This file defines a Genkit flow for suggesting initial search filters for vehicle fleet analysis
+ * based on common analysis scenarios.
  *
  * @module src/ai/flows/generate-initial-search-filters
- * @typedef {Object} InitialSearchFilters - An object containing initial search filters for vehicle searches.
- * @property {string} state - The state to filter by.
- * @property {string} city - The city to filter by.
- * @property {string} manufacturer - The manufacturer to filter by.
- * @property {string} model - The model to filter by.
- * @property {string} version - The version to filter by.
- * @property {string} timePeriod - The time period to filter by.
- *
- * @function generateInitialSearchFilters - A function that generates initial search filters for vehicle searches.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const InitialSearchFiltersSchema = z.object({
-  state: z.string().describe('The state to filter by.'),
-  city: z.string().describe('The city to filter by.'),
-  manufacturer: z.string().describe('The manufacturer to filter by.'),
-  model: z.string().describe('The model to filter by.'),
-  version: z.string().describe('The version to filter by.'),
-  timePeriod: z.string().describe('The time period to filter by.'),
+  state: z.string().describe('The state to filter by (e.g., "São Paulo").'),
+  city: z.string().describe('The city to filter by (e.g., "São Paulo").'),
+  manufacturer: z.string().describe('The manufacturer to filter by (e.g., "Fiat").'),
+  model: z.string().describe('The model to filter by (e.g., "Strada").'),
+  description: z.string().describe('A short, user-facing description of the suggestion (e.g., "Analisar a frota de Fiat Strada em São Paulo").'),
 });
 
 export type InitialSearchFilters = z.infer<typeof InitialSearchFiltersSchema>;
 
 const GenerateInitialSearchFiltersInputSchema = z.object({
-  userLocation: z.string().describe('The current location of the user (e.g., city, state).'),
-  recentSearchHistory: z.string().describe('A summary of the user\'s recent search history.'),
+  userRegion: z.string().describe('The current region of the user for context (e.g., "Sudeste").'),
+  commonModels: z.array(z.string()).describe('A list of common vehicle models in the dataset.'),
 });
 
 export type GenerateInitialSearchFiltersInput = z.infer<typeof GenerateInitialSearchFiltersInputSchema>;
@@ -51,42 +41,41 @@ const prompt = ai.definePrompt({
   name: 'generateInitialSearchFiltersPrompt',
   input: {schema: GenerateInitialSearchFiltersInputSchema},
   output: {schema: GenerateInitialSearchFiltersOutputSchema},
-  prompt: `You are an AI assistant designed to suggest initial search filters for vehicle searches based on popular trends and historical data.
+  prompt: `You are an AI assistant for an auto parts market analysis platform. Your goal is to suggest three relevant and interesting starting points for fleet analysis.
 
-  Given the user's current location and recent search history, suggest three relevant filter combinations that the user might be interested in.
+Given the user's region and a list of common vehicle models, create three filter suggestions. Each suggestion should focus on a specific, actionable analysis scenario.
 
-  User Location: {{{userLocation}}}
-  Recent Search History: {{{recentSearchHistory}}}
+User's Region: {{{userRegion}}}
+Common Models: {{{commonModels}}}
 
-  Format the response as a JSON array of InitialSearchFilters objects.
+- Each suggestion should have a clear, concise description in Portuguese.
+- Pick a relevant state and city for the analysis.
+- Focus on popular models that are relevant for the auto parts market (e.g., high volume, older models).
 
-  Example:
-  [
-    {
-      "state": "California",
-      "city": "Los Angeles",
-      "manufacturer": "Toyota",
-      "model": "Camry",
-      "version": "LE",
-      "timePeriod": "Last 3 months"
-    },
-    {
-      "state": "California",
-      "city": "San Francisco",
-      "manufacturer": "Honda",
-      "model": "Civic",
-      "version": "EX",
-      "timePeriod": "Last 6 months"
-    },
-    {
-      "state": "California",
-      "city": "San Diego",
-      "manufacturer": "Ford",
-      "model": "F-150",
-      "version": "XLT",
-      "timePeriod": "Last 12 months"
-    }
-  ]
+Example Output (as a JSON array of InitialSearchFilters objects):
+[
+  {
+    "state": "São Paulo",
+    "city": "São Paulo",
+    "manufacturer": "Fiat",
+    "model": "Strada",
+    "description": "Analisar a frota de Fiat Strada em São Paulo"
+  },
+  {
+    "state": "Rio de Janeiro",
+    "city": "Rio de Janeiro",
+    "manufacturer": "Chevrolet",
+    "model": "Onix",
+    "description": "Chevrolet Onix no Rio de Janeiro"
+  },
+  {
+    "state": "Minas Gerais",
+    "city": "Belo Horizonte",
+    "manufacturer": "Volkswagen",
+    "model": "Polo",
+    "description": "Potencial do VW Polo em Minas Gerais"
+  }
+]
   `,
 });
 
