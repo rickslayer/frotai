@@ -64,19 +64,33 @@ export function getFleetData(): Vehicle[] {
     return fleetData;
   }
 
-  const dataFilePath = path.join(process.cwd(), 'infos.txt');
+  const dataFileNames = ['infos.txt', 'infos.TXT'];
+  let foundFilePath: string | null = null;
+
+  for (const fileName of dataFileNames) {
+      const dataFilePath = path.join(process.cwd(), fileName);
+      try {
+          fs.accessSync(dataFilePath, fs.constants.R_OK);
+          foundFilePath = dataFilePath;
+          break;
+      } catch (e) {
+          // File not found, try the next one
+      }
+  }
   
-  try {
-    // Check if the real data file exists
-    fs.accessSync(dataFilePath, fs.constants.R_OK);
-    console.log("Real data file found. Parsing...");
-    // If it exists, parse it. This is synchronous and runs only once on server start.
-    const fileContent = fs.readFileSync(dataFilePath, 'utf8');
-    fleetData = parseVehicleData(fileContent);
-    console.log(`Successfully parsed ${fleetData.length} records from real data.`);
-  } catch (error) {
+  if (foundFilePath) {
+    console.log(`Real data file found at '${foundFilePath}'. Parsing...`);
+    try {
+      const fileContent = fs.readFileSync(foundFilePath, 'utf8');
+      fleetData = parseVehicleData(fileContent);
+      console.log(`Successfully parsed ${fleetData.length} records from real data.`);
+    } catch (error) {
+      console.error(`Error parsing real data file '${foundFilePath}'. Falling back to mock data.`, error);
+      fleetData = generateMockFleetData();
+    }
+  } else {
     // If the file doesn't exist or there's an error reading it, use mock data
-    console.warn("Real data file 'infos.txt' not found or failed to parse. Falling back to mock data.", error);
+    console.warn("Real data file not found. Falling back to mock data.");
     fleetData = generateMockFleetData();
   }
 
