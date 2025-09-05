@@ -13,7 +13,19 @@ import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { getFilterOptions } from '@/lib/data';
+
+function getDynamicFilterOptions(data: Vehicle[]): FilterOptions {
+  const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
+  const models = [...new Set(data.map(item => item.model))].sort();
+  const versions = [...new Set(data.map(item => item.version))].sort();
+  const states = [...new Set(data.map(item => item.state))].sort();
+  const cities = [...new Set(data.map(item => item.city))].sort();
+  const categories = [...new Set(data.map(item => item.category))].sort() as FilterOptions['categories'];
+  const years = [...new Set(data.map(item => item.year))].sort((a, b) => b - a);
+
+  return { manufacturers, models, versions, states, cities, categories, years };
+}
+
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -68,7 +80,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptio
       partiallyFilteredData = partiallyFilteredData.filter(item => item.model === filters.model);
     }
 
-    return getFilterOptions(partiallyFilteredData);
+    return getDynamicFilterOptions(partiallyFilteredData);
   }, [initialData, filters]);
 
   return (
