@@ -30,7 +30,6 @@ function generateMockFleetData(): Vehicle[] {
   const currentYear = new Date().getFullYear();
   let idCounter = 1;
 
-  // Generate data for the last 15 years
   for (let year = currentYear; year > currentYear - 15; year--) {
     locations.forEach(location => {
       location.cities.forEach(city => {
@@ -47,7 +46,7 @@ function generateMockFleetData(): Vehicle[] {
                 category: modelInfo.category,
                 state: location.state,
                 city,
-                quantity: Math.floor(Math.random() * (currentYear - year + 1) * 10) + 10, // Older cars are more numerous
+                quantity: Math.floor(Math.random() * (currentYear - year + 1) * 10) + 10, 
                 year,
               });
             });
@@ -69,7 +68,7 @@ export function getFleetData(): Vehicle[] {
   let allVehicles: Vehicle[] = [];
 
   try {
-    const files = fs.readdirSync(dataDir).filter(file => !file.endsWith('.jsonc')); // Ignore config files
+    const files = fs.readdirSync(dataDir).filter(file => !file.endsWith('.jsonc'));
     
     if (files.length === 0) {
       throw new Error("No data files found in src/data.");
@@ -82,11 +81,9 @@ export function getFleetData(): Vehicle[] {
       const fileContent = fs.readFileSync(filePath, 'utf8');
 
       if (file.endsWith('.json')) {
-        // Handle standard JSON files (like the sample)
         const vehicles: Vehicle[] = JSON.parse(fileContent);
         allVehicles = allVehicles.concat(vehicles);
       } else {
-        // Handle CSV-like files (assuming semicolon delimiter)
         const parsed = Papa.parse(fileContent, {
           header: true,
           skipEmptyLines: true,
