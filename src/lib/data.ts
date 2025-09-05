@@ -68,7 +68,7 @@ export function getFleetData(): Vehicle[] {
   let allVehicles: Vehicle[] = [];
 
   try {
-    const files = fs.readdirSync(dataDir).filter(file => !file.endsWith('.jsonc'));
+    const files = fs.readdirSync(dataDir).filter(file => !file.startsWith('.'));
     
     if (files.length === 0) {
       throw new Error("No data files found in src/data.");
@@ -80,30 +80,25 @@ export function getFleetData(): Vehicle[] {
       const filePath = path.join(dataDir, file);
       const fileContent = fs.readFileSync(filePath, 'utf8');
 
-      if (file.endsWith('.json')) {
-        const vehicles: Vehicle[] = JSON.parse(fileContent);
-        allVehicles = allVehicles.concat(vehicles);
-      } else {
-        const parsed = Papa.parse(fileContent, {
-          header: true,
-          skipEmptyLines: true,
-          delimiter: ';',
-        });
+      const parsed = Papa.parse(fileContent, {
+        header: true,
+        skipEmptyLines: true,
+        delimiter: ';',
+      });
 
-        const vehicles = parsed.data.map((row: any, index: number) => ({
-            id: `${file}-${index}`,
-            manufacturer: row.montadora || row.manufacturer,
-            model: row.modelo || row.model,
-            version: row.versao || row.version,
-            category: row.categoria || row.category,
-            state: row.uf || row.state,
-            city: row.cidade || row.city,
-            quantity: parseInt(row.quantidade || row.quantity, 10) || 0,
-            year: parseInt(row.ano_fabricacao || row.year, 10) || 0,
-        })) as Vehicle[];
-        
-        allVehicles = allVehicles.concat(vehicles.filter(v => v.manufacturer && v.model && v.year));
-      }
+      const vehicles = parsed.data.map((row: any, index: number) => ({
+          id: `${file}-${index}`,
+          manufacturer: row.montadora || row.manufacturer,
+          model: row.modelo || row.model,
+          version: row.versao || row.version,
+          category: row.categoria || row.category,
+          state: row.uf || row.state,
+          city: row.cidade || row.city,
+          quantity: parseInt(row.quantidade || row.quantity, 10) || 0,
+          year: parseInt(row.ano_fabricacao || row.year, 10) || 0,
+      })) as Vehicle[];
+      
+      allVehicles = allVehicles.concat(vehicles.filter(v => v.manufacturer && v.model && v.year));
     });
 
     if (allVehicles.length === 0) {
