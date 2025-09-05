@@ -7,7 +7,7 @@ export default function Home() {
 
   return (
     <main>
-      <DashboardClient initialData={fleetData} filterOptions={filterOptions} />
+      <DashboardClient initialData={fleetData} allFilterOptions={filterOptions} />
     </main>
   );
 }

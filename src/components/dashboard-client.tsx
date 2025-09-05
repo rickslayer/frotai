@@ -17,10 +17,10 @@ import { getFilterOptions } from '@/lib/data';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
-  filterOptions: FilterOptions;
+  allFilterOptions: FilterOptions;
 }
 
-const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions: initialFilterOptions }) => {
+const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptions }) => {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<Filters>({
     state: 'all',
@@ -57,10 +57,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions:
   }, [initialData, filters]);
 
   const dynamicFilterOptions = useMemo(() => {
-    // We pass the initial full data to getFilterOptions so that filter options
-    // for a specific filter don't disappear when that filter is applied.
-    // E.g. if we filter by a specific manufacturer, we still want to see all
-    // other manufacturers in the dropdown.
     let partiallyFilteredData = initialData;
     if (filters.state !== 'all') {
       partiallyFilteredData = partiallyFilteredData.filter(item => item.state === filters.state);
@@ -82,7 +78,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions:
           filters={filters}
           onFilterChange={handleFilterChange}
           filterOptions={dynamicFilterOptions}
-          allFilterOptions={initialFilterOptions}
+          allFilterOptions={allFilterOptions}
         />
       </div>
       <div className="flex flex-col">
@@ -99,7 +95,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, filterOptions:
                   filters={filters}
                   onFilterChange={handleFilterChange}
                   filterOptions={dynamicFilterOptions}
-                  allFilterOptions={initialFilterOptions}
+                  allFilterOptions={allFilterOptions}
                 />
             </SheetContent>
           </Sheet>
