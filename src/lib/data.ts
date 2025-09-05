@@ -1,6 +1,8 @@
+
 import type { Vehicle } from '@/types';
 import fs from 'fs';
 import path from 'path';
+import Papa from 'papaparse';
 
 let fleetData: Vehicle[] | null = null;
 
@@ -67,27 +69,57 @@ export function getFleetData(): Vehicle[] {
   let allVehicles: Vehicle[] = [];
 
   try {
-    const files = fs.readdirSync(dataDir);
-    const jsonFiles = files.filter(file => file.endsWith('.json'));
+    const files = fs.readdirSync(dataDir).filter(file => !file.endsWith('.jsonc')); // Ignore config files
+    
+    if (files.length === 0) {
+      throw new Error("No data files found in src/data.");
+    }
+    
+    console.log(`Found ${files.length} data file(s) in src/data. Parsing...`);
 
-    if (jsonFiles.length > 0) {
-      console.log(`Found ${jsonFiles.length} JSON file(s) in src/data. Parsing...`);
-      jsonFiles.forEach(file => {
-        const filePath = path.join(dataDir, file);
-        const fileContent = fs.readFileSync(filePath, 'utf8');
+    files.forEach(file => {
+      const filePath = path.join(dataDir, file);
+      const fileContent = fs.readFileSync(filePath, 'utf8');
+
+      if (file.endsWith('.json')) {
+        // Handle standard JSON files (like the sample)
         const vehicles: Vehicle[] = JSON.parse(fileContent);
         allVehicles = allVehicles.concat(vehicles);
-      });
-      console.log(`Successfully parsed ${allVehicles.length} total records from JSON files.`);
-      fleetData = allVehicles;
-    } else {
-      throw new Error("No JSON files found.");
+      } else {
+        // Handle CSV-like files (assuming semicolon delimiter)
+        const parsed = Papa.parse(fileContent, {
+          header: true,
+          skipEmptyLines: true,
+          delimiter: ';',
+        });
+
+        const vehicles = parsed.data.map((row: any, index: number) => ({
+            id: `${file}-${index}`,
+            manufacturer: row.montadora || row.manufacturer,
+            model: row.modelo || row.model,
+            version: row.versao || row.version,
+            category: row.categoria || row.category,
+            state: row.uf || row.state,
+            city: row.cidade || row.city,
+            quantity: parseInt(row.quantidade || row.quantity, 10) || 0,
+            year: parseInt(row.ano_fabricacao || row.year, 10) || 0,
+        })) as Vehicle[];
+        
+        allVehicles = allVehicles.concat(vehicles.filter(v => v.manufacturer && v.model && v.year));
+      }
+    });
+
+    if (allVehicles.length === 0) {
+      throw new Error("Data files were found, but no valid vehicle records could be parsed.");
     }
+    
+    console.log(`Successfully parsed ${allVehicles.length} total records from all files.`);
+    fleetData = allVehicles;
+    
   } catch (error) {
-    console.warn("Could not read or parse JSON data from src/data. Falling back to mock data.", error);
-    allVehicles = generateMockFleetData();
+    console.warn(`Could not read or parse data files from src/data. Falling back to mock data. Error: ${(error as Error).message}`);
+    fleetData = generateMockFleetData();
   }
 
-  fleetData = allVehicles;
   return fleetData;
 }
