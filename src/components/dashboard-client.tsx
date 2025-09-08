@@ -53,8 +53,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     setIsSheetOpen(false);
   }, []);
 
-  const allFilterOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
-
   const filteredData = useMemo(() => {
     return initialData.filter(item => {
       const { state, city, manufacturer, model, version, category, year } = filters;
@@ -70,6 +68,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
       );
     });
   }, [initialData, filters]);
+  
+  const allFilterOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
 
   const dynamicFilterOptions = useMemo(() => {
     let partiallyFilteredData = initialData;
