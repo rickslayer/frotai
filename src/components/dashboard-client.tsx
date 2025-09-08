@@ -73,28 +73,33 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     });
   }, [initialData, filters]);
   
- const filterOptions = useMemo(() => {
+  const filterOptions = useMemo(() => {
     const baseOptions = getBaseFilterOptions(initialData);
 
     // 1. Filter by location first
     const dataFilteredByLocation = initialData.filter(item => 
         (filters.state === 'all' || item.state === filters.state) &&
-        (filters.city === 'all' || item.city === city)
+        (filters.city === 'all' || item.city === filters.city)
     );
 
     // 2. Get available options from location-filtered data
     const cities = [...new Set(initialData.filter(item => item.state === filters.state).map(item => item.city))].sort();
+    
+    // 3. Get manufacturers based on the location-filtered data
     const manufacturers = [...new Set(dataFilteredByLocation.map(item => item.manufacturer))].sort();
-    const years = [...new Set(dataFilteredByLocation.map(item => item.year))].sort((a, b) => b - a);
-
-    // 3. Filter by manufacturer to get models
+    
+    // 4. Filter by manufacturer to get models
     const dataFilteredByManufacturer = dataFilteredByLocation.filter(item => 
         (filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer)
     );
     const models = [...new Set(dataFilteredByManufacturer.map(item => item.model))].sort();
+    
+    // 5. Get years from location-filtered data
+    const years = [...new Set(dataFilteredByLocation.map(item => item.year))].sort((a, b) => b - a);
 
     return { ...baseOptions, cities, manufacturers, models, years };
   }, [initialData, filters.state, filters.city, filters.manufacturer]);
+
   
   const isFiltered = useMemo(() => {
     return Object.values(filters).some(value => value !== 'all');
