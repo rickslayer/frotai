@@ -12,7 +12,7 @@ import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
-import FleetByYearChart from './dashboard/fleet-by-year-chart';
+import FleetByYearChart from './dashboard/sales-over-time-chart';
 import FleetQADialog from './dashboard/fleet-qa-dialog';
 import FilterSuggestions from './dashboard/filter-suggestions';
 
@@ -20,13 +20,11 @@ interface DashboardClientProps {
   initialData: Vehicle[];
 }
 
-const getFilterOptions = (data: Vehicle[]): FilterOptions => {
+const getFilterOptions = (data: Vehicle[]): Omit<FilterOptions, 'cities' | 'models'> => {
   const states = [...new Set(data.map(item => item.state))].sort();
-  const cities = [...new Set(data.map(item => item.city))].sort();
   const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
-  const models = [...new Set(data.map(item => item.model))].sort();
   const years = [...new Set(data.map(item => item.year))].sort((a, b) => b - a);
-  return { states, cities, manufacturers, models, years };
+  return { states, manufacturers, years };
 };
 
 const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
@@ -47,7 +45,9 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
-    setIsSheetOpen(false);
+    if(Object.keys(newFilters).length === 1 && Object.keys(newFilters)[0] !== 'year'){
+       setIsSheetOpen(false);
+    }
   }, []);
   
   const filteredData = useMemo(() => {
@@ -65,14 +65,21 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   }, [initialData, filters]);
   
   const filterOptions = useMemo(() => {
-    let dataForOptions = initialData;
-    if (filters.state !== 'all') {
-      dataForOptions = dataForOptions.filter(item => item.state === filters.state);
-    }
-    if (filters.manufacturer !== 'all') {
-      dataForOptions = dataForOptions.filter(item => item.manufacturer === filters.manufacturer);
-    }
-    return getFilterOptions(dataForOptions);
+    const baseOptions = getFilterOptions(initialData);
+
+    const availableAfterState = filters.state === 'all' 
+      ? initialData 
+      : initialData.filter(item => item.state === filters.state);
+    
+    const cities = [...new Set(availableAfterState.map(item => item.city))].sort();
+
+    const availableAfterManufacturer = filters.manufacturer === 'all'
+      ? initialData
+      : initialData.filter(item => item.manufacturer === filters.manufacturer);
+
+    const models = [...new Set(availableAfterManufacturer.map(item => item.model))].sort();
+
+    return { ...baseOptions, cities, models };
   }, [initialData, filters.state, filters.manufacturer]);
   
   const isFiltered = useMemo(() => {
@@ -113,7 +120,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           </DashboardHeader>
           <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
             <StatCards data={filteredData} filters={filters} />
-            <div className="border rounded-lg p-4 bg-card shadow-sm">
+            <div className="border rounded-lg p-6 bg-card shadow-sm">
              <FilterSuggestions onApplyFilters={handleFilterChange} />
             </div>
             <div className="grid gap-4 md:gap-8 lg:grid-cols-3">

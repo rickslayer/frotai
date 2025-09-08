@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '../ui/badge';
 import type { Filters } from '@/types';
 import { useTranslation } from 'react-i18next';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Terminal } from 'lucide-react';
 
 interface FilterSuggestionsProps {
   onApplyFilters: (newFilters: Partial<Filters>) => void;
@@ -43,12 +45,15 @@ const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
   };
 
   const applySuggestion = (suggestion: InitialSearchFilters) => {
-    onApplyFilters({
-      state: suggestion.state || 'all',
-      city: suggestion.city || 'all',
-      manufacturer: suggestion.manufacturer || 'all',
-      model: suggestion.model || 'all',
-    });
+    const filtersToApply: Partial<Filters> = {
+        state: suggestion.state || 'all',
+        city: suggestion.city || 'all',
+        manufacturer: suggestion.manufacturer || 'all',
+        model: suggestion.model || 'all',
+        year: 'all'
+    };
+    onApplyFilters(filtersToApply);
+    setSuggestions([]);
      toast({
         title: t('filters_applied'),
         description: t('showing_results_for_suggestion', { description: suggestion.description }),
@@ -56,8 +61,8 @@ const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
   };
 
   return (
-    <div>
-      <div className="flex items-center gap-4">
+    <div className='space-y-4'>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 space-y-2 sm:space-y-0">
         <Button onClick={handleGetSuggestions} disabled={loading} variant="default" size="sm">
           {loading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -66,24 +71,38 @@ const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
           )}
           {t('get_ai_suggestions')}
         </Button>
-        <p className="text-sm text-muted-foreground hidden md:block">
+        <p className="text-sm text-muted-foreground">
           {t('get_ai_suggestions_description')}
         </p>
       </div>
 
-      {suggestions.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {suggestions.map((s, i) => (
-            <Badge
-              key={i}
-              onClick={() => applySuggestion(s)}
-              variant="secondary"
-              className="cursor-pointer px-3 py-1.5 text-sm font-normal transition-transform hover:scale-105 hover:bg-secondary/90 active:scale-100"
-            >
-              {s.description}
-            </Badge>
-          ))}
+      {loading && (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>{t('generating_suggestions')}</span>
         </div>
+      )}
+
+      {suggestions.length > 0 && !loading && (
+        <Alert>
+          <Terminal className="h-4 w-4" />
+          <AlertTitle>{t('suggestions_title')}</AlertTitle>
+          <AlertDescription>
+            <p className='mb-3'>{t('suggestions_description')}</p>
+             <div className="flex flex-wrap gap-2">
+              {suggestions.map((s, i) => (
+                <Badge
+                  key={i}
+                  onClick={() => applySuggestion(s)}
+                  variant="secondary"
+                  className="cursor-pointer px-3 py-1.5 text-sm font-normal transition-transform hover:scale-105 hover:bg-secondary/90 active:scale-100"
+                >
+                  {s.description}
+                </Badge>
+              ))}
+            </div>
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );

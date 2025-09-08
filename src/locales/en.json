@@ -58,5 +58,13 @@
   "state": "State",
   "city": "City",
   "manufacturer": "Manufacturer",
-  "model": "Model"
+  "model": "Model",
+  "get_ai_suggestions": "Get AI Suggestions",
+  "get_ai_suggestions_description": "Get AI-powered suggestions for interesting data segments to analyze.",
+  "ai_suggestions_error": "Could not generate AI suggestions. Please try again.",
+  "filters_applied": "Filters Applied",
+  "showing_results_for_suggestion": "Showing results for: {description}",
+  "generating_suggestions": "Looking for interesting insights...",
+  "suggestions_title": "Analysis Suggestions",
+  "suggestions_description": "We found some interesting starting points for your analysis. Click one to apply the filters."
 }

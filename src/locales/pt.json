@@ -58,5 +58,13 @@
   "state": "Estado",
   "city": "Cidade",
   "manufacturer": "Montadora",
-  "model": "Modelo"
+  "model": "Modelo",
+  "get_ai_suggestions": "Obter Sugestões da IA",
+  "get_ai_suggestions_description": "Receba sugestões de segmentos de dados interessantes para analisar.",
+  "ai_suggestions_error": "Não foi possível gerar sugestões da IA. Por favor, tente novamente.",
+  "filters_applied": "Filtros Aplicados",
+  "showing_results_for_suggestion": "Exibindo resultados para: {description}",
+  "generating_suggestions": "Buscando por insights interessantes...",
+  "suggestions_title": "Sugestões de Análise",
+  "suggestions_description": "Encontramos alguns pontos de partida interessantes para sua análise. Clique em um para aplicar os filtros."
 }
