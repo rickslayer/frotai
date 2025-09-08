@@ -2,7 +2,7 @@
 
 import type { FC } from 'react';
 import { useMemo } from 'react';
-import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList } from 'recharts';
 import {
   Card,
   CardContent,
@@ -66,7 +66,7 @@ const FleetAgeBracketChart: FC<FleetAgeBracketChartProps> = ({ data }) => {
       { bracket: ageBrackets.old.label, quantity: ageBrackets.old.total, fill: 'var(--color-old)' },
     ].filter(d => d.quantity > 0);
 
-  }, [data, t]);
+  }, [data, t, chartConfig]);
 
   return (
     <Card className="lg:col-span-2">
@@ -95,15 +95,20 @@ const FleetAgeBracketChart: FC<FleetAgeBracketChartProps> = ({ data }) => {
                   type="category"
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={10}
-                  width={110}
-                  
+                  tick={false}
                 />
                 <Tooltip
                   cursor={{ fill: 'hsl(var(--muted))' }}
                   content={<ChartTooltipContent />}
                 />
-                <Bar dataKey="quantity" radius={5} barSize={35} />
+                <Bar dataKey="quantity" radius={5} barSize={35}>
+                  <LabelList
+                    dataKey="bracket"
+                    position="insideLeft"
+                    offset={8}
+                    className="fill-primary-foreground text-sm font-medium"
+                  />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
