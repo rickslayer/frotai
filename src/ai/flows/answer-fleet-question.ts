@@ -6,7 +6,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { Vehicle } from '@/types';
 
 const AnswerFleetQuestionInputSchema = z.object({
   question: z.string().describe('The user\'s question about the fleet data.'),

@@ -48,5 +48,15 @@
   "generating_analysis": "Generating...",
   "analysis_placeholder": "Click 'Generate Analysis' to get AI-powered insights on the current chart data.",
   "analysis_error": "Could not generate AI analysis. Please try again.",
-  "error": "Error"
+  "error": "Error",
+  "ask_ai": "Ask AI",
+  "ai_answer_error": "Could not get an answer from AI. Please try again.",
+  "ai_question_placeholder": "What is the average age of the fleet?",
+  "ai_answer": "AI Answer",
+  "active_filters": "Active filters",
+  "no_active_filters": "No active filters. The analysis will be done on the entire dataset.",
+  "state": "State",
+  "city": "City",
+  "manufacturer": "Manufacturer",
+  "model": "Model"
 }

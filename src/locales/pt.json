@@ -48,5 +48,15 @@
   "generating_analysis": "Gerando...",
   "analysis_placeholder": "Clique em 'Gerar Análise' para obter insights da IA sobre os dados do gráfico atual.",
   "analysis_error": "Não foi possível gerar a análise de IA. Por favor, tente novamente.",
-  "error": "Erro"
+  "error": "Erro",
+  "ask_ai": "Perguntar à IA",
+  "ai_answer_error": "Não foi possível obter uma resposta da IA. Por favor, tente novamente.",
+  "ai_question_placeholder": "Qual a idade média da frota?",
+  "ai_answer": "Resposta da IA",
+  "active_filters": "Filtros ativos",
+  "no_active_filters": "Nenhum filtro ativo. A análise será feita sobre todo o conjunto de dados.",
+  "state": "Estado",
+  "city": "Cidade",
+  "manufacturer": "Montadora",
+  "model": "Modelo"
 }

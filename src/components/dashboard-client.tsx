@@ -6,14 +6,14 @@ import type { Vehicle, FilterOptions, Filters } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
-import FleetAnalysis from './dashboard/fleet-by-year-chart';
 import TopModelsChart from './dashboard/top-models-chart';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
-import FleetByYearChart from './dashboard/sales-over-time-chart';
+import FleetByYearChart from './dashboard/fleet-by-year-chart';
+import FleetQADialog from './dashboard/fleet-qa-dialog';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -38,6 +38,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     year: 'all',
   });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isQADialogOpen, setIsQADialogOpen] = useState(false);
 
   const handleExport = () => {
     alert(t('export_planned_feature'));
@@ -73,45 +74,61 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     return getFilterOptions(dataForOptions);
   }, [initialData, filters.state, filters.manufacturer]);
   
+  const isFiltered = useMemo(() => {
+    return Object.values(filters).some(value => value !== 'all');
+  }, [filters]);
+
   return (
-    <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-card lg:block">
-        <DashboardSidebar
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          filterOptions={filterOptions}
-        />
+    <>
+      <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
+        <div className="hidden border-r bg-card lg:block">
+          <DashboardSidebar
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            filterOptions={filterOptions}
+          />
+        </div>
+        <div className="flex flex-col">
+          <DashboardHeader 
+            onExport={handleExport} 
+            onAskAi={() => setIsQADialogOpen(true)}
+            isFiltered={isFiltered}
+          >
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="shrink-0 lg:hidden">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="flex flex-col p-0">
+                <DashboardSidebar
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    filterOptions={filterOptions}
+                  />
+              </SheetContent>
+            </Sheet>
+          </DashboardHeader>
+          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
+            <StatCards data={filteredData} filters={filters} />
+            <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+              <FleetAgeBracketChart data={filteredData} />
+              <TopModelsChart data={filteredData} />
+            </div>
+            <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
+              <FleetByYearChart data={filteredData} />
+            </div>
+          </main>
+        </div>
       </div>
-      <div className="flex flex-col">
-        <DashboardHeader onExport={handleExport}>
-           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="shrink-0 lg:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col p-0">
-               <DashboardSidebar
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                  filterOptions={filterOptions}
-                />
-            </SheetContent>
-          </Sheet>
-        </DashboardHeader>
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
-          <StatCards data={filteredData} filters={filters} />
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-            <FleetAgeBracketChart data={filteredData} />
-            <TopModelsChart data={filteredData} />
-          </div>
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-             <FleetByYearChart data={filteredData} />
-          </div>
-        </main>
-      </div>
-    </div>
+      <FleetQADialog
+        isOpen={isQADialogOpen}
+        onOpenChange={setIsQADialogOpen}
+        fleetData={filteredData}
+        filters={filters}
+      />
+    </>
   );
 };
 
