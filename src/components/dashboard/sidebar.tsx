@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -19,19 +20,13 @@ interface DashboardSidebarProps {
 const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions }) => {
   const { t } = useTranslation();
   
-  const handleSelectChange = (key: keyof Omit<Filters, 'year'>, value: string) => {
+  const handleSelectChange = (key: keyof Filters, value: string) => {
     const newFilters: Partial<Filters> = { [key]: value };
-    if (key === 'state') {
-        newFilters.city = 'all';
+     if (key === 'year') {
+      onFilterChange({ year: value === 'all' ? 'all' : Number(value) });
+    } else {
+      onFilterChange({ [key]: value });
     }
-    if (key === 'manufacturer') {
-      newFilters.model = 'all';
-    }
-    onFilterChange(newFilters);
-  };
-
-  const handleYearChange = (value: string) => {
-    onFilterChange({ year: value === 'all' ? 'all' : Number(value) });
   };
 
   const clearFilters = () => {
@@ -109,7 +104,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-4">
-                 <Select value={String(filters.year)} onValueChange={handleYearChange}>
+                 <Select value={String(filters.year)} onValueChange={(value) => handleSelectChange('year', value)}>
                   <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_years')}</SelectItem>
