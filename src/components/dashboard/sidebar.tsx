@@ -22,7 +22,9 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
   const handleSelectChange = (key: keyof Omit<Filters, 'year'>, value: string) => {
     const newFilters: Partial<Filters> = {[key]: value};
     // Reinicia os filtros dependentes quando o filtro pai muda.
-    if (key === 'state') newFilters.city = 'all';
+    if (key === 'state') {
+        newFilters.city = 'all';
+    }
     if (key === 'manufacturer') {
       newFilters.model = 'all';
     }
