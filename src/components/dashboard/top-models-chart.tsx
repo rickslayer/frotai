@@ -43,8 +43,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
     return Object.entries(modelSales)
       .map(([model, quantity]) => ({ model, quantity }))
       .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 7) // Top 7
-      .reverse();
+      .slice(0, 10); // Top 10 e já em ordem decrescente
 
   }, [data]);
 
