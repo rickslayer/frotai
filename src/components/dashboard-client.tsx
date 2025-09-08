@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import FleetQADialog from './dashboard/fleet-qa-dialog';
+import FilterSuggestions from './dashboard/filter-suggestions';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -112,12 +113,15 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           </DashboardHeader>
           <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
             <StatCards data={filteredData} filters={filters} />
-            <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-              <FleetAgeBracketChart data={filteredData} />
-              <TopModelsChart data={filteredData} />
+            <div className="border rounded-lg p-4 bg-card shadow-sm">
+             <FilterSuggestions onApplyFilters={handleFilterChange} />
             </div>
             <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
+              <TopModelsChart data={filteredData} />
+            </div>
+            <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
               <FleetByYearChart data={filteredData} />
+              <FleetAgeBracketChart data={filteredData} />
             </div>
           </main>
         </div>
