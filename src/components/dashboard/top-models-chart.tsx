@@ -2,7 +2,7 @@
 
 import type { FC } from 'react';
 import { useMemo } from 'react';
-import { Bar, BarChart, XAxis, YAxis, Tooltip } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList } from 'recharts';
 import {
   Card,
   CardContent,
@@ -43,8 +43,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
     return Object.entries(modelSales)
       .map(([model, quantity]) => ({ model, quantity }))
       .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 10); // Top 10 e já em ordem decrescente
-
+      .slice(0, 10);
   }, [data]);
 
   return (
@@ -54,35 +53,37 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
         <CardDescription>{t('top_models_by_volume_description')}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
-           {chartData.length > 0 ? (
-          <BarChart
-            accessibilityLayer
-            data={chartData}
-            layout="vertical"
-            margin={{
-              left: 10,
-              right: 10,
-            }}
-          >
-            <YAxis
-              dataKey="model"
-              type="category"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) => value.slice(0, 15) + (value.length > 15 ? '...' : '')}
-              width={100}
-            />
-            <XAxis dataKey="quantity" type="number" hide />
-            <Tooltip
-              cursor={{ fill: 'hsl(var(--muted))' }}
-              content={<ChartTooltipContent />}
-            />
-            <Bar dataKey="quantity" layout="vertical" radius={5} fill="var(--color-quantity)" />
-          </BarChart>
+        <ChartContainer config={chartConfig} className="h-[350px] w-full">
+          {chartData.length > 0 ? (
+            <BarChart
+              accessibilityLayer
+              data={chartData}
+              layout="vertical"
+              margin={{
+                left: 10,
+                right: 10,
+                top: 10,
+                bottom: 10,
+              }}
+            >
+              <YAxis dataKey="model" type="category" hide />
+              <XAxis dataKey="quantity" type="number" hide />
+              <Tooltip
+                cursor={{ fill: 'hsl(var(--muted))' }}
+                content={<ChartTooltipContent />}
+              />
+              <Bar dataKey="quantity" layout="vertical" radius={5} fill="var(--color-quantity)">
+                <LabelList
+                  dataKey="model"
+                  position="insideLeft"
+                  offset={8}
+                  className="fill-primary-foreground text-sm font-medium"
+                  formatter={(value: string) => value.slice(0, 25) + (value.length > 25 ? '...' : '')}
+                />
+              </Bar>
+            </BarChart>
           ) : (
-            <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-[350px] w-full items-center justify-center text-muted-foreground">
               {t('no_data_available')}
             </div>
           )}

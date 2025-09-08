@@ -13,8 +13,6 @@ import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { answerFleetQuestion } from '@/ai/flows/answer-fleet-question';
-import { useToast } from '@/hooks/use-toast';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -31,7 +29,6 @@ const getFilterOptions = (data: Vehicle[]): FilterOptions => {
 
 const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [filters, setFilters] = useState<Filters>({
     state: 'all',
     city: 'all',
@@ -40,10 +37,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     year: 'all',
   });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  
-  const [question, setQuestion] = useState('');
-  const [aiAnswer, setAiAnswer] = useState('');
-  const [isAskingAi, setIsAskingAi] = useState(false);
 
   const handleExport = () => {
     alert(t('export_planned_feature'));
@@ -81,28 +74,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     return getFilterOptions(dataForOptions);
   }, [initialData, filters.state, filters.manufacturer]);
   
-  const handleAskAi = async (userQuestion: string) => {
-    setIsAskingAi(true);
-    setAiAnswer('');
-    try {
-      const result = await answerFleetQuestion({
-        question: userQuestion,
-        data: filteredData,
-      });
-      setAiAnswer(result.answer);
-    } catch (error) {
-      console.error('Error asking AI:', error);
-      toast({
-        variant: 'destructive',
-        title: t('error'),
-        description: t('ai_answer_error'),
-      });
-    } finally {
-      setIsAskingAi(false);
-    }
-  };
-
-
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-card lg:block">
@@ -140,11 +111,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           <div className="grid gap-4 md:gap-8 lg:grid-cols-1 xl:grid-cols-2">
             <FleetAnalysis 
               data={filteredData}
-              onAskAi={handleAskAi}
-              aiAnswer={aiAnswer}
-              isAskingAi={isAskingAi}
-              question={question}
-              setQuestion={setQuestion}
             />
             <TopModelsChart data={filteredData} />
           </div>
