@@ -23,12 +23,10 @@ interface DashboardClientProps {
 const getFilterOptions = (data: Vehicle[]): FilterOptions => {
   const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
   const models = [...new Set(data.map(item => item.model))].sort();
-  const versions = [...new Set(data.map(item => item.version))].sort();
   const states = [...new Set(data.map(item => item.state))].sort();
   const cities = [...new Set(data.map(item => item.city))].sort();
-  const categories = [...new Set(data.map(item => item.category))].sort() as FilterOptions['categories'];
   const years = [...new Set(data.map(item => item.year))].sort((a, b) => b - a);
-  return { manufacturers, models, versions, states, cities, categories, years };
+  return { manufacturers, models, states, cities, years };
 };
 
 const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
@@ -38,8 +36,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     city: 'all',
     manufacturer: 'all',
     model: 'all',
-    version: 'all',
-    category: 'all',
     year: 'all',
   });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -55,25 +51,20 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
 
   const filteredData = useMemo(() => {
     return initialData.filter(item => {
-      const { state, city, manufacturer, model, version, category, year } = filters;
+      const { state, city, manufacturer, model, year } = filters;
       
       return (
         (state === 'all' || item.state === state) &&
         (city === 'all' || item.city === city) &&
         (manufacturer === 'all' || item.manufacturer === manufacturer) &&
         (model === 'all' || item.model === model) &&
-        (version === 'all' || item.version === version) &&
-        (category === 'all' || item.category === category) &&
         (year === 'all' || item.year === year)
       );
     });
   }, [initialData, filters]);
   
-  // Opções de filtro que são usadas em todo o sistema.
-  // Sempre derivado do conjunto de dados inicial completo.
-  const allAvailableOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
+  const filterOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
 
-  // Opções dinâmicas que mudam com base nos filtros (ex: cidades de um estado selecionado).
   const dynamicFilterOptions = useMemo(() => {
     let dataForOptions = initialData;
     if (filters.state !== 'all') {
@@ -96,7 +87,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           filters={filters}
           onFilterChange={handleFilterChange}
           dynamicFilterOptions={dynamicFilterOptions}
-          allAvailableOptions={allAvailableOptions}
+          allAvailableOptions={filterOptions}
         />
       </div>
       <div className="flex flex-col">
@@ -113,7 +104,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                   filters={filters}
                   onFilterChange={handleFilterChange}
                   dynamicFilterOptions={dynamicFilterOptions}
-                  allAvailableOptions={allAvailableOptions}
+                  allAvailableOptions={filterOptions}
                 />
             </SheetContent>
           </Sheet>

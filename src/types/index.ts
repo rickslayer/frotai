@@ -1,9 +1,10 @@
+
 export type Vehicle = {
   id: string;
   manufacturer: string;
   model: string;
   version: string;
-  category: string; // Permitindo qualquer string, já que não temos uma lista fixa.
+  category: string;
   state: string;
   city: string;
   quantity: number;
@@ -13,10 +14,8 @@ export type Vehicle = {
 export type FilterOptions = {
   manufacturers: string[];
   models: string[];
-  versions: string[];
   states: string[];
   cities: string[];
-  categories: string[];
   years: number[];
 };
 
@@ -25,7 +24,5 @@ export type Filters = {
   city: string;
   manufacturer: string;
   model: string;
-  version: string;
-  category: string;
   year: number | 'all';
 };

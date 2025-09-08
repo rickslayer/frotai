@@ -27,9 +27,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
     if (key === 'state') newFilters.city = 'all';
     if (key === 'manufacturer') {
       newFilters.model = 'all';
-      newFilters.version = 'all';
     }
-    if (key === 'model') newFilters.version = 'all';
     onFilterChange(newFilters);
   };
 
@@ -43,8 +41,6 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
       city: 'all',
       manufacturer: 'all',
       model: 'all',
-      version: 'all',
-      category: 'all',
       year: 'all',
     });
   };
@@ -98,25 +94,11 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                     {allAvailableOptions.manufacturers.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                 <Select value={filters.category} onValueChange={(value) => handleSelectChange('category', value)}>
-                  <SelectTrigger><SelectValue placeholder={t('select_category')} /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('all_categories')}</SelectItem>
-                    {allAvailableOptions.categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
                 <Select value={filters.model} onValueChange={(value) => handleSelectChange('model', value)} disabled={filters.manufacturer === 'all'}>
                   <SelectTrigger><SelectValue placeholder={t('select_model')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_models')}</SelectItem>
                     {dynamicFilterOptions.models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={filters.version} onValueChange={(value) => handleSelectChange('version', value)} disabled={filters.model === 'all'}>
-                  <SelectTrigger><SelectValue placeholder={t('select_version')} /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('all_versions')}</SelectItem>
-                    {dynamicFilterOptions.versions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </AccordionContent>
