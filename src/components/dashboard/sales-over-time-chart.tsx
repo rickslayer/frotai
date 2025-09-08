@@ -118,7 +118,7 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
       </CardContent>
       <div className="border-t p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold">{t('ai_analysis')}</h3>
+            <h3 className="text-base font-semibold">{t('ai_analysis_title')}</h3>
             <Button onClick={handleGenerateAnalysis} disabled={loadingAnalysis || chartData.length === 0} size="sm">
               {loadingAnalysis ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -131,7 +131,7 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
           {analysis ? (
              <Alert>
               <Terminal className="h-4 w-4" />
-              <AlertTitle>Analysis</AlertTitle>
+              <AlertTitle>{t('ai_analysis_title')}</AlertTitle>
               <AlertDescription>
                 {analysis}
               </AlertDescription>

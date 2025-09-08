@@ -33,7 +33,7 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ onExport, onAskAi, children
       </div>
       <Button variant="outline" size="sm" onClick={onAskAi} disabled={!isFiltered}>
         <MessageCircleQuestion className="mr-2 h-4 w-4" />
-        {t('ask_ai')}
+        {t('ask_ai_button')}
       </Button>
       <LanguageSwitcher />
       <Button variant="outline" size="sm" onClick={onExport}>

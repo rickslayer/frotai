@@ -75,7 +75,7 @@ const FleetQADialog: FC<FleetQADialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            {t('ask_ai')}
+            {t('ask_ai_title')}
           </DialogTitle>
           <DialogDescription>{getFilterDescription()}</DialogDescription>
         </DialogHeader>
