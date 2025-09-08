@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import React, { useState, useMemo, useCallback } from 'react';
-import type { Vehicle, FilterOptions, Filters } from '@/types';
+import type { Vehicle, FilterOptions, Filters, FleetAgeBracket } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
@@ -14,6 +14,7 @@ import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import FleetByYearChart from './dashboard/sales-over-time-chart';
+import PartDemandForecast from './dashboard/part-demand-forecast';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -42,28 +43,27 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => {
         const updated = { ...prev, ...newFilters };
-        // Reset dependent filters
-        if ('state' in newFilters) {
+        if (Object.prototype.hasOwnProperty.call(newFilters, 'state')) {
             updated.city = 'all';
             updated.manufacturer = 'all';
             updated.model = 'all';
             updated.year = 'all';
         }
-        if ('manufacturer' in newFilters) {
-            updated.model = 'all';
-            updated.year = 'all';
-        }
-         if ('city' in newFilters) {
+        if (Object.prototype.hasOwnProperty.call(newFilters, 'city')) {
             updated.manufacturer = 'all';
             updated.model = 'all';
             updated.year = 'all';
         }
-        if ('model' in newFilters) {
+        if (Object.prototype.hasOwnProperty.call(newFilters, 'manufacturer')) {
+            updated.model = 'all';
+            updated.year = 'all';
+        }
+        if (Object.prototype.hasOwnProperty.call(newFilters, 'model')) {
             updated.year = 'all';
         }
         return updated;
     });
-    if(Object.keys(newFilters).length === 1 && Object.keys(newFilters)[0] !== 'year'){
+    if(Object.keys(newFilters).length === 1 && !['year', 'manufacturer'].includes(Object.keys(newFilters)[0])){
        setIsSheetOpen(false);
     }
   }, []);
@@ -86,29 +86,28 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     const baseOptions = getBaseFilterOptions(initialData);
 
     const dataFilteredForOptions = initialData.filter(item => {
-        const { state, city, manufacturer, model } = filters;
         return (
-            (state === 'all' || item.state === state) &&
-            (city === 'all' || item.city === city) &&
-            (manufacturer === 'all' || item.manufacturer === manufacturer) &&
-            (model === 'all' || item.model === model)
+            (filters.state === 'all' || item.state === filters.state) &&
+            (filters.city === 'all' || item.city === filters.city) &&
+            (filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer) &&
+            (filters.model === 'all' || item.model === filters.model)
         );
     });
+    
+    const cities = filters.state === 'all' 
+        ? [] 
+        : [...new Set(initialData.filter(item => item.state === filters.state).map(item => item.city))].sort();
 
     const dataFilteredByLocation = initialData.filter(item => 
         (filters.state === 'all' || item.state === filters.state) &&
         (filters.city === 'all' || item.city === filters.city)
     );
 
+    const manufacturers = [...new Set(dataFilteredByLocation.map(item => item.manufacturer))].sort();
+
     const dataFilteredByManufacturer = dataFilteredByLocation.filter(item => 
         filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer
     );
-    
-    const cities = filters.state === 'all' 
-        ? [] 
-        : [...new Set(initialData.filter(item => item.state === filters.state).map(item => item.city))].sort();
-
-    const manufacturers = [...new Set(dataFilteredByLocation.map(item => item.manufacturer))].sort();
 
     const models = filters.manufacturer === 'all'
         ? []
@@ -117,12 +116,37 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     const years = [...new Set(dataFilteredForOptions.map(item => item.year))].sort((a, b) => b - a);
 
     return { ...baseOptions, cities, manufacturers, models, years };
-  }, [initialData, filters.state, filters.city, filters.manufacturer, filters.model]);
+  }, [initialData, filters]);
 
   
   const isFiltered = useMemo(() => {
     return Object.values(filters).some(value => value !== 'all');
   }, [filters]);
+
+  const fleetAgeBrackets = useMemo((): FleetAgeBracket[] => {
+    const currentYear = new Date().getFullYear();
+    const brackets = {
+      '0-3': { label: t('age_bracket_new'), total: 0 },
+      '4-7': { label: t('age_bracket_semi_new'), total: 0 },
+      '8-12': { label: t('age_bracket_used'), total: 0 },
+      '13+': { label: t('age_bracket_old'), total: 0 },
+    };
+
+    filteredData.forEach(item => {
+      const age = currentYear - item.year;
+      if (age >= 0 && age <= 3) brackets['0-3'].total += item.quantity;
+      else if (age >= 4 && age <= 7) brackets['4-7'].total += item.quantity;
+      else if (age >= 8 && age <= 12) brackets['8-12'].total += item.quantity;
+      else if (age >= 13) brackets['13+'].total += item.quantity;
+    });
+
+    return Object.entries(brackets).map(([range, data]) => ({
+      range,
+      label: data.label,
+      quantity: data.total,
+    }));
+  }, [filteredData, t]);
+
 
   return (
     <>
@@ -156,10 +180,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           </DashboardHeader>
           <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
             <StatCards data={filteredData} filters={filters} />
-            <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <FleetByYearChart data={filteredData} />
-              </div>
+            <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+              <FleetByYearChart data={filteredData} />
               <FleetAgeBracketChart data={filteredData} />
             </div>
              <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
@@ -167,7 +189,11 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                  <TopModelsChart data={filteredData} />
               </div>
               <div className="lg:col-span-1">
-                 {/* Placeholder for a future chart */}
+                 <PartDemandForecast
+                    fleetAgeBrackets={fleetAgeBrackets}
+                    filters={filters}
+                    disabled={!isFiltered || filteredData.length === 0}
+                  />
               </div>
             </div>
           </main>
