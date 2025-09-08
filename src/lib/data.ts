@@ -68,10 +68,10 @@ export function getFleetData(): Vehicle[] {
   let allVehicles: Vehicle[] = [];
 
   try {
-    const files = fs.readdirSync(dataDir).filter(file => !file.startsWith('.') && file !== 'sample-data.json');
+    const files = fs.readdirSync(dataDir).filter(file => file.endsWith('.json') && file !== 'sample-data.json');
     
     if (files.length === 0) {
-      throw new Error("No data files found in src/data to parse.");
+      throw new Error("No user data files found in src/data. Falling back to mock data.");
     }
     
     console.log(`Found ${files.length} data file(s) in src/data. Parsing...`);
