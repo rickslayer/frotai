@@ -35,7 +35,7 @@ const LanguageSwitcher = () => {
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => changeLanguage('en')}>
           <Image src="/flags/us.svg" alt="United States" width={20} height={20} className="mr-2" />
-          <span>English</span>
+          <span>Inglês</span>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => changeLanguage('pt')}>
           <Image src="/flags/br.svg" alt="Brasil" width={20} height={20} className="mr-2" />
