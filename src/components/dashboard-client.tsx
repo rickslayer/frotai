@@ -72,19 +72,21 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const allFilterOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
 
   const dynamicFilterOptions = useMemo(() => {
-    let partiallyFilteredData = initialData;
+    let dataToFilter = initialData;
+
     if (filters.state !== 'all') {
-      partiallyFilteredData = partiallyFilteredData.filter(item => item.state === filters.state);
+      dataToFilter = dataToFilter.filter(item => item.state === filters.state);
     }
     if (filters.manufacturer !== 'all') {
-      partiallyFilteredData = partiallyFilteredData.filter(item => item.manufacturer === filters.manufacturer);
+      dataToFilter = dataToFilter.filter(item => item.manufacturer === filters.manufacturer);
     }
      if (filters.model !== 'all') {
-      partiallyFilteredData = partiallyFilteredData.filter(item => item.model === filters.model);
+      dataToFilter = dataToFilter.filter(item => item.model === filters.model);
     }
-
-    return getFilterOptions(partiallyFilteredData);
+    
+    return getFilterOptions(dataToFilter);
   }, [initialData, filters.state, filters.manufacturer, filters.model]);
+
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
