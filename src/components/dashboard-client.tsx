@@ -69,9 +69,13 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     });
   }, [initialData, filters]);
   
-  const filterOptions = useMemo(() => {
+  // Opções de filtro que são usadas em todo o sistema.
+  // Sempre derivado do conjunto de dados inicial completo.
+  const allAvailableOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
+
+  // Opções dinâmicas que mudam com base nos filtros (ex: cidades de um estado selecionado).
+  const dynamicFilterOptions = useMemo(() => {
     let dataForOptions = initialData;
-    // For cities, models, and versions, we want to show options based on the parent filter.
     if (filters.state !== 'all') {
       dataForOptions = dataForOptions.filter(item => item.state === filters.state);
     }
@@ -84,9 +88,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     return getFilterOptions(dataForOptions);
   }, [initialData, filters.state, filters.manufacturer, filters.model]);
 
-  // This will now correctly be based only on the loaded data.
-  const allAvailableOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
-
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
@@ -94,7 +95,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         <DashboardSidebar
           filters={filters}
           onFilterChange={handleFilterChange}
-          filterOptions={filterOptions}
+          dynamicFilterOptions={dynamicFilterOptions}
           allAvailableOptions={allAvailableOptions}
         />
       </div>
@@ -111,7 +112,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                <DashboardSidebar
                   filters={filters}
                   onFilterChange={handleFilterChange}
-                  filterOptions={filterOptions}
+                  dynamicFilterOptions={dynamicFilterOptions}
                   allAvailableOptions={allAvailableOptions}
                 />
             </SheetContent>
