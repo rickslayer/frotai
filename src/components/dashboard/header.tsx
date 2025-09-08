@@ -10,19 +10,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CircleUser, Download, MessageCircleQuestion } from 'lucide-react';
+import { CircleUser, Download } from 'lucide-react';
 import { Separator } from '../ui/separator';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './language-switcher';
 
 interface DashboardHeaderProps {
   onExport: () => void;
-  onAskAi: () => void;
   children: ReactNode;
-  isFiltered: boolean;
 }
 
-const DashboardHeader: FC<DashboardHeaderProps> = ({ onExport, onAskAi, children, isFiltered }) => {
+const DashboardHeader: FC<DashboardHeaderProps> = ({ onExport, children }) => {
   const { t } = useTranslation();
 
   return (
@@ -31,10 +29,6 @@ const DashboardHeader: FC<DashboardHeaderProps> = ({ onExport, onAskAi, children
       <div className='flex-1'>
         <h1 className="text-lg font-semibold md:text-xl">{t('dashboard')}</h1>
       </div>
-      <Button variant="outline" size="sm" onClick={onAskAi} disabled={!isFiltered}>
-        <MessageCircleQuestion className="mr-2 h-4 w-4" />
-        {t('ask_ai_button')}
-      </Button>
       <LanguageSwitcher />
       <Button variant="outline" size="sm" onClick={onExport}>
         <Download className="mr-2 h-4 w-4" />

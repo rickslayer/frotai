@@ -14,8 +14,6 @@ import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import FleetByYearChart from './dashboard/sales-over-time-chart';
-import FleetQADialog from './dashboard/fleet-qa-dialog';
-import FilterSuggestions from './dashboard/filter-suggestions';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -36,7 +34,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     year: 'all',
   });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [isQADialogOpen, setIsQADialogOpen] = useState(false);
 
   const handleExport = () => {
     alert(t('export_planned_feature'));
@@ -48,12 +45,20 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         // Reset dependent filters
         if ('state' in newFilters) {
             updated.city = 'all';
+            updated.manufacturer = 'all';
+            updated.model = 'all';
+            updated.year = 'all';
         }
         if ('manufacturer' in newFilters) {
             updated.model = 'all';
+            updated.year = 'all';
         }
-        // Always reset year if other filters change, to ensure consistency
-        if (Object.keys(newFilters).some(k => k !== 'year')) {
+         if ('city' in newFilters) {
+            updated.manufacturer = 'all';
+            updated.model = 'all';
+            updated.year = 'all';
+        }
+        if ('model' in newFilters) {
             updated.year = 'all';
         }
         return updated;
@@ -80,27 +85,30 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const filterOptions = useMemo(() => {
     const baseOptions = getBaseFilterOptions(initialData);
 
-    const dataFilteredForOptions = initialData.filter(item => 
+    const dataFilteredForOptions = initialData.filter(item => {
+        const { state, city, manufacturer, model } = filters;
+        return (
+            (state === 'all' || item.state === state) &&
+            (city === 'all' || item.city === city) &&
+            (manufacturer === 'all' || item.manufacturer === manufacturer) &&
+            (model === 'all' || item.model === model)
+        );
+    });
+
+    const dataFilteredByLocation = initialData.filter(item => 
         (filters.state === 'all' || item.state === filters.state) &&
-        (filters.city === 'all' || item.city === filters.city) &&
-        (filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer) &&
-        (filters.model === 'all' || item.model === filters.model)
+        (filters.city === 'all' || item.city === filters.city)
+    );
+
+    const dataFilteredByManufacturer = dataFilteredByLocation.filter(item => 
+        filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer
     );
     
     const cities = filters.state === 'all' 
         ? [] 
         : [...new Set(initialData.filter(item => item.state === filters.state).map(item => item.city))].sort();
 
-    const dataFilteredByLocation = initialData.filter(item => 
-        (filters.state === 'all' || item.state === filters.state) &&
-        (filters.city === 'all' || item.city === filters.city)
-    );
-    
     const manufacturers = [...new Set(dataFilteredByLocation.map(item => item.manufacturer))].sort();
-
-    const dataFilteredByManufacturer = dataFilteredByLocation.filter(item => 
-        filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer
-    );
 
     const models = filters.manufacturer === 'all'
         ? []
@@ -129,8 +137,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         <div className="flex flex-col">
           <DashboardHeader 
             onExport={handleExport} 
-            onAskAi={() => setIsQADialogOpen(true)}
-            isFiltered={isFiltered}
           >
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
@@ -150,9 +156,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           </DashboardHeader>
           <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
             <StatCards data={filteredData} filters={filters} />
-            <div className="border rounded-lg p-6 bg-card shadow-sm">
-             <FilterSuggestions onApplyFilters={handleFilterChange} />
-            </div>
             <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <FleetByYearChart data={filteredData} />
@@ -170,12 +173,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           </main>
         </div>
       </div>
-      <FleetQADialog
-        isOpen={isQADialogOpen}
-        onOpenChange={setIsQADialogOpen}
-        fleetData={filteredData}
-        filters={filters}
-      />
     </>
   );
 };
