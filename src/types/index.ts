@@ -3,7 +3,7 @@ export type Vehicle = {
   manufacturer: string;
   model: string;
   version: string;
-  category: 'Sedan' | 'SUV' | 'Hatchback' | 'Pickup' | 'Van' | 'Truck';
+  category: string; // Permitindo qualquer string, já que não temos uma lista fixa.
   state: string;
   city: string;
   quantity: number;
