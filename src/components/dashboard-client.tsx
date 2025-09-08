@@ -116,12 +116,14 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
             <div className="border rounded-lg p-4 bg-card shadow-sm">
              <FilterSuggestions onApplyFilters={handleFilterChange} />
             </div>
-            <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-              <TopModelsChart data={filteredData} />
-            </div>
-            <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-              <FleetByYearChart data={filteredData} />
+            <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <TopModelsChart data={filteredData} />
+              </div>
               <FleetAgeBracketChart data={filteredData} />
+            </div>
+            <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
+              <FleetByYearChart data={filteredData} />
             </div>
           </main>
         </div>
