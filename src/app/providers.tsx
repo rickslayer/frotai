@@ -1,15 +1,30 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import i18n from '../lib/i18n';
 
-// Wrapper component to apply language to html tag
+// Wrapper component to apply language to html tag and prevent hydration errors
 function LanguageWrapper({ children }: { children: React.ReactNode }) {
   const { i18n } = useTranslation();
+  const [isMounted, setIsMounted] = useState(false);
+
   useEffect(() => {
-    document.documentElement.lang = i18n.language;
-  }, [i18n.language]);
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      document.documentElement.lang = i18n.language;
+    }
+  }, [i18n.language, isMounted]);
+
+  // Render children only after the component has mounted on the client
+  // This prevents hydration mismatch for language-dependent rendering
+  if (!isMounted) {
+    return null; 
+  }
+
   return <>{children}</>;
 }
 

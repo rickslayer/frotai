@@ -1,7 +1,7 @@
 'use client';
 
 import type { FC } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import type { Filters, Vehicle } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Car, MapPin, Users2 } from 'lucide-react';
@@ -14,6 +14,7 @@ interface StatCardsProps {
 
 const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
   const { t } = useTranslation();
+  const [formattedTotalVehicles, setFormattedTotalVehicles] = useState<string>('0');
 
   const { totalVehicles, topModel, topRegion } = useMemo(() => {
     if (!data.length) {
@@ -38,7 +39,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
     }
     
     let topRegionDisplay = t('no_data_available');
-    if (filters.city !== 'all') {
+    if (filters.city !== 'all' && filters.city) {
       topRegionDisplay = `${filters.city}, ${filters.state}`;
     } else if (filters.state !== 'all') {
         topRegionDisplay = filters.state;
@@ -64,6 +65,11 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
     return { totalVehicles, topModel, topRegion: topRegionDisplay };
   }, [data, filters, t]);
 
+  useEffect(() => {
+    // Format the number on the client side to avoid hydration mismatch
+    setFormattedTotalVehicles(totalVehicles.toLocaleString());
+  }, [totalVehicles]);
+
   return (
     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
       <Card>
@@ -72,7 +78,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
           <Users2 className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{totalVehicles.toLocaleString()}</div>
+          <div className="text-2xl font-bold">{formattedTotalVehicles}</div>
           <p className="text-xs text-muted-foreground">{t('total_vehicles_description')}</p>
         </CardContent>
       </Card>
