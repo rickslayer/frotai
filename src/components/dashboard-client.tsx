@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -60,9 +61,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     });
   }, [initialData, filters]);
   
-  const allAvailableOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
-
-  const dynamicFilterOptions = useMemo(() => {
+  const filterOptions = useMemo(() => {
     let dataForOptions = initialData;
     if (filters.state !== 'all') {
       dataForOptions = dataForOptions.filter(item => item.state === filters.state);
@@ -79,8 +78,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         <DashboardSidebar
           filters={filters}
           onFilterChange={handleFilterChange}
-          dynamicFilterOptions={dynamicFilterOptions}
-          allAvailableOptions={allAvailableOptions}
+          filterOptions={filterOptions}
         />
       </div>
       <div className="flex flex-col">
@@ -96,14 +94,16 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                <DashboardSidebar
                   filters={filters}
                   onFilterChange={handleFilterChange}
-                  dynamicFilterOptions={dynamicFilterOptions}
-                  allAvailableOptions={allAvailableOptions}
+                  filterOptions={filterOptions}
                 />
             </SheetContent>
           </Sheet>
         </DashboardHeader>
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
           <StatCards data={filteredData} />
+          <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+            <FleetAgeBracketChart data={filteredData} />
+          </div>
           <div className="grid gap-4 md:gap-8 lg:grid-cols-1 xl:grid-cols-2">
             <FleetAnalysis 
               data={filteredData}

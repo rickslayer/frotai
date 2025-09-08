@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FC } from 'react';
@@ -14,11 +13,10 @@ import { useTranslation } from 'react-i18next';
 interface DashboardSidebarProps {
   filters: Filters;
   onFilterChange: (newFilters: Partial<Filters>) => void;
-  dynamicFilterOptions: FilterOptions;
-  allAvailableOptions: FilterOptions;
+  filterOptions: FilterOptions;
 }
 
-const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, dynamicFilterOptions, allAvailableOptions }) => {
+const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions }) => {
   const { t } = useTranslation();
   
   const handleSelectChange = (key: keyof Omit<Filters, 'year'>, value: string) => {
@@ -33,7 +31,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
 
   const handleYearChange = (value: string) => {
     onFilterChange({ year: value === 'all' ? 'all' : Number(value) });
-  }
+  };
 
   const clearFilters = () => {
     onFilterChange({
@@ -68,14 +66,14 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_states')}</SelectItem>
-                    {allAvailableOptions.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    {filterOptions.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={filters.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={filters.state === 'all'}>
-                  <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectValue>
                   <SelectContent>
                     <SelectItem value="all">{t('all_cities')}</SelectItem>
-                    {dynamicFilterOptions.cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {filterOptions.cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </AccordionContent>
@@ -91,14 +89,14 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
-                    {allAvailableOptions.manufacturers.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                    {filterOptions.manufacturers.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={filters.model} onValueChange={(value) => handleSelectChange('model', value)} disabled={filters.manufacturer === 'all'}>
                   <SelectTrigger><SelectValue placeholder={t('select_model')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_models')}</SelectItem>
-                    {dynamicFilterOptions.models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                    {filterOptions.models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </AccordionContent>
@@ -114,7 +112,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_years')}</SelectItem>
-                    {allAvailableOptions.years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                    {filterOptions.years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </AccordionContent>

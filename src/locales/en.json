@@ -21,12 +21,6 @@
   "select_year": "Select Year",
   "all_years": "All Years",
   "clear_all_filters": "Clear All Filters",
-  "get_ai_suggestions": "Get AI Suggestions",
-  "get_ai_suggestions_description": "Click to get relevant analysis starting points.",
-  "error": "Error",
-  "ai_suggestions_error": "Could not generate AI suggestions.",
-  "filters_applied": "Filters Applied",
-  "showing_results_for_suggestion": "Showing results for: {{description}}.",
   "total_vehicles": "Total Vehicles",
   "total_vehicles_description": "Circulating fleet in the selected period",
   "main_model": "Main Model",
@@ -41,5 +35,12 @@
   "top_models_by_volume_description": "Top 10 models by fleet volume in the selection.",
   "no_data_available": "No data available.",
   "export_planned_feature": "Exporting reports is a planned feature.",
-  "year": "Year"
+  "year": "Year",
+  "fleet_by_age_bracket": "Fleet by Age Bracket",
+  "fleet_by_age_bracket_description": "Distribution of fleet by age range (New, Used, etc.).",
+  "age_bracket": "Age Bracket",
+  "age_bracket_new": "New (0-3 years)",
+  "age_bracket_semi_new": "Semi-New (4-7 years)",
+  "age_bracket_used": "Used (8-12 years)",
+  "age_bracket_old": "Old (13+ years)"
 }

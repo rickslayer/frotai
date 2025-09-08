@@ -21,12 +21,6 @@
   "select_year": "Selecione o Ano",
   "all_years": "Todos os Anos",
   "clear_all_filters": "Limpar Todos os Filtros",
-  "get_ai_suggestions": "Obter Sugestões de IA",
-  "get_ai_suggestions_description": "Clique para obter pontos de partida relevantes para sua análise.",
-  "error": "Erro",
-  "ai_suggestions_error": "Não foi possível gerar sugestões de IA.",
-  "filters_applied": "Filtros Aplicados",
-  "showing_results_for_suggestion": "Mostrando resultados para: {{description}}.",
   "total_vehicles": "Total de Veículos",
   "total_vehicles_description": "Frota circulante no período selecionado",
   "main_model": "Principal Modelo",
@@ -41,5 +35,12 @@
   "top_models_by_volume_description": "Os 10 principais modelos por volume de frota na seleção.",
   "no_data_available": "Nenhum dado disponível.",
   "export_planned_feature": "A exportação de relatórios é um recurso planejado.",
-  "year": "Ano"
+  "year": "Ano",
+  "fleet_by_age_bracket": "Frota por Faixa Etária",
+  "fleet_by_age_bracket_description": "Distribuição da frota por faixa de idade (Novos, Usados, etc.).",
+  "age_bracket": "Faixa Etária",
+  "age_bracket_new": "Novos (0-3 anos)",
+  "age_bracket_semi_new": "Seminovos (4-7 anos)",
+  "age_bracket_used": "Usados (8-12 anos)",
+  "age_bracket_old": "Antigos (13+ anos)"
 }

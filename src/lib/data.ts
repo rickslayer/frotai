@@ -1,4 +1,3 @@
-
 import type { Vehicle } from '@/types';
 import fs from 'fs';
 import path from 'path';
@@ -37,8 +36,6 @@ export function getFleetData(): Vehicle[] {
         id: row.ID || `vehicle-${index}`,
         manufacturer: row.Marca || 'N/A',
         model: row.Modelo || 'N/A',
-        version: row.Versao || 'N/A', // Assumindo que pode haver uma coluna Versao
-        category: row.Categoria || 'N/A', // Assumindo que pode haver uma coluna Categoria
         state: row.UF || 'N/A',
         city: row.Município || 'N/A',
         quantity: parseInt(row.Quantidade, 10) || 0,

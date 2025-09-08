@@ -1,14 +1,11 @@
-
 export type Vehicle = {
   id: string;
   manufacturer: string;
   model: string;
-  version: string;
-  category: string;
+  year: number;
+  quantity: number;
   state: string;
   city: string;
-  quantity: number;
-  year: number;
 };
 
 export type FilterOptions = {
