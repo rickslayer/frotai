@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -13,11 +14,11 @@ import { useTranslation } from 'react-i18next';
 interface DashboardSidebarProps {
   filters: Filters;
   onFilterChange: (newFilters: Partial<Filters>) => void;
-  filterOptions: FilterOptions;
+  dynamicFilterOptions: FilterOptions;
   allFilterOptions: FilterOptions;
 }
 
-const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions, allFilterOptions }) => {
+const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, dynamicFilterOptions, allFilterOptions }) => {
   const { t } = useTranslation();
   
   const handleSelectChange = (key: keyof Omit<Filters, 'year'>, value: string) => {
@@ -74,7 +75,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_cities')}</SelectItem>
-                    {filterOptions.cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {dynamicFilterOptions.cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </AccordionContent>
@@ -104,14 +105,14 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   <SelectTrigger><SelectValue placeholder={t('select_model')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_models')}</SelectItem>
-                    {filterOptions.models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                    {dynamicFilterOptions.models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={filters.version} onValueChange={(value) => handleSelectChange('version', value)} disabled={filters.model === 'all'}>
                   <SelectTrigger><SelectValue placeholder={t('select_version')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_versions')}</SelectItem>
-                    {filterOptions.versions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                    {dynamicFilterOptions.versions.map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </AccordionContent>

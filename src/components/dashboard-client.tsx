@@ -94,7 +94,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         <DashboardSidebar
           filters={filters}
           onFilterChange={handleFilterChange}
-          filterOptions={dynamicFilterOptions}
+          dynamicFilterOptions={dynamicFilterOptions}
           allFilterOptions={allFilterOptions}
         />
       </div>
@@ -111,7 +111,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                <DashboardSidebar
                   filters={filters}
                   onFilterChange={handleFilterChange}
-                  filterOptions={dynamicFilterOptions}
+                  dynamicFilterOptions={dynamicFilterOptions}
                   allFilterOptions={allFilterOptions}
                 />
             </SheetContent>
