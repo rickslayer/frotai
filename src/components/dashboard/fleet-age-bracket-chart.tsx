@@ -42,17 +42,16 @@ const CustomLabel: FC<CustomLabelProps> = (props) => {
     return null;
   }
 
-  // Adiciona um padding à esquerda
   const paddingX = 12;
   const iconSize = 16;
-  const spaceBetween = 8;
-  const labelX = x + paddingX;
-  const labelY = y + height / 2;
-
+  
   // Renderiza o conteúdo apenas se houver espaço suficiente na barra
   if (width < 80) {
     return null;
   }
+  
+  const labelX = x + paddingX;
+  const labelY = y + height / 2;
 
   return (
     <g>
@@ -113,15 +112,15 @@ const FleetAgeBracketChart: FC<FleetAgeBracketChartProps> = ({ data }) => {
   }, [data, t, chartConfig]);
 
   return (
-    <Card className="lg:col-span-2">
+    <Card>
       <CardHeader>
         <CardTitle>{t('fleet_by_age_bracket')}</CardTitle>
         <CardDescription>{t('fleet_by_age_bracket_description')}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
+        <ChartContainer config={chartConfig} className="h-[300px] w-full">
           {chartData.length > 0 ? (
-             <ResponsiveContainer width="100%" height={250}>
+             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 accessibilityLayer
                 data={chartData}
@@ -155,7 +154,7 @@ const FleetAgeBracketChart: FC<FleetAgeBracketChartProps> = ({ data }) => {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-[250px] w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
               {t('no_data_available')}
             </div>
           )}

@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import FleetByYearChart from './dashboard/sales-over-time-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
+import FilterSuggestions from './dashboard/filter-suggestions';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -35,10 +36,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     year: 'all',
   });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
-  const handleExport = () => {
-    alert(t('export_planned_feature'));
-  };
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => {
@@ -85,35 +82,33 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const filterOptions = useMemo(() => {
     const baseOptions = getBaseFilterOptions(initialData);
 
-    const dataFilteredForOptions = initialData.filter(item => {
-        return (
-            (filters.state === 'all' || item.state === filters.state) &&
-            (filters.city === 'all' || item.city === filters.city) &&
-            (filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer) &&
-            (filters.model === 'all' || item.model === filters.model)
-        );
-    });
+    const dataFilteredByState = initialData.filter(item => 
+        (filters.state === 'all' || item.state === filters.state)
+    );
     
     const cities = filters.state === 'all' 
         ? [] 
-        : [...new Set(initialData.filter(item => item.state === filters.state).map(item => item.city))].sort();
+        : [...new Set(dataFilteredByState.map(item => item.city))].sort();
 
-    const dataFilteredByLocation = initialData.filter(item => 
-        (filters.state === 'all' || item.state === filters.state) &&
+    const dataFilteredByCity = dataFilteredByState.filter(item =>
         (filters.city === 'all' || item.city === filters.city)
     );
 
-    const manufacturers = [...new Set(dataFilteredByLocation.map(item => item.manufacturer))].sort();
+    const manufacturers = [...new Set(dataFilteredByCity.map(item => item.manufacturer))].sort();
 
-    const dataFilteredByManufacturer = dataFilteredByLocation.filter(item => 
-        filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer
+    const dataFilteredByManufacturer = dataFilteredByCity.filter(item => 
+        (filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer)
     );
 
     const models = filters.manufacturer === 'all'
         ? []
         : [...new Set(dataFilteredByManufacturer.map(item => item.model))].sort();
+
+    const dataFilteredByModel = dataFilteredByManufacturer.filter(item =>
+        (filters.model === 'all' || item.model === filters.model)
+    );
     
-    const years = [...new Set(dataFilteredForOptions.map(item => item.year))].sort((a, b) => b - a);
+    const years = [...new Set(dataFilteredByModel.map(item => item.year))].sort((a, b) => b - a);
 
     return { ...baseOptions, cities, manufacturers, models, years };
   }, [initialData, filters]);
@@ -159,9 +154,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           />
         </div>
         <div className="flex flex-col">
-          <DashboardHeader 
-            onExport={handleExport} 
-          >
+          <DashboardHeader>
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="shrink-0 lg:hidden">
@@ -179,6 +172,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
             </Sheet>
           </DashboardHeader>
           <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
+            <FilterSuggestions onApplyFilters={handleFilterChange} />
             <StatCards data={filteredData} filters={filters} />
             <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
               <FleetByYearChart data={filteredData} />
