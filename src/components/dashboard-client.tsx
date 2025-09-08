@@ -52,6 +52,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         if ('manufacturer' in newFilters) {
             updated.model = 'all';
         }
+        // Always reset year if other filters change, to ensure consistency
+        if (Object.keys(newFilters).some(k => k !== 'year')) {
+            updated.year = 'all';
+        }
         return updated;
     });
     if(Object.keys(newFilters).length === 1 && Object.keys(newFilters)[0] !== 'year'){
@@ -76,29 +80,36 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const filterOptions = useMemo(() => {
     const baseOptions = getBaseFilterOptions(initialData);
 
-    // 1. Filter by location first
+    const dataFilteredForOptions = initialData.filter(item => 
+        (filters.state === 'all' || item.state === filters.state) &&
+        (filters.city === 'all' || item.city === filters.city) &&
+        (filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer) &&
+        (filters.model === 'all' || item.model === filters.model)
+    );
+    
+    const cities = filters.state === 'all' 
+        ? [] 
+        : [...new Set(initialData.filter(item => item.state === filters.state).map(item => item.city))].sort();
+
     const dataFilteredByLocation = initialData.filter(item => 
         (filters.state === 'all' || item.state === filters.state) &&
         (filters.city === 'all' || item.city === filters.city)
     );
-
-    // 2. Get available options from location-filtered data
-    const cities = [...new Set(initialData.filter(item => item.state === filters.state).map(item => item.city))].sort();
     
-    // 3. Get manufacturers based on the location-filtered data
     const manufacturers = [...new Set(dataFilteredByLocation.map(item => item.manufacturer))].sort();
-    
-    // 4. Filter by manufacturer to get models
+
     const dataFilteredByManufacturer = dataFilteredByLocation.filter(item => 
-        (filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer)
+        filters.manufacturer === 'all' || item.manufacturer === filters.manufacturer
     );
-    const models = [...new Set(dataFilteredByManufacturer.map(item => item.model))].sort();
+
+    const models = filters.manufacturer === 'all'
+        ? []
+        : [...new Set(dataFilteredByManufacturer.map(item => item.model))].sort();
     
-    // 5. Get years from location-filtered data
-    const years = [...new Set(dataFilteredByLocation.map(item => item.year))].sort((a, b) => b - a);
+    const years = [...new Set(dataFilteredForOptions.map(item => item.year))].sort((a, b) => b - a);
 
     return { ...baseOptions, cities, manufacturers, models, years };
-  }, [initialData, filters.state, filters.city, filters.manufacturer]);
+  }, [initialData, filters.state, filters.city, filters.manufacturer, filters.model]);
 
   
   const isFiltered = useMemo(() => {
@@ -142,14 +153,19 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
             <div className="border rounded-lg p-6 bg-card shadow-sm">
              <FilterSuggestions onApplyFilters={handleFilterChange} />
             </div>
-             <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
-               <div className="lg:col-span-2">
-                 <FleetByYearChart data={filteredData} />
+            <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <FleetByYearChart data={filteredData} />
               </div>
               <FleetAgeBracketChart data={filteredData} />
             </div>
-            <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-               <TopModelsChart data={filteredData} />
+             <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                 <TopModelsChart data={filteredData} />
+              </div>
+              <div className="lg:col-span-1">
+                 {/* Placeholder for a future chart */}
+              </div>
             </div>
           </main>
         </div>
