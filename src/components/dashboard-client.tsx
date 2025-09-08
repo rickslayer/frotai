@@ -8,7 +8,6 @@ import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
 import FleetAnalysis from './dashboard/fleet-by-year-chart';
 import TopModelsChart from './dashboard/top-models-chart';
-import FilterSuggestions from './dashboard/filter-suggestions';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
@@ -61,7 +60,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     });
   }, [initialData, filters]);
   
-  const filterOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
+  const allAvailableOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
 
   const dynamicFilterOptions = useMemo(() => {
     let dataForOptions = initialData;
@@ -81,7 +80,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           filters={filters}
           onFilterChange={handleFilterChange}
           dynamicFilterOptions={dynamicFilterOptions}
-          allAvailableOptions={filterOptions}
+          allAvailableOptions={allAvailableOptions}
         />
       </div>
       <div className="flex flex-col">
@@ -98,15 +97,12 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                   filters={filters}
                   onFilterChange={handleFilterChange}
                   dynamicFilterOptions={dynamicFilterOptions}
-                  allAvailableOptions={filterOptions}
+                  allAvailableOptions={allAvailableOptions}
                 />
             </SheetContent>
           </Sheet>
         </DashboardHeader>
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
-          <div className="bg-background p-4 rounded-lg border">
-            <FilterSuggestions onApplyFilters={handleFilterChange} />
-          </div>
           <StatCards data={filteredData} />
           <div className="grid gap-4 md:gap-8 lg:grid-cols-1 xl:grid-cols-2">
             <FleetAnalysis 
