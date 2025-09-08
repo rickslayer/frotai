@@ -74,15 +74,14 @@ const FilterSuggestions: FC<FilterSuggestionsProps> = ({ onApplyFilters }) => {
       {suggestions.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2">
           {suggestions.map((s, i) => (
-            <button
+            <Badge
               key={i}
               onClick={() => applySuggestion(s)}
-              className="transform transition-transform hover:scale-105"
+              variant="secondary"
+              className="cursor-pointer px-3 py-1.5 text-sm font-normal transition-transform hover:scale-105 hover:bg-secondary/90 active:scale-100"
             >
-              <Badge variant="secondary" className="cursor-pointer px-3 py-1.5 text-sm font-normal">
-                {s.description}
-              </Badge>
-            </button>
+              {s.description}
+            </Badge>
           ))}
         </div>
       )}
