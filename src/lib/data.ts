@@ -6,25 +6,25 @@ import Papa from 'papaparse';
 let fleetData: Vehicle[] | null = null;
 
 export function getFleetData(): Vehicle[] {
-  // Se já tivermos os dados em memória, retornamos para evitar releituras.
   if (fleetData) {
     return fleetData;
   }
 
-  const dataDir = path.join(process.cwd(), 'src', 'data');
+  // Corrigido para buscar na pasta 'data' na raiz do projeto.
+  const dataDir = path.join(process.cwd(), 'data');
   let allVehicles: Vehicle[] = [];
 
   try {
-    // Encontra todos os arquivos .json na pasta, exceto o de exemplo.
-    const files = fs.readdirSync(dataDir).filter(file => file.endsWith('.json') && file !== 'sample-data.json');
+    // Lê todos os arquivos .json da pasta.
+    const files = fs.readdirSync(dataDir).filter(file => file.endsWith('.json'));
     
     if (files.length === 0) {
-      console.warn("Nenhum arquivo de dados .json encontrado em src/data. O dashboard estará vazio.");
-      fleetData = []; // Define como array vazio se nenhum arquivo for encontrado.
+      console.warn("Nenhum arquivo de dados .json encontrado em 'data'. O dashboard estará vazio.");
+      fleetData = [];
       return fleetData;
     }
     
-    console.log(`Encontrados ${files.length} arquivos de dados em src/data. Lendo...`);
+    console.log(`Encontrados ${files.length} arquivos de dados em 'data'. Lendo...`);
 
     files.forEach(file => {
       const filePath = path.join(dataDir, file);
@@ -36,6 +36,10 @@ export function getFleetData(): Vehicle[] {
         skipEmptyLines: true,
         delimiter: ';',
       });
+
+      if (parsed.errors.length > 0) {
+        console.warn(`Erros encontrados ao analisar o arquivo ${file}:`, parsed.errors);
+      }
 
       // Mapeia cada linha para o formato Vehicle
       const vehicles = parsed.data.map((row: any, index: number) => ({
@@ -63,7 +67,7 @@ export function getFleetData(): Vehicle[] {
     fleetData = allVehicles;
     
   } catch (error) {
-    console.error(`Erro ao ler ou processar os arquivos de dados. O dashboard estará vazio. Erro: ${(error as Error).message}`);
+    console.error(`Erro ao ler ou processar os arquivos de dados. Verifique se a pasta 'data' existe na raiz. Erro: ${(error as Error).message}`);
     fleetData = []; // Retorna um array vazio em caso de erro.
   }
 
