@@ -13,6 +13,7 @@ import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
+import FleetByYearChart from './dashboard/sales-over-time-chart';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -103,12 +104,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           <StatCards data={filteredData} />
           <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
             <FleetAgeBracketChart data={filteredData} />
-          </div>
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-1 xl:grid-cols-2">
-            <FleetAnalysis 
-              data={filteredData}
-            />
             <TopModelsChart data={filteredData} />
+          </div>
+          <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
+             <FleetByYearChart data={filteredData} />
           </div>
         </main>
       </div>

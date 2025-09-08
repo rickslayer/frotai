@@ -47,13 +47,13 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
   }, [data]);
 
   return (
-    <Card className="xl:col-span-1">
+    <Card>
       <CardHeader>
         <CardTitle>{t('top_models_by_volume')}</CardTitle>
         <CardDescription>{t('top_models_by_volume_description')}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[350px] w-full">
+        <ChartContainer config={chartConfig} className="h-[250px] w-full">
           {chartData.length > 0 ? (
             <BarChart
               accessibilityLayer
@@ -72,7 +72,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
                 cursor={{ fill: 'hsl(var(--muted))' }}
                 content={<ChartTooltipContent />}
               />
-              <Bar dataKey="quantity" layout="vertical" radius={5} fill="var(--color-quantity)">
+              <Bar dataKey="quantity" layout="vertical" radius={5} barSize={35} fill="var(--color-quantity)">
                 <LabelList
                   dataKey="model"
                   position="insideLeft"
@@ -83,7 +83,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
               </Bar>
             </BarChart>
           ) : (
-            <div className="flex h-[350px] w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-[250px] w-full items-center justify-center text-muted-foreground">
               {t('no_data_available')}
             </div>
           )}

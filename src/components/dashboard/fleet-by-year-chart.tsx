@@ -1,7 +1,7 @@
 'use client';
 
 import type { FC } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 import {
   Card,
@@ -16,15 +16,24 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import type { Vehicle } from '@/types';
+import type { Vehicle, ChartData } from '@/types';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../ui/button';
+import { Loader2, Wand2 } from 'lucide-react';
+import { summarizeChartData } from '@/ai/flows/summarize-chart-data';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Terminal } from 'lucide-react';
 
-interface FleetAnalysisProps {
+interface FleetByYearChartProps {
   data: Vehicle[];
 }
 
-const FleetAnalysis: FC<FleetAnalysisProps> = ({ data }) => {
+const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [analysis, setAnalysis] = useState('');
 
   const chartConfig = {
     quantity: {
@@ -44,19 +53,40 @@ const FleetAnalysis: FC<FleetAnalysisProps> = ({ data }) => {
       .sort((a, b) => a.year - b.year);
   }, [data]);
 
+  const handleGenerateAnalysis = async () => {
+    setLoadingAnalysis(true);
+    setAnalysis('');
+    try {
+      const result = await summarizeChartData({
+        chartData: chartData as ChartData[],
+        chartTitle: t('fleet_by_year'),
+      });
+      setAnalysis(result.summary);
+    } catch (error) {
+      console.error('Error generating analysis:', error);
+      toast({
+        variant: 'destructive',
+        title: t('error'),
+        description: t('analysis_error'),
+      });
+    } finally {
+      setLoadingAnalysis(false);
+    }
+  }
+
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <CardTitle>{t('fleet_by_year')}</CardTitle>
         <CardDescription>{t('fleet_by_year_description')}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow">
-        <ChartContainer config={chartConfig} className="h-[350px] w-full">
+      <CardContent className='flex-grow'>
+        <ChartContainer config={chartConfig} className="h-[300px] w-full">
           {chartData.length > 0 ? (
             <LineChart
               accessibilityLayer
               data={chartData}
-              margin={{ top: 20, left: 12, right: 12, bottom: 5 }}
+              margin={{ left: 12, right: 12 }}
             >
               <CartesianGrid vertical={false} />
               <XAxis
@@ -80,14 +110,38 @@ const FleetAnalysis: FC<FleetAnalysisProps> = ({ data }) => {
               />
             </LineChart>
           ) : (
-            <div className="flex h-[350px] w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
               {t('no_data_for_filters')}
             </div>
           )}
         </ChartContainer>
       </CardContent>
+      <div className="border-t p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-semibold">{t('ai_analysis')}</h3>
+            <Button onClick={handleGenerateAnalysis} disabled={loadingAnalysis || chartData.length === 0} size="sm">
+              {loadingAnalysis ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Wand2 className="mr-2 h-4 w-4" />
+              )}
+              {loadingAnalysis ? t('generating_analysis') : t('generate_analysis')}
+            </Button>
+          </div>
+          {analysis ? (
+             <Alert>
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>Analysis</AlertTitle>
+              <AlertDescription>
+                {analysis}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <p className="text-sm text-muted-foreground">{t('analysis_placeholder')}</p>
+          )}
+        </div>
     </Card>
   );
 };
 
-export default FleetAnalysis;
+export default FleetByYearChart;

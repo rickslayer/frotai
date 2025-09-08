@@ -42,5 +42,11 @@
   "age_bracket_new": "Novos (0-3 anos)",
   "age_bracket_semi_new": "Seminovos (4-7 anos)",
   "age_bracket_used": "Usados (8-12 anos)",
-  "age_bracket_old": "Antigos (13+ anos)"
+  "age_bracket_old": "Antigos (13+ anos)",
+  "ai_analysis": "Análise IA",
+  "generate_analysis": "Gerar Análise",
+  "generating_analysis": "Gerando...",
+  "analysis_placeholder": "Clique em 'Gerar Análise' para obter insights da IA sobre os dados do gráfico atual.",
+  "analysis_error": "Não foi possível gerar a análise de IA. Por favor, tente novamente.",
+  "error": "Erro"
 }
