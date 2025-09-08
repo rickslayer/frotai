@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -19,9 +20,8 @@ interface DashboardSidebarProps {
 const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions }) => {
   const { t } = useTranslation();
   
-  const handleSelectChange = (key: keyof Omit<Filters, 'year'>, value: string) => {
-    const newFilters: Partial<Filters> = {[key]: value};
-    // Reinicia os filtros dependentes quando o filtro pai muda.
+  const handleSelectChange = (key: keyof Omit<Filters, 'year' | 'version' | 'category'>, value: string) => {
+    const newFilters: Partial<Filters> = { [key]: value };
     if (key === 'state') {
         newFilters.city = 'all';
     }
@@ -95,7 +95,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </SelectContent>
                 </Select>
                 <Select value={filters.model} onValueChange={(value) => handleSelectChange('model', value)} disabled={filters.manufacturer === 'all'}>
-                  <SelectTrigger><SelectValue placeholder={t('select_model')} /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('select_model')} /></SelectValue>
                   <SelectContent>
                     <SelectItem value="all">{t('all_models')}</SelectItem>
                     {filterOptions.models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
