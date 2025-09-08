@@ -14,19 +14,18 @@ import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import FleetAgeDistributionChart from './dashboard/fleet-age-distribution-chart';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
 }
 
 const getFilterOptions = (data: Vehicle[]): FilterOptions => {
-  const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
-  const models = [...new Set(data.map(item => item.model))].sort();
   const states = [...new Set(data.map(item => item.state))].sort();
   const cities = [...new Set(data.map(item => item.city))].sort();
+  const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
+  const models = [...new Set(data.map(item => item.model))].sort();
   const years = [...new Set(data.map(item => item.year))].sort((a, b) => b - a);
-  return { manufacturers, models, states, cities, years };
+  return { states, cities, manufacturers, models, years };
 };
 
 const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
@@ -43,7 +42,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const handleExport = () => {
     alert(t('export_planned_feature'));
   };
-  
+
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => ({...prev, ...newFilters}));
     setIsSheetOpen(false);
@@ -73,11 +72,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     if (filters.manufacturer !== 'all') {
       dataForOptions = dataForOptions.filter(item => item.manufacturer === filters.manufacturer);
     }
-    if (filters.model !== 'all') {
-       dataForOptions = dataForOptions.filter(item => item.model === filters.model);
-    }
     return getFilterOptions(dataForOptions);
-  }, [initialData, filters.state, filters.manufacturer, filters.model]);
+  }, [initialData, filters.state, filters.manufacturer]);
 
 
   return (
@@ -114,10 +110,9 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
             <FilterSuggestions onApplyFilters={handleFilterChange} />
           </div>
           <StatCards data={filteredData} />
-          <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 md:gap-8 lg:grid-cols-1 xl:grid-cols-2">
             <FleetByYearChart data={filteredData} />
             <TopModelsChart data={filteredData} />
-            <FleetAgeDistributionChart data={filteredData} />
           </div>
         </main>
       </div>
