@@ -20,7 +20,6 @@ interface DashboardClientProps {
   initialData: Vehicle[];
 }
 
-// Esta função agora será usada para todas as opções de filtro, garantindo que elas venham apenas dos dados carregados.
 const getFilterOptions = (data: Vehicle[]): FilterOptions => {
   const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
   const models = [...new Set(data.map(item => item.model))].sort();
@@ -54,7 +53,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     setIsSheetOpen(false);
   }, []);
 
-  // `allFilterOptions` agora é derivado diretamente dos dados iniciais, garantindo que os filtros reflitam os dados carregados.
   const allFilterOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
 
   const filteredData = useMemo(() => {
@@ -73,7 +71,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     });
   }, [initialData, filters]);
 
-  // Esta lógica permanece para atualizar dinamicamente os filtros dependentes, como cidades e modelos.
   const dynamicFilterOptions = useMemo(() => {
     let partiallyFilteredData = initialData;
     if (filters.state !== 'all') {
@@ -82,7 +79,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     if (filters.manufacturer !== 'all') {
       partiallyFilteredData = partiallyFilteredData.filter(item => item.manufacturer === filters.manufacturer);
     }
-    if (filters.model !== 'all') {
+     if (filters.model !== 'all') {
       partiallyFilteredData = partiallyFilteredData.filter(item => item.model === filters.model);
     }
 
