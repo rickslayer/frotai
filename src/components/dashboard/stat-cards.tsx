@@ -2,21 +2,22 @@
 
 import type { FC } from 'react';
 import { useMemo } from 'react';
-import type { Vehicle } from '@/types';
+import type { Filters, Vehicle } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Car, MapPin, Users2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface StatCardsProps {
   data: Vehicle[];
+  filters: Filters;
 }
 
-const StatCards: FC<StatCardsProps> = ({ data }) => {
+const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
   const { t } = useTranslation();
 
   const { totalVehicles, topModel, topRegion } = useMemo(() => {
     if (!data.length) {
-      return { totalVehicles: 0, topModel: 'N/A', topRegion: 'N/A' };
+      return { totalVehicles: 0, topModel: t('no_data_available'), topRegion: t('no_data_available') };
     }
 
     const totalVehicles = data.reduce((sum, item) => sum + item.quantity, 0);
@@ -27,7 +28,7 @@ const StatCards: FC<StatCardsProps> = ({ data }) => {
       return acc;
     }, {} as Record<string, number>);
 
-    let topModel = 'N/A';
+    let topModel = t('no_data_available');
     let maxModelSales = 0;
     for (const model in modelSales) {
       if (modelSales[model] > maxModelSales) {
@@ -36,23 +37,32 @@ const StatCards: FC<StatCardsProps> = ({ data }) => {
       }
     }
     
-    const regionSales = data.reduce((acc, item) => {
-      const key = item.city ? `${item.city}, ${item.state}` : item.state;
-      acc[key] = (acc[key] || 0) + item.quantity;
-      return acc;
-    }, {} as Record<string, number>);
+    let topRegionDisplay = t('no_data_available');
+    if (filters.city !== 'all') {
+      topRegionDisplay = `${filters.city}, ${filters.state}`;
+    } else if (filters.state !== 'all') {
+        topRegionDisplay = filters.state;
+    } else {
+        const regionSales = data.reduce((acc, item) => {
+            const key = item.state;
+            acc[key] = (acc[key] || 0) + item.quantity;
+            return acc;
+        }, {} as Record<string, number>);
 
-    let topRegion = 'N/A';
-    let maxRegionSales = 0;
-    for (const region in regionSales) {
-        if(regionSales[region] > maxRegionSales) {
-            maxRegionSales = regionSales[region];
-            topRegion = region;
+        let topState = '';
+        let maxRegionSales = 0;
+        for (const region in regionSales) {
+            if(regionSales[region] > maxRegionSales) {
+                maxRegionSales = regionSales[region];
+                topState = region;
+            }
         }
+        topRegionDisplay = topState || t('all_states');
     }
 
-    return { totalVehicles, topModel, topRegion };
-  }, [data]);
+
+    return { totalVehicles, topModel, topRegion: topRegionDisplay };
+  }, [data, filters, t]);
 
   return (
     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
