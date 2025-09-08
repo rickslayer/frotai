@@ -69,23 +69,23 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     });
   }, [initialData, filters]);
   
-  const allFilterOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
-
-  const dynamicFilterOptions = useMemo(() => {
-    let dataToFilter = initialData;
-
+  const filterOptions = useMemo(() => {
+    let dataForOptions = initialData;
+    // For cities, models, and versions, we want to show options based on the parent filter.
     if (filters.state !== 'all') {
-      dataToFilter = dataToFilter.filter(item => item.state === filters.state);
+      dataForOptions = dataForOptions.filter(item => item.state === filters.state);
     }
     if (filters.manufacturer !== 'all') {
-      dataToFilter = dataToFilter.filter(item => item.manufacturer === filters.manufacturer);
+      dataForOptions = dataForOptions.filter(item => item.manufacturer === filters.manufacturer);
     }
-     if (filters.model !== 'all') {
-      dataToFilter = dataToFilter.filter(item => item.model === filters.model);
+    if (filters.model !== 'all') {
+       dataForOptions = dataForOptions.filter(item => item.model === filters.model);
     }
-    
-    return getFilterOptions(dataToFilter);
+    return getFilterOptions(dataForOptions);
   }, [initialData, filters.state, filters.manufacturer, filters.model]);
+
+  // This will now correctly be based only on the loaded data.
+  const allAvailableOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
 
 
   return (
@@ -94,8 +94,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         <DashboardSidebar
           filters={filters}
           onFilterChange={handleFilterChange}
-          dynamicFilterOptions={dynamicFilterOptions}
-          allFilterOptions={allFilterOptions}
+          filterOptions={filterOptions}
+          allAvailableOptions={allAvailableOptions}
         />
       </div>
       <div className="flex flex-col">
@@ -111,8 +111,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                <DashboardSidebar
                   filters={filters}
                   onFilterChange={handleFilterChange}
-                  dynamicFilterOptions={dynamicFilterOptions}
-                  allFilterOptions={allFilterOptions}
+                  filterOptions={filterOptions}
+                  allAvailableOptions={allAvailableOptions}
                 />
             </SheetContent>
           </Sheet>
