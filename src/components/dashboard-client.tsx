@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FC } from 'react';
@@ -7,13 +6,15 @@ import type { Vehicle, FilterOptions, Filters } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
-import FleetByYearChart from './dashboard/fleet-by-year-chart';
+import FleetAnalysis from './dashboard/fleet-by-year-chart';
 import TopModelsChart from './dashboard/top-models-chart';
 import FilterSuggestions from './dashboard/filter-suggestions';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 import { Button } from './ui/button';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { answerFleetQuestion } from '@/ai/flows/answer-fleet-question';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -30,6 +31,7 @@ const getFilterOptions = (data: Vehicle[]): FilterOptions => {
 
 const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [filters, setFilters] = useState<Filters>({
     state: 'all',
     city: 'all',
@@ -38,16 +40,20 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     year: 'all',
   });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  
+  const [question, setQuestion] = useState('');
+  const [aiAnswer, setAiAnswer] = useState('');
+  const [isAskingAi, setIsAskingAi] = useState(false);
 
   const handleExport = () => {
     alert(t('export_planned_feature'));
   };
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
-    setFilters(prev => ({...prev, ...newFilters}));
+    setFilters(prev => ({ ...prev, ...newFilters }));
     setIsSheetOpen(false);
   }, []);
-
+  
   const filteredData = useMemo(() => {
     return initialData.filter(item => {
       const { state, city, manufacturer, model, year } = filters;
@@ -74,6 +80,27 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     }
     return getFilterOptions(dataForOptions);
   }, [initialData, filters.state, filters.manufacturer]);
+  
+  const handleAskAi = async (userQuestion: string) => {
+    setIsAskingAi(true);
+    setAiAnswer('');
+    try {
+      const result = await answerFleetQuestion({
+        question: userQuestion,
+        data: filteredData,
+      });
+      setAiAnswer(result.answer);
+    } catch (error) {
+      console.error('Error asking AI:', error);
+      toast({
+        variant: 'destructive',
+        title: t('error'),
+        description: t('ai_answer_error'),
+      });
+    } finally {
+      setIsAskingAi(false);
+    }
+  };
 
 
   return (
@@ -111,7 +138,14 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           </div>
           <StatCards data={filteredData} />
           <div className="grid gap-4 md:gap-8 lg:grid-cols-1 xl:grid-cols-2">
-            <FleetByYearChart data={filteredData} />
+            <FleetAnalysis 
+              data={filteredData}
+              onAskAi={handleAskAi}
+              aiAnswer={aiAnswer}
+              isAskingAi={isAskingAi}
+              question={question}
+              setQuestion={setQuestion}
+            />
             <TopModelsChart data={filteredData} />
           </div>
         </main>
