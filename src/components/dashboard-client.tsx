@@ -18,11 +18,21 @@ import FleetAgeDistributionChart from './dashboard/fleet-age-distribution-chart'
 
 interface DashboardClientProps {
   initialData: Vehicle[];
-  allFilterOptions: FilterOptions;
-  dynamicFilterOptions: FilterOptions;
 }
 
-const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptions: initialAllFilterOptions, dynamicFilterOptions: initialDynamicFilterOptions }) => {
+// This function can be defined outside because it's a pure function
+const getFilterOptions = (data: Vehicle[]): FilterOptions => {
+  const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
+  const models = [...new Set(data.map(item => item.model))].sort();
+  const versions = [...new Set(data.map(item => item.version))].sort();
+  const states = [...new Set(data.map(item => item.state))].sort();
+  const cities = [...new Set(data.map(item => item.city))].sort();
+  const categories = [...new Set(data.map(item => item.category))].sort() as FilterOptions['categories'];
+  const years = [...new Set(data.map(item => item.year))].sort((a, b) => b - a);
+  return { manufacturers, models, versions, states, cities, categories, years };
+};
+
+const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<Filters>({
     state: 'all',
@@ -44,6 +54,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptio
     setIsSheetOpen(false);
   }, []);
 
+  const allFilterOptions = useMemo(() => getFilterOptions(initialData), [initialData]);
+
   const filteredData = useMemo(() => {
     return initialData.filter(item => {
       const { state, city, manufacturer, model, version, category, year } = filters;
@@ -60,20 +72,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptio
     });
   }, [initialData, filters]);
 
-  // This function is defined outside because it doesn't depend on `filters`
-  const getDynamicFilterOptions = (data: Vehicle[]): FilterOptions => {
-    const manufacturers = [...new Set(data.map(item => item.manufacturer))].sort();
-    const models = [...new Set(data.map(item => item.model))].sort();
-    const versions = [...new Set(data.map(item => item.version))].sort();
-    const states = [...new Set(data.map(item => item.state))].sort();
-    const cities = [...new Set(data.map(item => item.city))].sort();
-    const categories = [...new Set(data.map(item => item.category))].sort() as FilterOptions['categories'];
-    const years = [...new Set(data.map(item => item.year))].sort((a, b) => b - a);
-    return { manufacturers, models, versions, states, cities, categories, years };
-  }
-
-  const allFilterOptions = useMemo(() => initialAllFilterOptions, [initialAllFilterOptions]);
-
   const dynamicFilterOptions = useMemo(() => {
     let partiallyFilteredData = initialData;
     if (filters.state !== 'all') {
@@ -86,7 +84,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, allFilterOptio
       partiallyFilteredData = partiallyFilteredData.filter(item => item.model === filters.model);
     }
 
-    return getDynamicFilterOptions(partiallyFilteredData);
+    return getFilterOptions(partiallyFilteredData);
   }, [initialData, filters.state, filters.manufacturer, filters.model]);
 
   return (
