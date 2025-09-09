@@ -11,6 +11,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { useTranslation } from 'react-i18next';
 import { SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
+import { Combobox } from '../ui/combobox';
 
 interface DashboardSidebarProps {
   filters: Filters;
@@ -28,6 +29,10 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
     } else {
       onFilterChange({ [key]: value });
     }
+  };
+
+  const handleModelChange = (value: string) => {
+    onFilterChange({ model: value });
   };
 
   const clearFilters = () => {
@@ -95,13 +100,15 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                       {filterOptions.manufacturers.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={filters.model} onValueChange={(value) => handleSelectChange('model', value)} disabled={!filters.manufacturer || filters.manufacturer === 'all'}>
-                    <SelectTrigger><SelectValue placeholder={t('select_model')} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('all_models')}</SelectItem>
-                      {filterOptions.models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                   <Combobox
+                      placeholder={t('select_model')}
+                      searchPlaceholder={t('search_model_placeholder')}
+                      noResultsText={t('no_model_found')}
+                      items={filterOptions.models.map(m => ({ label: m, value: m }))}
+                      value={filters.model}
+                      onChange={handleModelChange}
+                      disabled={!filters.manufacturer || filters.manufacturer === 'all'}
+                    />
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="time">

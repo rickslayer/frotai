@@ -1,4 +1,4 @@
-
+{
 {
   "dashboard": "Dashboard",
   "export": "Export",
@@ -75,5 +75,7 @@
     "Understanding fleet age to predict the future.",
     "Predictive insights at your fingertips.",
     "Find your niche in any state or city."
-  ]
+  ],
+  "search_model_placeholder": "Search model...",
+  "no_model_found": "No model found."
 }

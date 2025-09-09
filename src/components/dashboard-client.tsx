@@ -71,11 +71,14 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     return initialData.filter(item => {
       const { state, city, manufacturer, model, year } = filters;
       
+      const itemModel = `${item.manufacturer} ${item.model}`.toLowerCase();
+      const filterModel = model.toLowerCase();
+
       return (
         (state === 'all' || state === '' || item.state === state) &&
         (city === 'all' || city === '' || item.city === city) &&
         (manufacturer === 'all' || manufacturer === '' || item.manufacturer === manufacturer) &&
-        (model === 'all' || model === '' || item.model === model) &&
+        (model === 'all' || model === '' || item.model.toLowerCase() === filterModel) &&
         (year === 'all' || year === '' || item.year === year)
       );
     });

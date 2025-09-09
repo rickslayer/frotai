@@ -75,5 +75,7 @@
     "Entendendo a idade da frota para prever o futuro.",
     "Insights preditivos ao seu alcance.",
     "Encontre seu nicho em qualquer estado ou cidade."
-  ]
+  ],
+  "search_model_placeholder": "Buscar modelo...",
+  "no_model_found": "Nenhum modelo encontrado."
 }
