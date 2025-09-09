@@ -18,6 +18,9 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from '@/components/ui/sidebar';
+import RegionalFleetMap from './dashboard/regional-fleet-map';
+import { getRegionData } from '@/lib/regions';
+
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -146,6 +149,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
       quantity: data.total,
     }));
   }, [filteredData, t]);
+  
+  const regionalData = useMemo(() => getRegionData(filteredData), [filteredData]);
 
 
   return (
@@ -163,21 +168,24 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           {isFiltered ? (
             <>
               <StatCards data={filteredData} filters={filters} />
+               <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
+                <div className="lg:col-span-3">
+                  <RegionalFleetMap data={regionalData} />
+                </div>
+                <div className="lg:col-span-2">
+                   <TopModelsChart data={filteredData} />
+                </div>
+              </div>
               <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
                 <FleetByYearChart data={filteredData} />
                 <FleetAgeBracketChart data={filteredData} />
               </div>
-              <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
-                <div className="lg:col-span-2">
-                  <TopModelsChart data={filteredData} />
-                </div>
-                <div className="lg:col-span-1">
-                  <PartDemandForecast
+              <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
+                 <PartDemandForecast
                     fleetAgeBrackets={fleetAgeBrackets}
                     filters={filters}
                     disabled={!isFiltered || filteredData.length === 0}
                   />
-                </div>
               </div>
             </>
           ) : (

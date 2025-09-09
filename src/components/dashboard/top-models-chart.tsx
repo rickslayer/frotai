@@ -2,7 +2,7 @@
 
 import type { FC } from 'react';
 import { useMemo } from 'react';
-import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList, ResponsiveContainer } from 'recharts';
 import {
   Card,
   CardContent,
@@ -43,45 +43,54 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
     return Object.entries(modelSales)
       .map(([model, quantity]) => ({ model, quantity }))
       .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 10);
+      .slice(0, 5);
   }, [data]);
 
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle>{t('top_models_by_volume')}</CardTitle>
-        <CardDescription>{t('top_models_by_volume_description')}</CardDescription>
+        <CardDescription>{t('top_models_by_volume_description_short')}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
           {chartData.length > 0 ? (
-            <BarChart
-              accessibilityLayer
-              data={chartData}
-              layout="vertical"
-              margin={{
-                left: 10,
-                right: 10,
-                top: 10,
-                bottom: 10,
-              }}
-            >
-              <YAxis dataKey="model" type="category" hide />
-              <XAxis dataKey="quantity" type="number" hide />
-              <Tooltip
-                cursor={{ fill: 'hsl(var(--muted))' }}
-                content={<ChartTooltipContent />}
-              />
-              <Bar dataKey="quantity" layout="vertical" radius={5} barSize={35} fill="var(--color-quantity)">
-                <LabelList
-                  dataKey="model"
-                  position="insideLeft"
-                  offset={8}
-                  className="fill-primary-foreground text-sm font-medium"
-                  formatter={(value: string) => value.slice(0, 25) + (value.length > 25 ? '...' : '')}
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                accessibilityLayer
+                data={chartData}
+                layout="vertical"
+                margin={{
+                  left: 10,
+                  right: 10,
+                  top: 0,
+                  bottom: 0,
+                }}
+              >
+                <YAxis dataKey="model" type="category" hide />
+                <XAxis dataKey="quantity" type="number" hide />
+                <Tooltip
+                  cursor={{ fill: 'hsl(var(--muted))' }}
+                  content={<ChartTooltipContent />}
                 />
-              </Bar>
-            </BarChart>
+                <Bar dataKey="quantity" layout="vertical" radius={5} barSize={35} fill="var(--color-quantity)">
+                  <LabelList
+                    dataKey="model"
+                    position="insideLeft"
+                    offset={8}
+                    className="fill-primary-foreground text-sm font-medium"
+                    formatter={(value: string) => value.slice(0, 25) + (value.length > 25 ? '...' : '')}
+                  />
+                   <LabelList 
+                      dataKey="quantity" 
+                      position="right"
+                      offset={8}
+                      className="fill-foreground font-semibold"
+                      formatter={(value: number) => value.toLocaleString()}
+                    />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           ) : (
             <div className="flex h-[250px] w-full items-center justify-center text-muted-foreground">
               {t('no_data_available')}

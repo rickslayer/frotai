@@ -92,24 +92,24 @@ const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, fil
           </div>
         )}
 
-        {result && (
-          <div className="space-y-4 pt-4">
+        {result ? (
+          <div className="space-y-4 pt-4 overflow-y-auto max-h-[400px]">
             {result.predictions.length > 0 ? (
                 result.predictions.map((pred, index) => (
                 <Alert key={index} className="flex flex-col">
                     <div className='flex items-start gap-3'>
-                        <Lightbulb className="h-5 w-5 text-primary mt-1" />
+                        <Lightbulb className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
                         <div className="flex-1">
-                            <div className='flex justify-between items-center mb-1'>
+                            <div className='flex justify-between items-center mb-1 gap-2'>
                                 <AlertTitle className='text-base'>{pred.partName}</AlertTitle>
-                                 <Badge variant="default" className={getDemandColor(pred.demandLevel)}>
+                                 <Badge variant="default" className={`flex-shrink-0 ${getDemandColor(pred.demandLevel)}`}>
                                     {t('demand_level', { level: pred.demandLevel })}
                                 </Badge>
                             </div>
                             <AlertDescription className="space-y-2">
                                 <p>{pred.reason}</p>
-                                <p className='font-semibold text-foreground flex items-center gap-2'>
-                                    <Package className='h-4 w-4 text-green-600' />
+                                <p className='font-semibold text-foreground flex items-start gap-2'>
+                                    <Package className='h-4 w-4 text-green-600 mt-0.5 flex-shrink-0' />
                                     <span>{pred.opportunity}</span>
                                 </p>
                             </AlertDescription>
@@ -124,16 +124,15 @@ const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, fil
                 </Alert>
             )}
           </div>
-        )}
-
-        {!loading && !result && disabled && (
+        ) : (
+          !loading && disabled && (
              <div className="flex flex-col items-center justify-center text-center text-muted-foreground flex-grow">
                 <Wrench className="h-10 w-10 mb-2 text-primary/30" />
                 <p className='font-semibold text-base'>{t('part_demand_disabled_title')}</p>
                 <p className='text-sm'>{t('part_demand_disabled_description')}</p>
             </div>
+          )
         )}
-
       </CardContent>
     </Card>
   );
