@@ -6,11 +6,10 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const AnswerFleetQuestionInputSchema = z.object({
-  question: z.string().describe('The user\'s question about the fleet data.'),
-  data: z.any().describe('The fleet data (JSON array of Vehicle objects) to answer the question from.'),
+  question: z.string().describe('The user\'s question about the fleet data, including the filter context.'),
 });
 
 export type AnswerFleetQuestionInput = z.infer<typeof AnswerFleetQuestionInputSchema>;
@@ -31,16 +30,11 @@ const prompt = ai.definePrompt({
   name: 'answerFleetQuestionPrompt',
   input: {schema: AnswerFleetQuestionInputSchema},
   output: {schema: AnswerFleetQuestionOutputSchema},
-  prompt: `You are an expert data analyst for an auto parts market analysis platform. Your task is to answer a user's question based on a provided JSON dataset of vehicle fleet information.
+  prompt: `Você é um especialista em análise de mercado para a indústria de autopeças. Sua tarefa é responder a uma pergunta do usuário sobre uma frota de veículos com base em um conjunto de filtros que ele aplicou.
 
-The user's question is: "{{question}}"
+A pergunta do usuário, que já inclui o contexto dos filtros, é: "{{question}}"
 
-The data, in JSON format, is as follows:
-\`\`\`json
-{{{json data}}}
-\`\`\`
-
-Based *only* on the data provided, answer the user's question in a clear and concise way. Provide a direct answer. If the data is insufficient to answer the question, state that you cannot answer with the available information. The response should be in the same language as the question.`,
+Com base nesta pergunta, forneça uma análise de mercado clara, profissional e sucinta. A resposta deve ser em português.`,
 });
 
 
@@ -51,12 +45,7 @@ const answerFleetQuestionFlow = ai.defineFlow(
     outputSchema: AnswerFleetQuestionOutputSchema,
   },
   async input => {
-    // Stringify the data to pass it to the prompt
-    const augmentedInput = {
-      ...input,
-      data: JSON.stringify(input.data, null, 2),
-    };
-    const {output} = await prompt(augmentedInput);
+    const {output} = await prompt(input);
     return output!;
   }
 );

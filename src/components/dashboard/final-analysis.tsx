@@ -13,12 +13,11 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Loader2, Sparkles, Terminal } from 'lucide-react';
 
 interface FinalAnalysisProps {
-  fleetData: Vehicle[];
   filters: Filters;
   disabled: boolean;
 }
 
-const FinalAnalysis: FC<FinalAnalysisProps> = ({ fleetData, filters, disabled }) => {
+const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -36,8 +35,7 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ fleetData, filters, disabled })
         const question = `Faça uma análise de mercado sucinta e profissional sobre a frota de veículos com os seguintes filtros: ${activeFilters || 'sem filtros específicos'}. Destaque a principal oportunidade de negócio com base nos dados. A resposta deve ser em português.`;
 
       const result = await answerFleetQuestion({
-        question: question,
-        data: fleetData,
+        question: question
       });
       setAnalysis(result.answer);
     } catch (error) {
