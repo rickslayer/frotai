@@ -23,6 +23,8 @@
   "clear_all_filters": "Clear All Filters",
   "total_vehicles": "Total Vehicles",
   "total_vehicles_description": "Circulating fleet in the selected period",
+  "main_city": "Main City",
+  "main_city_description": "City with the largest fleet in the selection",
   "main_model": "Main Model",
   "main_model_description": "Most frequent model in the selection",
   "main_region": "Main Region",

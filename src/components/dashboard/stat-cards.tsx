@@ -18,12 +18,27 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
   const { t } = useTranslation();
   const [formattedTotalVehicles, setFormattedTotalVehicles] = useState<string>('0');
 
-  const { totalVehicles, topModel, topRegion } = useMemo(() => {
+  const { totalVehicles, topCity, topModel, topRegion } = useMemo(() => {
     if (!data.length) {
-      return { totalVehicles: 0, topModel: t('no_data_available'), topRegion: t('no_data_available') };
+      return { totalVehicles: 0, topCity: t('no_data_available'), topModel: t('no_data_available'), topRegion: t('no_data_available') };
     }
 
     const totalVehicles = data.reduce((sum, item) => sum + item.quantity, 0);
+
+    const citySales = data.reduce((acc, item) => {
+        acc[item.city] = (acc[item.city] || 0) + item.quantity;
+        return acc;
+    }, {} as Record<string, number>);
+
+    let topCity = t('no_data_available');
+    let maxCitySales = 0;
+    for (const city in citySales) {
+        if (citySales[city] > maxCitySales) {
+            maxCitySales = citySales[city];
+            topCity = city;
+        }
+    }
+
 
     const modelSales = data.reduce((acc, item) => {
       const key = `${item.manufacturer} ${item.model}`;
@@ -58,7 +73,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
     }
 
 
-    return { totalVehicles, topModel, topRegion: t(topRegion as any) };
+    return { totalVehicles, topCity, topModel, topRegion: t(topRegion as any) };
   }, [data, t]);
 
   useEffect(() => {
@@ -67,7 +82,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
   }, [totalVehicles]);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{t('total_vehicles')}</CardTitle>
@@ -76,6 +91,16 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
         <CardContent>
           <div className="text-2xl font-bold">{formattedTotalVehicles}</div>
           <p className="text-xs text-muted-foreground">{t('total_vehicles_description')}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('main_city')}</CardTitle>
+          <MapPin className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold truncate">{topCity}</div>
+          <p className="text-xs text-muted-foreground">{t('main_city_description')}</p>
         </CardContent>
       </Card>
       <Card>
