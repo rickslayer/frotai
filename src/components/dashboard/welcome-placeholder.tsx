@@ -1,12 +1,51 @@
 
 'use client';
 
-import { Car, MapPin, Wrench } from 'lucide-react';
+import { Car, Wrench, Truck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import DynamicWelcomeText from './dynamic-welcome-text';
+import { useEffect, useState } from 'react';
+
+const MotorcycleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg 
+        xmlns="http://www.w3.org/2000/svg" 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        {...props}
+    >
+        <circle cx="5.5" cy="17.5" r="2.5" />
+        <circle cx="18.5" cy="17.5" r="2.5" />
+        <path d="M12 6h3.5a3 3 0 0 1 3 3v5" />
+        <path d="M12 17.5h-2.5l-3-4-2-3h5.5" />
+        <path d="m15 6-3 4" />
+    </svg>
+);
+
+
+const icons = [
+    <Car key="car" className="w-12 h-12 text-primary" />,
+    <Truck key="truck" className="w-12 h-12 text-accent" />,
+    <MotorcycleIcon key="motorcycle" className="w-12 h-12 text-primary" />,
+    <Wrench key="wrench" className="w-12 h-12 text-accent" />,
+];
 
 const WelcomePlaceholder = () => {
     const { t } = useTranslation();
+    const [currentIconIndex, setCurrentIconIndex] = useState(0);
+
+     useEffect(() => {
+        const intervalId = setInterval(() => {
+            setCurrentIconIndex((prevIndex) => (prevIndex + 1) % icons.length);
+        }, 2000); // Change icon every 2 seconds
+
+        return () => clearInterval(intervalId);
+    }, []);
 
     return (
         <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/20 bg-card h-full p-8">
@@ -18,17 +57,17 @@ const WelcomePlaceholder = () => {
                     <div className="absolute inset-16 bg-primary/5 rounded-full animate-pulse [animation-delay:400ms]"></div>
                     
                     {/* Animated icons */}
-                    <div className="absolute top-[20%] left-[50%] -translate-x-1/2 animate-fade-in-out [animation-delay:0s]">
-                        <Car className="w-8 h-8 text-primary" />
-                    </div>
-                    <div className="absolute top-[45%] left-[25%] animate-fade-in-out [animation-delay:1s]">
-                        <Wrench className="w-7 h-7 text-accent" />
-                    </div>
-                    <div className="absolute top-[70%] left-[75%] animate-fade-in-out [animation-delay:2s]">
-                        <MapPin className="w-8 h-8 text-primary" />
-                    </div>
-                     <div className="absolute top-[45%] left-[70%] animate-fade-in-out [animation-delay:3s]">
-                        <Wrench className="w-7 h-7 text-accent" />
+                    <div className="relative w-16 h-16 flex items-center justify-center">
+                         {icons.map((icon, index) => (
+                            <div
+                                key={index}
+                                className={`absolute transition-opacity duration-1000 ${
+                                    index === currentIconIndex ? 'opacity-100' : 'opacity-0'
+                                }`}
+                            >
+                                {icon}
+                            </div>
+                        ))}
                     </div>
                 </div>
 
