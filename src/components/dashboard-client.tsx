@@ -178,14 +178,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
             <>
               <div className='flex items-center justify-between gap-4'>
                 <StatCards data={filteredData} filters={filters} />
-                <Button 
-                    onClick={() => setIsQaOpen(true)} 
-                    variant="outline" 
-                    className='hidden sm:flex h-full flex-col px-4 py-2 items-center justify-center gap-2 text-center'
-                >
-                    <MessageSquarePlus className='h-6 w-6' />
-                    <span className='text-xs font-normal'>{t('ask_ai_button_title')}</span>
-                </Button>
               </div>
 
                <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
