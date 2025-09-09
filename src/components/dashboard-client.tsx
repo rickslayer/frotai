@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FC } from 'react';
@@ -8,14 +7,17 @@ import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
 import TopModelsChart from './dashboard/top-models-chart';
-import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
-import { Button } from './ui/button';
-import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import FleetByYearChart from './dashboard/sales-over-time-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import WelcomePlaceholder from './dashboard/welcome-placeholder';
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarTrigger,
+  SidebarInset,
+} from '@/components/ui/sidebar';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -35,7 +37,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     model: '',
     year: '',
   });
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => {
@@ -60,13 +61,9 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         }
         return updated;
     });
-    if(Object.keys(newFilters).length > 1 || !['year', 'manufacturer'].includes(Object.keys(newFilters)[0])){
-       setIsSheetOpen(false);
-    }
   }, []);
   
   const filteredData = useMemo(() => {
-    // Se nenhum filtro estiver selecionado, não retorna nenhum dado.
     if (Object.values(filters).every(f => f === '' || f === 'all')) {
         return [];
     }
@@ -149,60 +146,43 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
 
 
   return (
-    <>
-      <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
-        <div className="hidden border-r bg-card lg:block">
-          <DashboardSidebar
-            filters={filters}
-            onFilterChange={handleFilterChange}
-            filterOptions={filterOptions}
-          />
-        </div>
-        <div className="flex flex-col">
-          <DashboardHeader onExport={() => alert(t('export_planned_feature'))} />
-          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
-            {isFiltered ? (
-              <>
-                <StatCards data={filteredData} filters={filters} />
-                <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-                  <FleetByYearChart data={filteredData} />
-                  <FleetAgeBracketChart data={filteredData} />
+    <SidebarProvider>
+      <Sidebar>
+        <DashboardSidebar
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          filterOptions={filterOptions}
+        />
+      </Sidebar>
+      <SidebarInset>
+        <DashboardHeader onExport={() => alert(t('export_planned_feature'))} />
+        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
+          {isFiltered ? (
+            <>
+              <StatCards data={filteredData} filters={filters} />
+              <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+                <FleetByYearChart data={filteredData} />
+                <FleetAgeBracketChart data={filteredData} />
+              </div>
+              <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-2">
+                  <TopModelsChart data={filteredData} />
                 </div>
-                <div className="grid gap-4 md:gap-8 lg:grid-cols-3">
-                  <div className="lg:col-span-2">
-                    <TopModelsChart data={filteredData} />
-                  </div>
-                  <div className="lg:col-span-1">
-                    <PartDemandForecast
-                      fleetAgeBrackets={fleetAgeBrackets}
-                      filters={filters}
-                      disabled={!isFiltered || filteredData.length === 0}
-                    />
-                  </div>
+                <div className="lg:col-span-1">
+                  <PartDemandForecast
+                    fleetAgeBrackets={fleetAgeBrackets}
+                    filters={filters}
+                    disabled={!isFiltered || filteredData.length === 0}
+                  />
                 </div>
-              </>
-            ) : (
-              <WelcomePlaceholder />
-            )}
-          </main>
-        </div>
-      </div>
-       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="shrink-0 lg:hidden fixed top-3 left-4 z-50">
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle navigation menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="flex flex-col p-0">
-            <DashboardSidebar
-                filters={filters}
-                onFilterChange={handleFilterChange}
-                filterOptions={filterOptions}
-              />
-          </SheetContent>
-        </Sheet>
-    </>
+              </div>
+            </>
+          ) : (
+            <WelcomePlaceholder />
+          )}
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
 
