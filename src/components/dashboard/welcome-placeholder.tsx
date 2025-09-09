@@ -3,6 +3,7 @@
 
 import { Car, MapPin, Wrench } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import DynamicWelcomeText from './dynamic-welcome-text';
 
 const WelcomePlaceholder = () => {
     const { t } = useTranslation();
@@ -40,12 +41,10 @@ const WelcomePlaceholder = () => {
                     </div>
                 </div>
 
-                <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">
                     {t('welcome_title')}
                 </h2>
-                <p className="text-muted-foreground mt-2">
-                    {t('welcome_subtitle')}
-                </p>
+                <DynamicWelcomeText />
             </div>
         </div>
     );
