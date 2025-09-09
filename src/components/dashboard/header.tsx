@@ -1,6 +1,7 @@
+
 'use client';
 
-import type { FC, ReactNode } from 'react';
+import type { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,16 +18,14 @@ import LanguageSwitcher from './language-switcher';
 
 interface DashboardHeaderProps {
   onExport: () => void;
-  children: ReactNode;
 }
 
-const DashboardHeader: FC<DashboardHeaderProps> = ({ onExport, children }) => {
+const DashboardHeader: FC<DashboardHeaderProps> = ({ onExport }) => {
   const { t } = useTranslation();
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
-      {children}
-      <div className='flex-1'>
+      <div className='flex-1 pl-10 lg:pl-0'>
         <h1 className="text-lg font-semibold md:text-xl">{t('dashboard')}</h1>
       </div>
       <LanguageSwitcher />

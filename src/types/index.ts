@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export type Vehicle = {
@@ -23,7 +24,7 @@ export type Filters = {
   city: string;
   manufacturer: string;
   model: string;
-  year: number | 'all';
+  year: number | 'all' | '';
 };
 
 // Schema for data points used in charts

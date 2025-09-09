@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { Car, MapPin, Calendar, SlidersHorizontal } from 'lucide-react';
+import { Car, MapPin, Calendar, SlidersHorizontal, FilterX } from 'lucide-react';
 import type { FilterOptions, Filters } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -31,13 +31,15 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
 
   const clearFilters = () => {
     onFilterChange({
-      state: 'all',
-      city: 'all',
-      manufacturer: 'all',
-      model: 'all',
-      year: 'all',
+      state: '',
+      city: '',
+      manufacturer: '',
+      model: '',
+      year: '',
     });
   };
+
+  const hasActiveFilters = Object.values(filters).some(f => f && f !== 'all');
 
   return (
     <div className="flex h-full max-h-screen flex-col gap-2 bg-card">
@@ -61,11 +63,10 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                 <Select value={filters.state} onValueChange={(value) => handleSelectChange('state', value)}>
                   <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('all_states')}</SelectItem>
                     {filterOptions.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Select value={filters.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={filters.state === 'all'}>
+                <Select value={filters.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={!filters.state || filters.state === 'all'}>
                   <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_cities')}</SelectItem>
@@ -81,14 +82,14 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4 pt-4">
-                <Select value={filters.manufacturer} onValueChange={(value) => handleSelectChange('manufacturer', value)}>
+                <Select value={filters.manufacturer} onValueChange={(value) => handleSelectChange('manufacturer', value)} disabled={!hasActiveFilters}>
                   <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
                     {filterOptions.manufacturers.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Select value={filters.model} onValueChange={(value) => handleSelectChange('model', value)} disabled={filters.manufacturer === 'all'}>
+                <Select value={filters.model} onValueChange={(value) => handleSelectChange('model', value)} disabled={!filters.manufacturer || filters.manufacturer === 'all'}>
                   <SelectTrigger><SelectValue placeholder={t('select_model')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_models')}</SelectItem>
@@ -104,7 +105,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-4">
-                 <Select value={String(filters.year)} onValueChange={(value) => handleSelectChange('year', value)}>
+                 <Select value={String(filters.year)} onValueChange={(value) => handleSelectChange('year', value)} disabled={!hasActiveFilters}>
                   <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('all_years')}</SelectItem>
@@ -117,7 +118,8 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
         </div>
       </ScrollArea>
        <div className="mt-auto p-4 border-t">
-        <Button variant="ghost" className="w-full justify-center" onClick={clearFilters}>
+        <Button variant="ghost" className="w-full justify-center" onClick={clearFilters} disabled={!hasActiveFilters}>
+           <FilterX className="mr-2 h-4 w-4" />
           {t('clear_all_filters')}
         </Button>
       </div>
