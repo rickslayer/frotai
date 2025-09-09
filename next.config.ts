@@ -24,6 +24,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+   experimental: {
+    turbopack: {
+      resolveAlias: {
+        // Exclui o rj.json do bundle do cliente
+        './rj.json': {
+          browser: 'next/dist/server/noop.js',
+        },
+      },
+    },
+  },
 };
 
 export default nextConfig;
