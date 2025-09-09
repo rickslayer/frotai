@@ -86,3 +86,14 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @keyframes fade-in-out {
+    0%, 100% { opacity: 0; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-fade-in-out {
+    animation: fade-in-out 4s ease-in-out infinite;
+  }
+}
