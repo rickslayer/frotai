@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Car, Wrench, Truck } from 'lucide-react';
+import { Car, Wrench, Truck, Filter } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import DynamicWelcomeText from './dynamic-welcome-text';
 import { useEffect, useState } from 'react';
@@ -33,6 +33,7 @@ const icons = [
     <Truck key="truck" className="w-12 h-12 text-accent" />,
     <MotorcycleIcon key="motorcycle" className="w-12 h-12 text-primary" />,
     <Wrench key="wrench" className="w-12 h-12 text-accent" />,
+    <Filter key="filter" className="w-12 h-12 text-primary" />,
 ];
 
 const WelcomePlaceholder = () => {
