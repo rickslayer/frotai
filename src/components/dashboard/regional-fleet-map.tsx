@@ -7,10 +7,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import type { RegionData } from '@/lib/regions';
 import { brazilRegions } from '@/lib/regions';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 
-interface RegionalFleetMapProps {
-  data: RegionData[];
-}
+
+const regionColorMapping: Record<string, string> = {
+  'Norte': 'var(--region-norte)',
+  'Nordeste': 'var(--region-nordeste)',
+  'Centro-Oeste': 'var(--region-centro-oeste)',
+  'Sudeste': 'var(--region-sudeste)',
+  'Sul': 'var(--region-sul)',
+};
 
 const BrazilMap = ({ data }: { data: RegionData[] }) => {
   const { t } = useTranslation();
@@ -19,56 +25,69 @@ const BrazilMap = ({ data }: { data: RegionData[] }) => {
     return new Map(data.map(d => [d.region, d.quantity]));
   }, [data]);
 
-  const maxQuantity = useMemo(() => {
-    return Math.max(...data.map(d => d.quantity), 0);
-  }, [data]);
 
-  const getRegionColor = (regionName: string) => {
-    const quantity = dataMap.get(regionName) ?? 0;
-    if (quantity === 0 || maxQuantity === 0) return 'fill-muted/30';
-    
-    const intensity = Math.min(Math.sqrt(quantity / maxQuantity), 1);
-    const hue = 220; // Blue
-    const saturation = 80;
-    const lightness = Math.max(25, 90 - (intensity * 60));
-
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  const getRegionFill = (regionName: string) => {
+    const quantity = dataMap.get(regionName);
+    if (quantity && quantity > 0) {
+      return regionColorMapping[regionName] || 'fill-muted/30';
+    }
+    return 'hsl(var(--muted))';
   };
 
   return (
-    <TooltipProvider>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 600 700"
-        aria-label="Mapa do Brasil"
-        className="w-full h-auto"
-      >
-        <g stroke="#9ca3af" strokeWidth="0.5">
-          {brazilRegions.map(region => (
-            <Tooltip key={region.name}>
-              <TooltipTrigger asChild>
-                <g>
-                  {region.states.map(state => (
-                    <path
-                      key={state.id}
-                      d={state.d}
-                      className="transition-all duration-300"
-                      fill={getRegionColor(region.name)}
-                      stroke="hsl(var(--card))"
-                      strokeWidth="1.5"
-                    />
-                  ))}
-                </g>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="font-bold">{t(region.name)}</p>
-                <p>{t('total_vehicles')}: {dataMap.get(region.name)?.toLocaleString() ?? 0}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-        </g>
-      </svg>
-    </TooltipProvider>
+    <div className='flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-8 w-full h-full'>
+       <div className='w-full lg:w-2/3'>
+        <TooltipProvider>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 800 800"
+            aria-label="Mapa do Brasil"
+            className="w-full h-auto"
+          >
+            <g>
+              {brazilRegions.map(region => (
+                <Tooltip key={region.name}>
+                  <TooltipTrigger asChild>
+                    <g>
+                      {region.states.map(state => (
+                        <path
+                          key={state.id}
+                          d={state.d}
+                          className="transition-all duration-300"
+                          fill={getRegionFill(region.name)}
+                          stroke="hsl(var(--card))"
+                          strokeWidth="2"
+                        />
+                      ))}
+                    </g>
+                  </TooltipTrigger>
+                  {dataMap.has(region.name) && (
+                    <TooltipContent>
+                      <div className='flex items-center gap-2'>
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: regionColorMapping[region.name] }}
+                        />
+                        <p className="font-bold">{t(region.name)}</p>
+                      </div>
+                      <p>{t('total_vehicles')}: {dataMap.get(region.name)?.toLocaleString() ?? 0}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              ))}
+            </g>
+          </svg>
+        </TooltipProvider>
+      </div>
+      <div className='w-full lg:w-1/3 flex lg:flex-col justify-center gap-2'>
+        {Object.entries(regionColorMapping).map(([name, color]) => (
+          <div key={name} className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: color }}></div>
+            <span className="text-sm text-muted-foreground">{t(name)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -82,7 +101,7 @@ const RegionalFleetMap = ({ data }: RegionalFleetMapProps) => {
         <CardTitle>{t('regional_fleet_analysis')}</CardTitle>
         <CardDescription>{t('regional_fleet_analysis_description')}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow flex items-center justify-center">
+      <CardContent className="flex-grow flex items-center justify-center p-2 sm:p-4">
          {data.length > 0 ? (
             <BrazilMap data={data} />
          ) : (

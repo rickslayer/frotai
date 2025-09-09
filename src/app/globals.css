@@ -41,6 +41,11 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --region-norte: 122 70% 50%;
+    --region-nordeste: 203 100% 61%;
+    --region-centro-oeste: 27 87% 67%;
+    --region-sudeste: 224 100% 58%;
+    --region-sul: 55 90% 60%;
   }
   .dark {
     --background: 222 47% 11%;
@@ -75,6 +80,11 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --region-norte: 122 70% 40%;
+    --region-nordeste: 203 100% 51%;
+    --region-centro-oeste: 27 87% 57%;
+    --region-sudeste: 224 100% 48%;
+    --region-sul: 55 90% 50%;
   }
 }
 
