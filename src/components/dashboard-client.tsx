@@ -22,6 +22,7 @@ import { Button } from './ui/button';
 import { MessageSquarePlus } from 'lucide-react';
 import FleetQADialog from './dashboard/fleet-qa-dialog';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
+import PartDemandForecast from './dashboard/part-demand-forecast';
 
 
 interface DashboardClientProps {
