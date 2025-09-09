@@ -90,7 +90,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{formattedTotalVehicles}</div>
-          <p className="text-xs text-muted-foreground">{t('total_vehicles_description')}</p>
+          <p className="text-xs text-muted-foreground uppercase">{t('total_vehicles_description')}</p>
         </CardContent>
       </Card>
       <Card>
@@ -100,7 +100,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold truncate">{topCity}</div>
-          <p className="text-xs text-muted-foreground">{t('main_city_description')}</p>
+          <p className="text-xs text-muted-foreground uppercase">{t('main_city_description')}</p>
         </CardContent>
       </Card>
       <Card>
@@ -110,7 +110,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold truncate">{topModel}</div>
-          <p className="text-xs text-muted-foreground">{t('main_model_description')}</p>
+          <p className="text-xs text-muted-foreground uppercase">{t('main_model_description')}</p>
         </CardContent>
       </Card>
       <Card>
@@ -120,7 +120,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold truncate">{topRegion}</div>
-          <p className="text-xs text-muted-foreground">{t('main_region_description')}</p>
+          <p className="text-xs text-muted-foreground uppercase">{t('main_region_description')}</p>
         </CardContent>
       </Card>
     </div>
