@@ -119,7 +119,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
           <Map className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold truncate">{topRegion}</div>
+          <div className="text-2xl font-bold truncate uppercase">{topRegion}</div>
           <p className="text-xs text-muted-foreground uppercase">{t('main_region_description')}</p>
         </CardContent>
       </Card>
