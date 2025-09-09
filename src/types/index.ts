@@ -29,10 +29,11 @@ export type Filters = {
 
 // Schema for data points used in charts
 export const ChartDataSchema = z.object({
-    year: z.number().describe('The manufacturing year.'),
-    quantity: z.number().describe('The total number of vehicles for that year.'),
+    name: z.string().describe('The label for the data point (e.g., a year, a region name).'),
+    quantity: z.number().describe('The value of the data point.'),
 });
 export type ChartData = z.infer<typeof ChartDataSchema>;
+
 
 // Type for the data structure representing fleet age distribution
 export type FleetAgeBracket = {

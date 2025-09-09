@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FC } from 'react';
@@ -10,13 +9,10 @@ import StatCards from './dashboard/stat-cards';
 import TopModelsChart from './dashboard/top-models-chart';
 import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
-import SalesOverTimeChart from './dashboard/sales-over-time-chart';
-import PartDemandForecast from './dashboard/part-demand-forecast';
 import WelcomePlaceholder from './dashboard/welcome-placeholder';
 import {
   SidebarProvider,
   Sidebar,
-  SidebarTrigger,
   SidebarInset,
 } from '@/components/ui/sidebar';
 import RegionalFleetChart from './dashboard/regional-fleet-chart';
@@ -25,6 +21,7 @@ import FilterSuggestions from './dashboard/filter-suggestions';
 import { Button } from './ui/button';
 import { MessageSquarePlus } from 'lucide-react';
 import FleetQADialog from './dashboard/fleet-qa-dialog';
+import FleetByYearChart from './dashboard/fleet-by-year-chart';
 
 
 interface DashboardClientProps {
@@ -199,7 +196,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                 </div>
               </div>
               <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-                <SalesOverTimeChart data={filteredData} />
+                <FleetByYearChart data={filteredData} />
                 <FleetAgeBracketChart data={filteredData} />
               </div>
               <div className="grid gap-4 md:gap-8 lg:grid-cols-1">

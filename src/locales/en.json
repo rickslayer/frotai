@@ -81,6 +81,7 @@
   "no_model_found": "No model found.",
   "regional_fleet_analysis": "Regional Fleet Analysis",
   "regional_fleet_analysis_description": "Distribution of the fleet across Brazilian regions.",
+  "regional_fleet_analysis_title_ai": "Analysis of Regional Fleet (Total: {total})",
   "no_data_for_regional_chart": "No data to display on the chart. Select filters to begin.",
   "total_by_region": "Total by Region",
   "Norte": "North",

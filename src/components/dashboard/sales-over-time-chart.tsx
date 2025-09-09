@@ -21,7 +21,7 @@ import type { Vehicle } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import { Loader2, Wand2, Terminal } from 'lucide-react';
-import { summarizeChartData, type ChartData } from '@/ai/flows/summarize-chart-data';
+import { summarizeChartData } from '@/ai/flows/summarize-chart-data';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
@@ -52,13 +52,19 @@ const SalesOverTimeChart: FC<SalesOverTimeChartProps> = ({ data }) => {
       .map(([year, quantity]) => ({ year: parseInt(year), quantity }))
       .sort((a, b) => a.year - b.year);
   }, [data]);
+  
+  const chartDataForAI = useMemo(() => chartData.map(d => ({
+      name: d.year.toString(),
+      quantity: d.quantity
+  })), [chartData]);
+
 
   const handleGenerateAnalysis = async () => {
     setLoadingAnalysis(true);
     setAnalysis('');
     try {
       const result = await summarizeChartData({
-        chartData: chartData as ChartData[],
+        chartData: chartDataForAI,
         chartTitle: t('fleet_by_year'),
       });
       setAnalysis(result.summary);
