@@ -37,7 +37,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
 
   const chartData = useMemo(() => {
     const modelSales = data.reduce((acc, item) => {
-      const key = `${item.manufacturer} ${item.model}`;
+      const key = item.fullName;
       acc[key] = (acc[key] || 0) + item.quantity;
       return acc;
     }, {} as Record<string, number>);

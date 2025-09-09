@@ -11,7 +11,6 @@ import { ScrollArea } from '../ui/scroll-area';
 import { useTranslation } from 'react-i18next';
 import { SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
-import { Combobox } from '../ui/combobox';
 
 interface DashboardSidebarProps {
   filters: Filters;
@@ -22,17 +21,12 @@ interface DashboardSidebarProps {
 const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions }) => {
   const { t } = useTranslation();
   
-  const handleSelectChange = (key: keyof Filters, value: string) => {
-    const newFilters: Partial<Filters> = { [key]: value };
-     if (key === 'year') {
+  const handleFilterValueChange = (key: keyof Filters, value: string) => {
+    if (key === 'year') {
       onFilterChange({ year: value === 'all' ? 'all' : Number(value) });
     } else {
       onFilterChange({ [key]: value });
     }
-  };
-
-  const handleModelChange = (value: string) => {
-    onFilterChange({ model: value });
   };
 
   const clearFilters = () => {
@@ -41,6 +35,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
       city: '',
       manufacturer: '',
       model: '',
+      version: '',
       year: '',
     });
   };
@@ -71,13 +66,13 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4 group-data-[collapsible=icon]:hidden">
-                  <Select value={filters.state} onValueChange={(value) => handleSelectChange('state', value)}>
+                  <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
                       {filterOptions.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={filters.city} onValueChange={(value) => handleSelectChange('city', value)} disabled={!filters.state || filters.state === 'all'}>
+                  <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value)} disabled={!filters.state || filters.state === 'all'}>
                     <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_cities')}</SelectItem>
@@ -93,22 +88,27 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4 group-data-[collapsible=icon]:hidden">
-                  <Select value={filters.manufacturer} onValueChange={(value) => handleSelectChange('manufacturer', value)}>
+                  <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
                       {filterOptions.manufacturers.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                   <Combobox
-                      placeholder={t('select_model')}
-                      searchPlaceholder={t('search_model_placeholder')}
-                      noResultsText={t('no_model_found')}
-                      items={filterOptions.models.map(m => ({ label: m, value: m }))}
-                      value={filters.model}
-                      onChange={handleModelChange}
-                      disabled={!filters.manufacturer || filters.manufacturer === 'all'}
-                    />
+                  <Select value={filters.model} onValueChange={(value) => handleFilterValueChange('model', value)} disabled={!filters.manufacturer || filters.manufacturer === 'all'}>
+                    <SelectTrigger><SelectValue placeholder={t('select_model')} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('all_models')}</SelectItem>
+                      {filterOptions.models.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                   <Select value={filters.version} onValueChange={(value) => handleFilterValueChange('version', value)} disabled={!filters.model || filters.model === 'all'}>
+                    <SelectTrigger><SelectValue placeholder={t('select_version')} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t('all_versions')}</SelectItem>
+                      {filterOptions.versions.map(v => <SelectItem key={v} value={v}>{v || t('base_model_version')}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="time">
@@ -118,7 +118,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4 group-data-[collapsible=icon]:hidden">
-                   <Select value={String(filters.year)} onValueChange={(value) => handleSelectChange('year', value)}>
+                   <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_years')}</SelectItem>

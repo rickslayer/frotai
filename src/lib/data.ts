@@ -4,6 +4,22 @@ import path from 'path';
 
 let fleetData: Vehicle[] | null = null;
 
+// Helper to split model name into base and version
+const splitModelAndVersion = (modelName: string): { model: string, version: string } => {
+  const parts = modelName.split(' ');
+  if (parts.length > 1) {
+    const model = parts[0];
+    const version = parts.slice(1).join(' ');
+    // Handle cases like "HB20" vs "HB20S"
+    if (parts.length > 1 && parts[0].toUpperCase() === 'HB20' && (parts[1].toUpperCase().startsWith('S') || parts[1].toUpperCase().startsWith('X'))) {
+        return { model: `${parts[0]} ${parts[1]}`, version: parts.slice(2).join(' ') };
+    }
+    return { model, version };
+  }
+  return { model: modelName, version: '' };
+};
+
+
 export function getFleetData(): Vehicle[] {
   if (fleetData) {
     return fleetData;
@@ -32,15 +48,22 @@ export function getFleetData(): Vehicle[] {
     }
 
     // Mapeia cada objeto JSON para o formato Vehicle
-    const vehicles = jsonData.map((row: any, index: number) => ({
-        id: row.ID || `vehicle-${index}`,
-        manufacturer: row.Marca || 'N/A',
-        model: row.Modelo || 'N/A',
-        state: row.UF || 'N/A',
-        city: row.Município || 'N/A',
-        quantity: parseInt(row.Quantidade, 10) || 0,
-        year: parseInt(row.Ano, 10) || 0,
-    })) as Vehicle[];
+    const vehicles = jsonData.map((row: any, index: number) => {
+        const originalModelName = row.Modelo || 'N/A';
+        const { model, version } = splitModelAndVersion(originalModelName);
+        
+        return {
+            id: row.ID || `vehicle-${index}`,
+            manufacturer: row.Marca || 'N/A',
+            model: model,
+            version: version,
+            fullName: originalModelName,
+            state: row.UF || 'N/A',
+            city: row.Município || 'N/A',
+            quantity: parseInt(row.Quantidade, 10) || 0,
+            year: parseInt(row.Ano, 10) || 0,
+        };
+    }) as Vehicle[];
     
     allVehicles = vehicles.filter(v => v.manufacturer && v.model && v.year);
     

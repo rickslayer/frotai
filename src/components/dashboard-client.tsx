@@ -41,28 +41,37 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     city: '',
     manufacturer: '',
     model: '',
+    version: '',
     year: '',
   });
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => {
         const updated = { ...prev, ...newFilters };
+        // Reset subsequent filters when a parent filter changes
         if (Object.prototype.hasOwnProperty.call(newFilters, 'state')) {
             updated.city = '';
             updated.manufacturer = '';
             updated.model = '';
+            updated.version = '';
             updated.year = '';
         }
         if (Object.prototype.hasOwnProperty.call(newFilters, 'city')) {
             updated.manufacturer = '';
             updated.model = '';
+            updated.version = '';
             updated.year = '';
         }
         if (Object.prototype.hasOwnProperty.call(newFilters, 'manufacturer')) {
             updated.model = '';
+            updated.version = '';
             updated.year = '';
         }
         if (Object.prototype.hasOwnProperty.call(newFilters, 'model')) {
+            updated.version = '';
+            updated.year = '';
+        }
+        if (Object.prototype.hasOwnProperty.call(newFilters, 'version')) {
             updated.year = '';
         }
         return updated;
@@ -75,22 +84,20 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     }
 
     return initialData.filter(item => {
-      const { state, city, manufacturer, model, year } = filters;
-      
-      const itemModel = `${item.manufacturer} ${item.model}`.toLowerCase();
-      const filterModel = typeof model === 'string' ? model.toLowerCase() : '';
+      const { state, city, manufacturer, model, version, year } = filters;
 
       return (
         (state === 'all' || state === '' || item.state === state) &&
         (city === 'all' || city === '' || item.city === city) &&
         (manufacturer === 'all' || manufacturer === '' || item.manufacturer === manufacturer) &&
-        (model === 'all' || model === '' || item.model.toLowerCase() === filterModel) &&
+        (model === 'all' || model === '' || item.model === model) &&
+        (version === 'all' || version === '' || item.version === version) &&
         (year === 'all' || year === '' || item.year === year)
       );
     });
   }, [initialData, filters]);
   
-  const filterOptions = useMemo(() => {
+  const filterOptions = useMemo((): FilterOptions => {
     const baseOptions = getBaseFilterOptions(initialData);
 
     const dataFilteredByState = (filters.state && filters.state !== 'all')
@@ -111,17 +118,23 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         ? dataFilteredByCity.filter(item => item.manufacturer === filters.manufacturer)
         : dataFilteredByCity;
     
-    const models = (filters.manufacturer && filters.manufacturer !== 'all')
-        ? [...new Set(dataFilteredByManufacturer.map(item => item.model))].sort()
-        : [];
+    const models = [...new Set(dataFilteredByManufacturer.map(item => item.model))].sort();
 
     const dataFilteredByModel = (filters.model && filters.model !== 'all')
         ? dataFilteredByManufacturer.filter(item => item.model === filters.model)
         : dataFilteredByManufacturer;
-    
-    const years = [...new Set(dataFilteredByModel.map(item => item.year))].sort((a, b) => b - a);
 
-    return { ...baseOptions, cities, manufacturers, models, years };
+    const versions = (filters.model && filters.model !== 'all')
+        ? [...new Set(dataFilteredByModel.map(item => item.version))].filter(Boolean).sort()
+        : [];
+
+    const dataFilteredByVersion = (filters.version && filters.version !== 'all')
+        ? dataFilteredByModel.filter(item => item.version === filters.version)
+        : dataFilteredByModel;
+    
+    const years = [...new Set(dataFilteredByVersion.map(item => item.year))].sort((a, b) => b - a);
+
+    return { ...baseOptions, cities, manufacturers, models, versions, years };
   }, [initialData, filters]);
 
   

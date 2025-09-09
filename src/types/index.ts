@@ -1,10 +1,11 @@
-
 import { z } from 'zod';
 
 export type Vehicle = {
   id: string;
   manufacturer: string;
-  model: string;
+  model: string; // Base model name, e.g., "Argo"
+  version: string; // Version details, e.g., "DRIVE 1.0"
+  fullName: string; // Combined model and version, e.g., "Argo DRIVE 1.0"
   year: number;
   quantity: number;
   state: string;
@@ -14,6 +15,7 @@ export type Vehicle = {
 export type FilterOptions = {
   manufacturers: string[];
   models: string[];
+  versions: string[];
   states: string[];
   cities: string[];
   years: number[];
@@ -24,6 +26,7 @@ export type Filters = {
   city: string;
   manufacturer: string;
   model: string;
+  version: string;
   year: number | 'all' | '';
 };
 
