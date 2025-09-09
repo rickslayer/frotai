@@ -6,12 +6,14 @@ import { Pie, PieChart, ResponsiveContainer, Cell } from 'recharts';
 import type { RegionData } from '@/lib/regions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '../ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart';
 import { Button } from '../ui/button';
 import { Terminal, Loader2, Wand2 } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { summarizeChartData } from '@/ai/flows/summarize-chart-data';
+import { Badge } from '../ui/badge';
+import { cn } from '@/lib/utils';
 
 interface RegionalFleetChartProps {
   data: RegionData[];
@@ -26,7 +28,7 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
   const totalVehicles = React.useMemo(() => data.reduce((acc, curr) => acc + curr.quantity, 0), [data]);
 
   const chartConfig = React.useMemo(() => {
-    const config: ChartConfig = {};
+    const config: any = {};
     data.forEach(item => {
         config[item.name] = {
             label: t(item.name as any),
@@ -46,7 +48,7 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
     setAnalysis('');
     try {
       const result = await summarizeChartData({
-        chartData: chartDataForAI,
+        chartData: chartDataForAI.filter(d => d.quantity > 0),
         chartTitle: t('regional_fleet_analysis_title_ai', { total: totalVehicles.toLocaleString() }),
       });
       setAnalysis(result.summary);
@@ -70,11 +72,11 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
         <CardDescription>{t('regional_fleet_analysis_description')}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex items-center justify-center p-2 sm:p-4">
-        {data.length > 0 ? (
-          <div className="w-full h-[250px] flex items-center">
+        {totalVehicles > 0 ? (
+          <div className="w-full h-[250px] flex flex-col md:flex-row items-center gap-4">
              <ChartContainer
                 config={chartConfig}
-                className="mx-auto aspect-square h-full w-1/2"
+                className="mx-auto aspect-square h-full w-full md:w-1/2"
               >
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -88,32 +90,37 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
+                    innerRadius="60%"
+                    outerRadius="80%"
+                    paddingAngle={2}
                     labelLine={false}
                   >
                     {data.map((entry) => (
-                      <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                      <Cell key={`cell-${entry.name}`} fill={entry.quantity > 0 ? entry.fill : 'hsl(var(--muted))'} />
                     ))}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
             </ChartContainer>
-            <div className="w-1/2 flex flex-col gap-2 text-sm">
+            <div className="w-full md:w-1/2 flex flex-col gap-2 text-sm">
                <div className="font-semibold mb-2">{t('total_by_region')}</div>
               {data.map((entry) => (
-                <div key={entry.name} className="flex items-center justify-between">
+                <div key={entry.name} className={cn("flex items-center justify-between transition-opacity", entry.quantity === 0 && "opacity-50")}>
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: entry.fill }}
+                      style={{ backgroundColor: entry.quantity > 0 ? entry.fill : 'hsl(var(--muted))' }}
                     />
                     <span>{t(entry.name as any)}</span>
                   </div>
-                  <span className="font-medium">
-                    {totalVehicles > 0 ? ((entry.quantity / totalVehicles) * 100).toFixed(1) : '0.0'}%
-                  </span>
+                   <div className='flex items-center gap-3'>
+                    <span className="font-mono text-xs text-muted-foreground">
+                        {entry.quantity.toLocaleString()}
+                    </span>
+                    <Badge variant="secondary" className='w-16 justify-center font-mono'>
+                        {totalVehicles > 0 ? ((entry.quantity / totalVehicles) * 100).toFixed(1) : '0.0'}%
+                    </Badge>
+                   </div>
                 </div>
               ))}
             </div>
@@ -127,7 +134,7 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
        <CardFooter className="flex-col items-start gap-2 border-t p-4">
           <div className="flex w-full items-center justify-between">
             <h3 className="text-base font-semibold">{t('ai_analysis_title')}</h3>
-            <Button onClick={handleGenerateAnalysis} disabled={loadingAnalysis || data.length === 0} size="sm">
+            <Button onClick={handleGenerateAnalysis} disabled={loadingAnalysis || totalVehicles === 0} size="sm">
               {loadingAnalysis ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (

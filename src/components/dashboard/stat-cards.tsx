@@ -1,11 +1,13 @@
+
 'use client';
 
 import type { FC } from 'react';
 import { useMemo, useState, useEffect } from 'react';
 import type { Filters, Vehicle } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car, MapPin, Users2 } from 'lucide-react';
+import { Car, MapPin, Users2, Map } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { stateToRegionMap } from '@/lib/regions';
 
 interface StatCardsProps {
   data: Vehicle[];
@@ -38,32 +40,26 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
       }
     }
     
-    let topRegionDisplay = t('no_data_available');
-    if (filters.city !== 'all' && filters.city) {
-      topRegionDisplay = `${filters.city}, ${filters.state}`;
-    } else if (filters.state !== 'all') {
-        topRegionDisplay = filters.state;
-    } else {
-        const regionSales = data.reduce((acc, item) => {
-            const key = item.state;
-            acc[key] = (acc[key] || 0) + item.quantity;
-            return acc;
-        }, {} as Record<string, number>);
+    const regionSales = data.reduce((acc, item) => {
+      const region = stateToRegionMap[item.state.toUpperCase()];
+      if (region) {
+          acc[region] = (acc[region] || 0) + item.quantity;
+      }
+      return acc;
+    }, {} as Record<string, number>);
 
-        let topState = '';
-        let maxRegionSales = 0;
-        for (const region in regionSales) {
-            if(regionSales[region] > maxRegionSales) {
-                maxRegionSales = regionSales[region];
-                topState = region;
-            }
-        }
-        topRegionDisplay = topState || t('all_states');
+    let topRegion = t('no_data_available');
+    let maxRegionSales = 0;
+    for (const region in regionSales) {
+      if (regionSales[region] > maxRegionSales) {
+        maxRegionSales = regionSales[region];
+        topRegion = region;
+      }
     }
 
 
-    return { totalVehicles, topModel, topRegion: topRegionDisplay };
-  }, [data, filters, t]);
+    return { totalVehicles, topModel, topRegion: t(topRegion as any) };
+  }, [data, t]);
 
   useEffect(() => {
     // Format the number on the client side to avoid hydration mismatch
@@ -95,7 +91,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{t('main_region')}</CardTitle>
-          <MapPin className="h-4 w-4 text-muted-foreground" />
+          <Map className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold truncate">{topRegion}</div>
