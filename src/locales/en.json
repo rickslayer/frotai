@@ -52,7 +52,7 @@
   "ai_analysis_title": "Frota.AI Analysis",
   "generate_analysis": "Analyze Filters and Charts",
   "generating_analysis": "Generating...",
-  "analysis_placeholder": "Click 'Analyze Filters and Charts' to access a complete summary from our perspective.",
+  "analysis_placeholder": "Click 'Analyze Filters and Charts' to get a complete AI summary of the current view.",
   "analysis_error": "Could not generate AI analysis. Please try again.",
   "error": "Error",
   "state": "State",
@@ -94,14 +94,8 @@
   "Sudeste": "Southeast",
   "Sul": "South",
   "Centro-Oeste": "Center-West",
-  "get_ai_suggestions": "Get AI Suggestions",
-  "get_ai_suggestions_description": "Based on market trends.",
-  "generating_suggestions": "Generating suggestions...",
-  "suggestions_title": "Here are some suggestions:",
-  "suggestions_description": "Click on a suggestion to apply the filters.",
-  "filters_applied": "Filters Applied!",
-  "showing_results_for_suggestion": "Showing results for: {description}",
-  "ai_suggestions_error": "Could not get AI suggestions. Please try again.",
   "top_5": "Top 5",
-  "top_10": "Top 10"
+  "top_10": "Top 10",
+  "final_analysis_question": "Provide a concise and professional market analysis of the vehicle fleet with the following filters: {{filters}}.",
+  "no_specific_filters": "no specific filters"
 }

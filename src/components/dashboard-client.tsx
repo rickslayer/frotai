@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import React, { useState, useMemo, useCallback, useRef } from 'react';
-import type { Vehicle, FilterOptions, Filters, FleetAgeBracket } from '@/types';
+import type { Vehicle, FilterOptions, Filters, FleetAgeBracket, ChartData, RegionData } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
@@ -238,6 +238,17 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   
   const regionalData = useMemo(() => getRegionData(filteredData), [filteredData]);
 
+  const fleetByYearData = useMemo(() => {
+    const yearlyFleet = filteredData.reduce((acc, item) => {
+      acc[item.year] = (acc[item.year] || 0) + item.quantity;
+      return acc;
+    }, {} as Record<number, number>);
+
+    return Object.entries(yearlyFleet)
+      .map(([year, quantity]) => ({ name: year, quantity }))
+      .sort((a, b) => Number(a.name) - Number(b.name));
+  }, [filteredData]);
+
 
   return (
     <SidebarProvider>
@@ -278,6 +289,9 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                  <FinalAnalysis
                     filters={filters}
                     disabled={!isFiltered || filteredData.length === 0}
+                    fleetAgeBrackets={fleetAgeBrackets}
+                    regionalData={regionalData}
+                    fleetByYearData={fleetByYearData}
                   />
               </div>
               <div className="grid gap-4 md:gap-8 lg:grid-cols-1">

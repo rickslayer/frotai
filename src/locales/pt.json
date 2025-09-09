@@ -94,14 +94,8 @@
   "Sudeste": "Sudeste",
   "Sul": "Sul",
   "Centro-Oeste": "Centro-Oeste",
-  "get_ai_suggestions": "Obter Sugestões da IA",
-  "get_ai_suggestions_description": "Com base nas tendências do mercado.",
-  "generating_suggestions": "Gerando sugestões...",
-  "suggestions_title": "Aqui estão algumas sugestões:",
-  "suggestions_description": "Clique em uma sugestão para aplicar os filtros.",
-  "filters_applied": "Filtros Aplicados!",
-  "showing_results_for_suggestion": "Mostrando resultados para: {description}",
-  "ai_suggestions_error": "Não foi possível obter sugestões da IA. Tente novamente.",
   "top_5": "Top 5",
-  "top_10": "Top 10"
+  "top_10": "Top 10",
+  "final_analysis_question": "Faça uma análise de mercado sucinta e profissional sobre a frota de veículos com os seguintes filtros: {{filters}}.",
+  "no_specific_filters": "sem filtros específicos"
 }

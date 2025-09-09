@@ -8,16 +8,19 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { answerFleetQuestion } from '@/ai/flows/answer-fleet-question';
-import type { Filters, Vehicle } from '@/types';
+import type { Filters, Vehicle, RegionData, FleetAgeBracket, ChartData } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Loader2, Sparkles, Terminal } from 'lucide-react';
 
 interface FinalAnalysisProps {
   filters: Filters;
   disabled: boolean;
+  fleetAgeBrackets: FleetAgeBracket[];
+  regionalData: RegionData[];
+  fleetByYearData: ChartData[];
 }
 
-const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled }) => {
+const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrackets, regionalData, fleetByYearData }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -27,16 +30,24 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled }) => {
     setLoading(true);
     setAnalysis(null);
     try {
-        const activeFilters = Object.entries(filters)
-            .filter(([, value]) => value && value !== 'all')
-            .map(([key, value]) => `${t(key as any)}: ${value}`)
-            .join(', ');
+      const activeFilters = Object.entries(filters)
+        .filter(([, value]) => value && value !== 'all')
+        .map(([key, value]) => `${t(key as any)}: ${value}`)
+        .join(', ');
 
-        const question = `Faça uma análise de mercado sucinta e profissional sobre a frota de veículos com os seguintes filtros: ${activeFilters || 'sem filtros específicos'}. Destaque a principal oportunidade de negócio com base nos dados. A resposta deve ser em português.`;
+      const question = t('final_analysis_question', {
+        filters: activeFilters || t('no_specific_filters'),
+      });
 
       const result = await answerFleetQuestion({
-        question: question
+        question,
+        data: {
+          fleetAgeBrackets,
+          regionalData,
+          fleetByYearData,
+        },
       });
+
       setAnalysis(result.answer);
     } catch (error) {
       console.error('Error generating final analysis:', error);
@@ -76,7 +87,7 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled }) => {
               <Terminal className="h-4 w-4" />
               <AlertTitle>{t('ai_analysis_title')}</AlertTitle>
               <AlertDescription>
-                {analysis}
+                <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br />') }} />
               </AlertDescription>
             </Alert>
           </div>
