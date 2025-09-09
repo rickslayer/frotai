@@ -1,7 +1,7 @@
 
 {
   "dashboard": "Painel",
-  "export": "Exportar",
+  "export": "Exportar PDF",
   "my_account": "Minha Conta",
   "settings": "Configurações",
   "support": "Suporte",
@@ -49,10 +49,10 @@
   "age_bracket_semi_new": "Seminovos (4-7 anos)",
   "age_bracket_used": "Usados (8-12 anos)",
   "age_bracket_old": "Antigos (13+ anos)",
-  "ai_analysis_title": "Análise do Frota.AI",
-  "generate_analysis": "Gerar Análise",
+  "ai_analysis_title": "Análise Final do Frota.AI",
+  "generate_analysis": "Analisar Filtros e Gráficos",
   "generating_analysis": "Gerando...",
-  "analysis_placeholder": "Clique em 'Gerar Análise' para obter insights do Frota.AI sobre os dados do gráfico atual.",
+  "analysis_placeholder": "Clique em 'Analisar Filtros e Gráficos' para obter um resumo completo da IA sobre a visão atual.",
   "analysis_error": "Não foi possível gerar a análise de IA. Por favor, tente novamente.",
   "error": "Erro",
   "state": "Estado",
@@ -102,13 +102,6 @@
   "filters_applied": "Filtros Aplicados!",
   "showing_results_for_suggestion": "Mostrando resultados para: {description}",
   "ai_suggestions_error": "Não foi possível obter sugestões da IA. Tente novamente.",
-  "ask_ai_title": "Pergunte à IA sobre esta Frota",
-  "active_filters": "Filtros ativos",
-  "no_active_filters": "Nenhum filtro ativo.",
-  "ai_question_placeholder": "Ex: Qual a idade média dos veículos?",
-  "ai_answer": "Resposta da IA",
-  "ai_answer_error": "Não foi possível obter a resposta da IA. Tente novamente.",
-  "ask_ai_button_title": "Perguntar à IA",
   "top_5": "Top 5",
   "top_10": "Top 10"
 }

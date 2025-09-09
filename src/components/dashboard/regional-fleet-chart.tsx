@@ -4,14 +4,9 @@
 import * as React from 'react';
 import { Pie, PieChart, ResponsiveContainer, Cell } from 'recharts';
 import type { RegionData } from '@/lib/regions';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart';
-import { Button } from '../ui/button';
-import { Terminal, Loader2, Wand2 } from 'lucide-react';
-import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
-import { useToast } from '@/hooks/use-toast';
-import { summarizeChartData } from '@/ai/flows/summarize-chart-data';
 import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -21,9 +16,6 @@ interface RegionalFleetChartProps {
 
 const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const [loadingAnalysis, setLoadingAnalysis] = React.useState(false);
-  const [analysis, setAnalysis] = React.useState('');
   
   const totalVehicles = React.useMemo(() => data.reduce((acc, curr) => acc + curr.quantity, 0), [data]);
 
@@ -38,32 +30,6 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
     return config;
   }, [data, t]);
   
-  const chartDataForAI = React.useMemo(() => data.map(item => ({
-      name: t(item.name as any),
-      quantity: item.quantity
-  })), [data, t]);
-
-  const handleGenerateAnalysis = async () => {
-    setLoadingAnalysis(true);
-    setAnalysis('');
-    try {
-      const result = await summarizeChartData({
-        chartData: chartDataForAI.filter(d => d.quantity > 0),
-        chartTitle: t('regional_fleet_analysis_title_ai', { total: totalVehicles.toLocaleString() }),
-      });
-      setAnalysis(result.summary);
-    } catch (error) {
-      console.error('Error generating analysis:', error);
-      toast({
-        variant: 'destructive',
-        title: t('error'),
-        description: t('analysis_error'),
-      });
-    } finally {
-      setLoadingAnalysis(false);
-    }
-  };
-
 
   return (
     <Card className="h-full flex flex-col">
@@ -131,30 +97,6 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
           </div>
         )}
       </CardContent>
-       <CardFooter className="flex-col items-start gap-2 border-t p-4">
-          <div className="flex w-full items-center justify-between">
-            <h3 className="text-base font-semibold">{t('ai_analysis_title')}</h3>
-            <Button onClick={handleGenerateAnalysis} disabled={loadingAnalysis || totalVehicles === 0} size="sm">
-              {loadingAnalysis ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Wand2 className="mr-2 h-4 w-4" />
-              )}
-              {loadingAnalysis ? t('generating_analysis') : t('generate_analysis')}
-            </Button>
-          </div>
-          {analysis ? (
-             <Alert>
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>{t('ai_analysis_title')}</AlertTitle>
-              <AlertDescription>
-                {analysis}
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t('analysis_placeholder')}</p>
-          )}
-        </CardFooter>
     </Card>
   );
 };

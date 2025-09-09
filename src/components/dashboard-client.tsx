@@ -2,7 +2,7 @@
 'use client';
 
 import type { FC } from 'react';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import type { Vehicle, FilterOptions, Filters, FleetAgeBracket } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
@@ -19,10 +19,11 @@ import {
 import RegionalFleetChart from './dashboard/regional-fleet-chart';
 import { getRegionData } from '@/lib/regions';
 import FilterSuggestions from './dashboard/filter-suggestions';
-import FleetQADialog from './dashboard/fleet-qa-dialog';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
-
+import FinalAnalysis from './dashboard/final-analysis';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -35,7 +36,6 @@ const getBaseFilterOptions = (data: Vehicle[]): Pick<FilterOptions, 'states'> =>
 
 const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const { t } = useTranslation();
-  const [isQaOpen, setIsQaOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     state: '',
     city: '',
@@ -44,6 +44,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     version: '',
     year: '',
   });
+
+  const dashboardContentRef = useRef<HTMLDivElement>(null);
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => {
@@ -77,6 +79,75 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         return updated;
     });
   }, []);
+
+  const handleExportPDF = () => {
+    const input = dashboardContentRef.current;
+    if (!input) return;
+
+    // We can add a class to temporarily style the dashboard for export
+    document.body.classList.add('exporting-pdf');
+
+    html2canvas(input, {
+        scale: 2, // Higher scale for better quality
+        useCORS: true,
+        logging: false,
+        onclone: (document) => {
+            // Remove the export button from the clone to avoid it appearing in the PDF
+            const exportButton = document.getElementById('export-button');
+            if (exportButton) {
+                exportButton.style.display = 'none';
+            }
+        }
+    }).then(canvas => {
+        document.body.classList.remove('exporting-pdf');
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        const width = pdfWidth;
+        const height = width / ratio;
+
+        // Check if the content fits on one page
+        if (height <= pdfHeight) {
+            pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+        } else { // Handle multi-page content
+            let position = 0;
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            let remainingHeight = canvas.height;
+
+            while (remainingHeight > 0) {
+                const pageCanvas = document.createElement('canvas');
+                const pageCtx = pageCanvas.getContext('2d');
+                if (!pageCtx) return;
+
+                // A4 aspect ratio
+                const a4Ratio = 1.414;
+                const sourceHeight = canvas.width / (pdfWidth / pageHeight);
+
+                pageCanvas.width = canvas.width;
+                pageCanvas.height = Math.min(sourceHeight, remainingHeight);
+                
+                pageCtx.drawImage(canvas, 0, position, canvas.width, pageCanvas.height, 0, 0, canvas.width, pageCanvas.height);
+                
+                const pageImgData = pageCanvas.toDataURL('image/png');
+                if (position > 0) {
+                    pdf.addPage();
+                }
+                pdf.addImage(pageImgData, 'PNG', 0, 0, pdfWidth, pdfWidth / (pageCanvas.width / pageCanvas.height));
+                
+                position += pageCanvas.height;
+                remainingHeight -= pageCanvas.height;
+            }
+        }
+
+        pdf.save(`frota-ai-report-${new Date().toISOString().slice(0,10)}.pdf`);
+    }).catch(() => {
+         document.body.classList.remove('exporting-pdf');
+    });
+  };
   
   const filteredData = useMemo(() => {
     if (Object.values(filters).every(f => f === '' || f === 'all')) {
@@ -180,11 +251,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
       </Sidebar>
       <SidebarInset>
         <DashboardHeader 
-          onExport={() => alert(t('export_planned_feature'))} 
-          onAskAi={() => setIsQaOpen(true)}
+          onExport={handleExportPDF} 
           isFiltered={isFiltered}
         />
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
+        <main ref={dashboardContentRef} className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
           {!isFiltered ? (
              <div className="flex flex-col h-full gap-8">
                <WelcomePlaceholder />
@@ -206,6 +276,13 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                 <FleetByYearChart data={filteredData} />
                 <FleetAgeBracketChart data={filteredData} />
               </div>
+               <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
+                 <FinalAnalysis
+                    fleetData={filteredData}
+                    filters={filters}
+                    disabled={!isFiltered || filteredData.length === 0}
+                  />
+              </div>
               <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
                  <PartDemandForecast
                     fleetAgeBrackets={fleetAgeBrackets}
@@ -217,12 +294,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           )}
         </main>
       </SidebarInset>
-      <FleetQADialog 
-        isOpen={isQaOpen}
-        onOpenChange={setIsQaOpen}
-        fleetData={filteredData}
-        filters={filters}
-      />
     </SidebarProvider>
   );
 };
