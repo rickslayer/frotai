@@ -87,5 +87,20 @@
   "Nordeste": "Nordeste",
   "Sudeste": "Sudeste",
   "Sul": "Sul",
-  "Centro-Oeste": "Centro-Oeste"
+  "Centro-Oeste": "Centro-Oeste",
+  "get_ai_suggestions": "Obter Sugestões da IA",
+  "get_ai_suggestions_description": "Com base nas tendências do mercado.",
+  "generating_suggestions": "Gerando sugestões...",
+  "suggestions_title": "Aqui estão algumas sugestões:",
+  "suggestions_description": "Clique em uma sugestão para aplicar os filtros.",
+  "filters_applied": "Filtros Aplicados!",
+  "showing_results_for_suggestion": "Mostrando resultados para: {description}",
+  "ai_suggestions_error": "Não foi possível obter sugestões da IA. Tente novamente.",
+  "ask_ai_title": "Pergunte à IA sobre esta Frota",
+  "active_filters": "Filtros ativos",
+  "no_active_filters": "Nenhum filtro ativo.",
+  "ai_question_placeholder": "Ex: Qual a idade média dos veículos?",
+  "ai_answer": "Resposta da IA",
+  "ai_answer_error": "Não foi possível obter a resposta da IA. Tente novamente.",
+  "ask_ai_button_title": "Perguntar à IA"
 }

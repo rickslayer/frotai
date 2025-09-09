@@ -2,13 +2,14 @@
 
 import type { FC } from 'react';
 import { useMemo, useState } from 'react';
-import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter
 } from '@/components/ui/card';
 import {
   ChartContainer,
@@ -19,17 +20,16 @@ import {
 import type { Vehicle } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
-import { Loader2, Wand2 } from 'lucide-react';
+import { Loader2, Wand2, Terminal } from 'lucide-react';
 import { summarizeChartData, type ChartData } from '@/ai/flows/summarize-chart-data';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Terminal } from 'lucide-react';
 
-interface FleetByYearChartProps {
+interface SalesOverTimeChartProps {
   data: Vehicle[];
 }
 
-const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
+const SalesOverTimeChart: FC<SalesOverTimeChartProps> = ({ data }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
@@ -83,32 +83,34 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
       <CardContent className='flex-grow'>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
           {chartData.length > 0 ? (
-            <LineChart
-              accessibilityLayer
-              data={chartData}
-              margin={{ left: 12, right: 12 }}
-            >
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="year"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickFormatter={(value) => String(value)}
-              />
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-              <Tooltip
-                cursor={false}
-                content={<ChartTooltipContent indicator="line" />}
-              />
-              <Line
-                dataKey="quantity"
-                type="natural"
-                stroke="var(--color-quantity)"
-                strokeWidth={2}
-                dot={true}
-              />
-            </LineChart>
+             <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                accessibilityLayer
+                data={chartData}
+                margin={{ left: 12, right: 12 }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="year"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) => String(value)}
+                />
+                <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                <Tooltip
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="line" />}
+                />
+                <Line
+                  dataKey="quantity"
+                  type="natural"
+                  stroke="var(--color-quantity)"
+                  strokeWidth={2}
+                  dot={true}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           ) : (
             <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
               {t('no_data_for_filters')}
@@ -116,8 +118,8 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
           )}
         </ChartContainer>
       </CardContent>
-      <div className="border-t p-4 space-y-4">
-          <div className="flex items-center justify-between">
+      <CardFooter className="flex-col items-start gap-2 border-t p-4">
+          <div className="flex w-full items-center justify-between">
             <h3 className="text-base font-semibold">{t('ai_analysis_title')}</h3>
             <Button onClick={handleGenerateAnalysis} disabled={loadingAnalysis || chartData.length === 0} size="sm">
               {loadingAnalysis ? (
@@ -139,9 +141,9 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
           ) : (
             <p className="text-sm text-muted-foreground">{t('analysis_placeholder')}</p>
           )}
-        </div>
+        </CardFooter>
     </Card>
   );
 };
 
-export default FleetByYearChart;
+export default SalesOverTimeChart;

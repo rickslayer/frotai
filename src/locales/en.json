@@ -87,5 +87,20 @@
   "Nordeste": "Northeast",
   "Sudeste": "Southeast",
   "Sul": "South",
-  "Centro-Oeste": "Center-West"
+  "Centro-Oeste": "Center-West",
+  "get_ai_suggestions": "Get AI Suggestions",
+  "get_ai_suggestions_description": "Based on market trends.",
+  "generating_suggestions": "Generating suggestions...",
+  "suggestions_title": "Here are some suggestions:",
+  "suggestions_description": "Click on a suggestion to apply the filters.",
+  "filters_applied": "Filters Applied!",
+  "showing_results_for_suggestion": "Showing results for: {description}",
+  "ai_suggestions_error": "Could not get AI suggestions. Please try again.",
+  "ask_ai_title": "Ask AI about this Fleet",
+  "active_filters": "Active filters",
+  "no_active_filters": "No active filters.",
+  "ai_question_placeholder": "E.g., What is the average age of the vehicles?",
+  "ai_answer": "AI Answer",
+  "ai_answer_error": "Could not get an answer from the AI. Please try again.",
+  "ask_ai_button_title": "Ask AI"
 }

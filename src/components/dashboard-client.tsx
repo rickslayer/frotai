@@ -10,7 +10,7 @@ import StatCards from './dashboard/stat-cards';
 import TopModelsChart from './dashboard/top-models-chart';
 import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
-import FleetByYearChart from './dashboard/sales-over-time-chart';
+import SalesOverTimeChart from './dashboard/sales-over-time-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import WelcomePlaceholder from './dashboard/welcome-placeholder';
 import {
@@ -21,6 +21,10 @@ import {
 } from '@/components/ui/sidebar';
 import RegionalFleetChart from './dashboard/regional-fleet-chart';
 import { getRegionData } from '@/lib/regions';
+import FilterSuggestions from './dashboard/filter-suggestions';
+import { Button } from './ui/button';
+import { MessageSquarePlus } from 'lucide-react';
+import FleetQADialog from './dashboard/fleet-qa-dialog';
 
 
 interface DashboardClientProps {
@@ -34,6 +38,7 @@ const getBaseFilterOptions = (data: Vehicle[]): Pick<FilterOptions, 'states'> =>
 
 const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   const { t } = useTranslation();
+  const [isQaOpen, setIsQaOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     state: '',
     city: '',
@@ -76,7 +81,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
       const { state, city, manufacturer, model, year } = filters;
       
       const itemModel = `${item.manufacturer} ${item.model}`.toLowerCase();
-      const filterModel = model.toLowerCase();
+      const filterModel = typeof model === 'string' ? model.toLowerCase() : '';
 
       return (
         (state === 'all' || state === '' || item.state === state) &&
@@ -166,9 +171,25 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
       <SidebarInset>
         <DashboardHeader onExport={() => alert(t('export_planned_feature'))} />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
-          {isFiltered ? (
+          {!isFiltered ? (
+             <div className="flex flex-col h-full gap-8">
+               <WelcomePlaceholder />
+               <FilterSuggestions onApplyFilters={handleFilterChange} />
+             </div>
+          ) : (
             <>
-              <StatCards data={filteredData} filters={filters} />
+              <div className='flex items-center justify-between gap-4'>
+                <StatCards data={filteredData} filters={filters} />
+                <Button 
+                    onClick={() => setIsQaOpen(true)} 
+                    variant="outline" 
+                    className='hidden sm:flex h-full flex-col px-4 py-2 items-center justify-center gap-2 text-center'
+                >
+                    <MessageSquarePlus className='h-6 w-6' />
+                    <span className='text-xs font-normal'>{t('ask_ai_button_title')}</span>
+                </Button>
+              </div>
+
                <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
                 <div className="lg:col-span-3">
                   <RegionalFleetChart data={regionalData} />
@@ -178,7 +199,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                 </div>
               </div>
               <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-                <FleetByYearChart data={filteredData} />
+                <SalesOverTimeChart data={filteredData} />
                 <FleetAgeBracketChart data={filteredData} />
               </div>
               <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
@@ -189,11 +210,15 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
                   />
               </div>
             </>
-          ) : (
-            <WelcomePlaceholder />
           )}
         </main>
       </SidebarInset>
+      <FleetQADialog 
+        isOpen={isQaOpen}
+        onOpenChange={setIsQaOpen}
+        fleetData={filteredData}
+        filters={filters}
+      />
     </SidebarProvider>
   );
 };
