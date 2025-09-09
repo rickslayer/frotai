@@ -33,9 +33,9 @@
   "fleet_by_year_description": "Total de veículos por ano de fabricação, de acordo com os filtros aplicados.",
   "no_data_for_filters": "Nenhum dado disponível para os filtros selecionados.",
   "quantity": "Quantidade",
-  "top_models_by_volume": "Top 5 Modelos por Volume",
+  "top_models_by_volume": "Top {{count}} Modelos por Volume",
   "top_models_by_volume_description": "Os 10 principais modelos por volume de frota na seleção.",
-  "top_models_by_volume_description_short": "Top 5 modelos na seleção.",
+  "top_models_by_volume_description_short": "Principais modelos na seleção.",
   "no_data_available": "Nenhum dado disponível.",
   "export_planned_feature": "A exportação de relatórios é um recurso planejado.",
   "year": "Ano",
@@ -105,5 +105,7 @@
   "ai_question_placeholder": "Ex: Qual a idade média dos veículos?",
   "ai_answer": "Resposta da IA",
   "ai_answer_error": "Não foi possível obter a resposta da IA. Tente novamente.",
-  "ask_ai_button_title": "Perguntar à IA"
+  "ask_ai_button_title": "Perguntar à IA",
+  "top_5": "Top 5",
+  "top_10": "Top 10"
 }

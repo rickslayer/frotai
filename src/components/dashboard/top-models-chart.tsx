@@ -1,7 +1,7 @@
 'use client';
 
 import type { FC } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList, ResponsiveContainer } from 'recharts';
 import {
   Card,
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/chart';
 import type { Vehicle } from '@/types';
 import { useTranslation } from 'react-i18next';
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 
 interface TopModelsChartProps {
   data: Vehicle[];
@@ -25,6 +26,7 @@ interface TopModelsChartProps {
 
 const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
   const { t } = useTranslation();
+  const [topN, setTopN] = useState<'5' | '10'>('5');
 
   const chartConfig = {
     quantity: {
@@ -43,13 +45,21 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
     return Object.entries(modelSales)
       .map(([model, quantity]) => ({ model, quantity }))
       .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, 5);
-  }, [data]);
+      .slice(0, Number(topN));
+  }, [data, topN]);
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle>{t('top_models_by_volume')}</CardTitle>
+        <div className="flex items-center justify-between gap-4">
+           <CardTitle>{t('top_models_by_volume', { count: topN })}</CardTitle>
+           <Tabs defaultValue="5" onValueChange={(value) => setTopN(value as '5' | '10')} className='w-auto'>
+            <TabsList>
+              <TabsTrigger value="5">{t('top_5')}</TabsTrigger>
+              <TabsTrigger value="10">{t('top_10')}</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
         <CardDescription>{t('top_models_by_volume_description_short')}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
