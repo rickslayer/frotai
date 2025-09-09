@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/sidebar';
 import RegionalFleetChart from './dashboard/regional-fleet-chart';
 import { getRegionData } from '@/lib/regions';
-import FilterSuggestions from './dashboard/filter-suggestions';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
@@ -258,7 +257,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           {!isFiltered ? (
              <div className="flex flex-col h-full gap-8">
                <WelcomePlaceholder />
-               <FilterSuggestions onApplyFilters={handleFilterChange} />
              </div>
           ) : (
             <>
@@ -278,7 +276,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
               </div>
                <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
                  <FinalAnalysis
-                    fleetData={filteredData}
                     filters={filters}
                     disabled={!isFiltered || filteredData.length === 0}
                   />
