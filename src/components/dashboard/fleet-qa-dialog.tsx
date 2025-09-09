@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -39,8 +40,8 @@ const FleetQADialog: FC<FleetQADialogProps> = ({
 
   const getFilterDescription = () => {
     const activeFilters = Object.entries(filters)
-      .filter(([, value]) => value !== 'all')
-      .map(([key, value]) => `${t(key)}: ${value}`)
+      .filter(([, value]) => value && value !== 'all')
+      .map(([key, value]) => `${t(key as any)}: ${value}`)
       .join(', ');
     return activeFilters ? `${t('active_filters')}: ${activeFilters}` : t('no_active_filters');
   };

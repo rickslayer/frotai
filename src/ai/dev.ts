@@ -1,8 +1,9 @@
+
 'use server';
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/answer-fleet-question.ts';
-import '@/ai/flows/summarize-chart-data.ts';
-import '@/ai/flows/predict-parts-demand.ts';
-import '@/ai/flows/generate-initial-search-filters.ts';
+import '@/ai/flows/answer-fleet-question';
+import '@/ai/flows/summarize-chart-data';
+import '@/ai/flows/predict-parts-demand';
+import '@/ai/flows/generate-initial-search-filters';
