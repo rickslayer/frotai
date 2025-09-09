@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -18,7 +19,7 @@ import {
   SidebarTrigger,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import RegionalFleetMap from './dashboard/regional-fleet-map';
+import RegionalFleetChart from './dashboard/regional-fleet-chart';
 import { getRegionData } from '@/lib/regions';
 
 
@@ -170,7 +171,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
               <StatCards data={filteredData} filters={filters} />
                <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
                 <div className="lg:col-span-3">
-                  <RegionalFleetMap data={regionalData} />
+                  <RegionalFleetChart data={regionalData} />
                 </div>
                 <div className="lg:col-span-2">
                    <TopModelsChart data={filteredData} />
