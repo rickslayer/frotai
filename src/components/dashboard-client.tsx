@@ -15,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import FleetByYearChart from './dashboard/sales-over-time-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
-import FilterSuggestions from './dashboard/filter-suggestions';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -60,7 +59,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         }
         return updated;
     });
-    if(Object.keys(newFilters).length === 1 && !['year', 'manufacturer'].includes(Object.keys(newFilters)[0])){
+    if(Object.keys(newFilters).length > 1 || !['year', 'manufacturer'].includes(Object.keys(newFilters)[0])){
        setIsSheetOpen(false);
     }
   }, []);
@@ -154,7 +153,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           />
         </div>
         <div className="flex flex-col">
-          <DashboardHeader>
+          <DashboardHeader onExport={() => alert(t('export_planned_feature'))}>
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon" className="shrink-0 lg:hidden">
@@ -172,7 +171,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
             </Sheet>
           </DashboardHeader>
           <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
-            <FilterSuggestions onApplyFilters={handleFilterChange} />
             <StatCards data={filteredData} filters={filters} />
             <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
               <FleetByYearChart data={filteredData} />

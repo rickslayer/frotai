@@ -35,14 +35,15 @@ const prompt = ai.definePrompt({
 
 O gráfico se chama: "{{chartTitle}}"
 
-Os dados do gráfico são:
+Os dados do gráfico, que representam o resultado de uma consulta específica de frota, são:
 \`\`\`json
 {{{json chartData}}}
 \`\`\`
 
+Baseie sua análise *estritamente* nos dados fornecidos. Não faça suposições sobre dados fora deste conjunto.
 Analise os dados e identifique as principais tendências, picos, quedas e oportunidades de mercado. Por exemplo, um grande número de veículos com 8-12 anos pode indicar uma alta demanda por peças de reposição e manutenção. Um pico em um ano específico pode sugerir uma oportunidade para peças daquele modelo/ano.
 
-Fale diretamente com o usuário (um profissional do setor). Seja conciso e direto ao ponto. Forneça insights que ajudem na tomada de decisão sobre estoque, vendas ou fabricação.`,
+Fale diretamente com o usuário (um profissional do setor). Seja conciso e direto ao ponto. Forneça insights que ajudem na tomada de decisão sobre estoque, vendas ou fabricação, com base *apenas* nos dados visíveis no gráfico.`,
 });
 
 
