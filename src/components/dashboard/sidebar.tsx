@@ -24,7 +24,7 @@ interface DashboardSidebarProps {
 const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions }) => {
   const { t } = useTranslation();
   
-  const handleFilterValueChange = (key: keyof Filters, value: string | string[]) => {
+  const handleFilterValueChange = (key: keyof Filters, value: string | string[] | number) => {
     if (key === 'year') {
       onFilterChange({ year: value === 'all' ? 'all' : Number(value) });
     } else {
@@ -92,7 +92,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4 group-data-[collapsible=icon]:hidden">
-                  <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value)}>
+                  <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
                     <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_manufacturers')}</SelectItem>

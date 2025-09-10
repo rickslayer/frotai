@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "./badge";
 import { ScrollArea } from "./scroll-area";
@@ -31,6 +32,7 @@ export function MultiSelectDropdown({
   disabled = false,
   className,
 }: MultiSelectDropdownProps) {
+
   const handleSelect = (value: string) => {
     if (selectedValues.includes(value)) {
       onChange(selectedValues.filter((v) => v !== value));
@@ -39,10 +41,21 @@ export function MultiSelectDropdown({
     }
   };
 
+  const handleSelectAll = () => {
+    if (selectedValues.length === options.length) {
+      onChange([]); // Deselect all
+    } else {
+      onChange(options.map(o => o.value)); // Select all
+    }
+  };
+
+
   const getLabel = (value: string) => {
       const option = options.find(o => o.value === value);
       return option ? option.label : value;
   }
+
+  const isAllSelected = options.length > 0 && selectedValues.length === options.length;
 
   return (
     <DropdownMenu>
@@ -50,7 +63,7 @@ export function MultiSelectDropdown({
         <Button
           variant="outline"
           role="combobox"
-          className={cn("w-full justify-between h-auto", className)}
+          className={cn("w-full justify-between h-auto min-h-10", className)}
         >
           <div className="flex gap-1 flex-wrap">
             {selectedValues.length > 0
@@ -70,6 +83,16 @@ export function MultiSelectDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
         <ScrollArea className="max-h-60">
+            <DropdownMenuItem onSelect={handleSelectAll}>
+                 <Check
+                    className={cn(
+                        "mr-2 h-4 w-4",
+                        isAllSelected ? "opacity-100" : "opacity-0"
+                    )}
+                 />
+                 {isAllSelected ? "Limpar seleção" : "Selecionar Todos"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             {options.map((option) => (
             <DropdownMenuItem
                 key={option.value}
