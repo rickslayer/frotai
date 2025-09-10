@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Check, ChevronsUpDown, ChevronRight } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
@@ -74,7 +74,7 @@ export function MultiSelectDropdown({
                 )
             ) : placeholder}
           </div>
-          <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
        <PopoverContent className="w-80 p-0" align="start">
