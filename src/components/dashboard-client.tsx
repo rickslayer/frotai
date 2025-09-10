@@ -269,7 +269,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
       totalVehicles,
       fleetAgeBrackets,
       regionalData,
-      fleetByYearData
+      fleetByYearData,
+      availableVersionsCount: filterOptions.versions.length
     };
     
     setSnapshots(prev => {

@@ -92,4 +92,5 @@ export type AnalysisSnapshot = {
   fleetAgeBrackets: FleetAgeBracket[];
   regionalData: RegionData[];
   fleetByYearData: ChartData[];
+  availableVersionsCount?: number;
 };

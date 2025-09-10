@@ -29,6 +29,11 @@ const SnapshotCard: FC<{ snapshot: AnalysisSnapshot | null; onClear: () => void;
         const value = snapshot.filters[key];
         if (value && value !== 'all') {
             if (Array.isArray(value)) {
+                if (value.length === 0) return null; // Não mostra a versão se estiver vazia
+                // Se todas as versões estiverem selecionadas (comparando com a contagem total), mostra "Todas"
+                if (snapshot.availableVersionsCount && value.length === snapshot.availableVersionsCount) {
+                    return { key: t(key), value: t('all_versions') };
+                }
                 if (value.length > 0) {
                      return { key: t(key), value: value.join(', ') };
                 }
@@ -65,35 +70,58 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
 
   const canCompare = snapshots[0] && snapshots[1];
 
-  // Helper to convert all filter values to string for AI
-  const prepareFiltersForAI = (filters: Filters) => {
-    const prepared = {} as Record<string, string | string[]>;
+  const prepareFiltersForAI = (snapshot: AnalysisSnapshot) => {
+    const prepared: Record<string, string | string[]> = {};
+    const filters = snapshot.filters;
+
     for (const key in filters) {
-      const value = filters[key as keyof Filters];
-      if (Array.isArray(value)) {
-        prepared[key] = value;
-      } else {
-        prepared[key] = String(value);
-      }
+        const filterKey = key as keyof Filters;
+        const value = filters[filterKey];
+
+        if (filterKey === 'version') {
+            if (snapshot.availableVersionsCount && value.length === snapshot.availableVersionsCount) {
+                prepared[key] = t('all_versions'); 
+            } else {
+                prepared[key] = value;
+            }
+        } else {
+            prepared[key] = String(value);
+        }
     }
     return prepared;
   };
 
+
   const handleGenerateComparison = async () => {
     if (!canCompare) return;
+
+     // Verifica o limite de versões para cada cenário
+    for (const snapshot of snapshots) {
+        if (snapshot && snapshot.filters.version.length > 5) {
+            if (!snapshot.availableVersionsCount || snapshot.filters.version.length !== snapshot.availableVersionsCount) {
+                toast({
+                    variant: 'destructive',
+                    title: t('error'),
+                    description: t('version_limit_error', { limit: 5 }),
+                });
+                return;
+            }
+        }
+    }
+
 
     setLoading(true);
     setAnalysis(null);
     try {
       const result = await compareFleetData({
         scenarioA: {
-          filters: prepareFiltersForAI(snapshots[0]!.filters) as any,
+          filters: prepareFiltersForAI(snapshots[0]!) as any,
           fleetAgeBrackets: snapshots[0]!.fleetAgeBrackets,
           regionalData: snapshots[0]!.regionalData,
           fleetByYearData: snapshots[0]!.fleetByYearData,
         },
         scenarioB: {
-          filters: prepareFiltersForAI(snapshots[1]!.filters) as any,
+          filters: prepareFiltersForAI(snapshots[1]!) as any,
           fleetAgeBrackets: snapshots[1]!.fleetAgeBrackets,
           regionalData: snapshots[1]!.regionalData,
           fleetByYearData: snapshots[1]!.fleetByYearData,

@@ -111,5 +111,6 @@
   "generate_comparison": "Generate Comparison",
   "generating_comparison": "Comparing scenarios...",
   "ai_comparison_title": "AI Comparative Analysis",
-  "selected_versions": "{{count}} versions selected"
+  "selected_versions": "{{count}} versions selected",
+  "version_limit_error": "For a better analysis, please compare a maximum of {{limit}} versions at a time, or select all versions."
 }
