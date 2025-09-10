@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export type Vehicle = {
@@ -38,12 +39,22 @@ export const ChartDataSchema = z.object({
 export type ChartData = z.infer<typeof ChartDataSchema>;
 
 
-// Type for the data structure representing fleet age distribution
-export type FleetAgeBracket = {
-  range: string;
-  label: string;
-  quantity: number;
-};
+// Schema for the data structure representing fleet age distribution
+export const FleetAgeBracketSchema = z.object({
+  range: z.string().describe('The age range, e.g., "0-3".'),
+  label: z.string().describe('The user-facing label for the age bracket, e.g., "Novos (0-3 anos)".'),
+  quantity: z.number().describe('The total number of vehicles in this bracket.'),
+});
+export type FleetAgeBracket = z.infer<typeof FleetAgeBracketSchema>;
+
+// Schema for regional data
+export const RegionDataSchema = z.object({
+    name: z.string().describe('The name of the region.'),
+    quantity: z.number().describe('The total number of vehicles in this region.'),
+    fill: z.string().describe('The color code for the chart.'),
+});
+export type RegionData = z.infer<typeof RegionDataSchema>;
+
 
 // Types for Part Demand Prediction Flow
 const PartPredictionSchema = z.object({
@@ -54,7 +65,7 @@ const PartPredictionSchema = z.object({
 });
 
 export const PredictPartsDemandInputSchema = z.object({
-  fleetAgeBrackets: z.array(z.custom<FleetAgeBracket>()).describe('An array of objects representing the age distribution of the vehicle fleet.'),
+  fleetAgeBrackets: z.array(FleetAgeBracketSchema).describe('An array of objects representing the age distribution of the vehicle fleet.'),
   partCategory: z.string().optional().describe('An optional, user-specified category of parts to focus the analysis on (e.g., "Freios", "Suspensão", "Cabos").'),
   filters: z.object({
     manufacturer: z.string(),
@@ -67,3 +78,9 @@ export const PredictPartsDemandOutputSchema = z.object({
     predictions: z.array(PartPredictionSchema).describe('An array of up to 3-4 key part demand predictions.'),
 });
 export type PredictPartsDemandOutput = z.infer<typeof PredictPartsDemandOutputSchema>;
+
+
+// Types for Final Analysis Flow
+export type AnswerFleetQuestionOutput = {
+  answer: string;
+};

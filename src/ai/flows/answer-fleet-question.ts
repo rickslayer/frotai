@@ -7,14 +7,15 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import type { FleetAgeBracket, RegionData, ChartData } from '@/types';
+import { FleetAgeBracketSchema, RegionDataSchema, ChartDataSchema } from '@/types';
+import type { AnswerFleetQuestionOutput } from '@/types';
 
 const AnswerFleetQuestionInputSchema = z.object({
-  question: z.string().describe('The user\'s question about the fleet data, including the filter context.'),
+  question: z.string().describe("The user's question about the fleet data, including the filter context."),
   data: z.object({
-    fleetAgeBrackets: z.array(z.custom<FleetAgeBracket>()).describe('An array of objects representing the age distribution of the vehicle fleet.'),
-    regionalData: z.array(z.custom<RegionData>()).describe('An array of objects representing the regional distribution of the vehicle fleet.'),
-    fleetByYearData: z.array(z.custom<ChartData>()).describe('An array of objects representing the fleet distribution by year.'),
+    fleetAgeBrackets: z.array(FleetAgeBracketSchema).describe('An array of objects representing the age distribution of the vehicle fleet.'),
+    regionalData: z.array(RegionDataSchema).describe('An array of objects representing the regional distribution of the vehicle fleet.'),
+    fleetByYearData: z.array(ChartDataSchema).describe('An array of objects representing the fleet distribution by year.'),
   }),
 });
 
@@ -24,7 +25,6 @@ const AnswerFleetQuestionOutputSchema = z.object({
   answer: z.string().describe('The answer to the user\'s question in Markdown format.'),
 });
 
-export type AnswerFleetQuestionOutput = z.infer<typeof AnswerFleetQuestionOutputSchema>;
 
 export async function answerFleetQuestion(
   input: AnswerFleetQuestionInput
@@ -90,7 +90,6 @@ const answerFleetQuestionFlow = ai.defineFlow(
     outputSchema: AnswerFleetQuestionOutputSchema,
   },
   async input => {
-    // Transform data for the prompt if necessary, or pass directly.
     const {output} = await prompt(input);
     return output!;
   }

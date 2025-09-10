@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -6,7 +7,8 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { PredictPartsDemandInputSchema, PredictPartsDemandOutputSchema, type PredictPartsDemandInput, type PredictPartsDemandOutput } from '@/types';
+import { PredictPartsDemandInputSchema, PredictPartsDemandOutputSchema, FleetAgeBracketSchema } from '@/types';
+import type { PredictPartsDemandInput, PredictPartsDemandOutput } from '@/types';
 
 
 export async function predictPartsDemand(
