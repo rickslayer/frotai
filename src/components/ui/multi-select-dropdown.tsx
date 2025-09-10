@@ -34,6 +34,7 @@ export function MultiSelectDropdown({
   className,
 }: MultiSelectDropdownProps) {
   const { t } = useTranslation();
+  const [isOpen, setIsOpen] = React.useState(false);
 
   const handleSelect = (value: string) => {
     if (selectedValues.includes(value)) {
@@ -60,7 +61,7 @@ export function MultiSelectDropdown({
   const isAllSelected = options.length > 0 && selectedValues.length === options.length;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild disabled={disabled}>
         <Button
           variant="outline"
@@ -92,7 +93,8 @@ export function MultiSelectDropdown({
             {options.length > 1 && (
                 <>
                     <DropdownMenuItem 
-                        onSelect={() => {
+                        onSelect={(e) => {
+                          e.preventDefault();
                           handleSelectAll();
                         }}
                     >
@@ -110,7 +112,8 @@ export function MultiSelectDropdown({
             {options.map((option) => (
             <DropdownMenuItem
                 key={option.value}
-                onSelect={() => {
+                onSelect={(e) => {
+                    e.preventDefault();
                     handleSelect(option.value);
                 }}
             >
