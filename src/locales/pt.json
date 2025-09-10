@@ -59,6 +59,7 @@
   "city": "Cidade",
   "manufacturer": "Montadora",
   "model": "Modelo",
+  "version": "Versão",
   "part_demand_forecast_title": "Previsão de Demanda de Peças",
   "part_demand_forecast_description": "Preveja a demanda por peças específicas com base na frota filtrada.",
   "part_category_placeholder": "Ex: Freios, Suspensão, Cabos...",

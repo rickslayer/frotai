@@ -22,10 +22,17 @@ const SnapshotCard: FC<{ snapshot: AnalysisSnapshot | null; onClear: () => void;
     const { t } = useTranslation();
     if (!snapshot) return null;
 
-    const filters = Object.entries(snapshot.filters)
-        .filter(([, value]) => value && value !== 'all')
-        .map(([key, value]) => ({ key: t(key as any), value }))
-        .slice(0, 3);
+    const filterDisplayOrder: (keyof AnalysisSnapshot['filters'])[] = ['state', 'city', 'manufacturer', 'model', 'version', 'year'];
+
+    const filters = filterDisplayOrder
+      .map(key => {
+        const value = snapshot.filters[key];
+        if (value && value !== 'all' && value !== '') {
+          return { key: t(key), value: String(value) };
+        }
+        return null;
+      })
+      .filter(Boolean);
 
     return (
         <Card className="relative bg-muted/30">
@@ -36,7 +43,7 @@ const SnapshotCard: FC<{ snapshot: AnalysisSnapshot | null; onClear: () => void;
                 <CardTitle>{title}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-1 text-sm">
-                {filters.map(f => <p key={f.key}><span className="font-semibold">{f.key}:</span> {f.value}</p>)}
+                {filters.map(f => f && <p key={f.key}><span className="font-semibold">{f.key}:</span> {f.value}</p>)}
                  <p><span className="font-semibold">{t('total_vehicles')}:</span> {snapshot.totalVehicles.toLocaleString()}</p>
             </CardContent>
         </Card>
