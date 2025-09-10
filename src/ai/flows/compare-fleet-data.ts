@@ -9,9 +9,19 @@ import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 import { FleetAgeBracketSchema, RegionDataSchema, ChartDataSchema } from '@/types';
 
+// Defines the explicit schema for the filters
+const ComparisonFilterSchema = z.object({
+  state: z.string(),
+  city: z.string(),
+  manufacturer: z.string(),
+  model: z.string(),
+  version: z.array(z.string()),
+  year: z.string(),
+});
+
 // Defines the structure for a single analysis scenario to be compared
 const FleetAnalysisScenarioSchema = z.object({
-  filters: z.record(z.string()).describe('The filters applied for this scenario.'),
+  filters: ComparisonFilterSchema.describe('The filters applied for this scenario.'),
   fleetAgeBrackets: z.array(FleetAgeBracketSchema).describe('Age distribution data for this scenario.'),
   regionalData: z.array(RegionDataSchema).describe('Regional distribution data for this scenario.'),
   fleetByYearData: z.array(ChartDataSchema).describe('Fleet by manufacturing year data for this scenario.'),

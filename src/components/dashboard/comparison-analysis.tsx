@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { useToast } from '@/hooks/use-toast';
-import type { AnalysisSnapshot } from '@/types';
+import type { AnalysisSnapshot, Filters } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Download, Loader2, Sparkles, Terminal, X } from 'lucide-react';
 import { compareFleetData } from '@/ai/flows/compare-fleet-data';
@@ -65,6 +65,20 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
 
   const canCompare = snapshots[0] && snapshots[1];
 
+  // Helper to convert all filter values to string for AI
+  const prepareFiltersForAI = (filters: Filters) => {
+    const prepared = {} as Record<string, string | string[]>;
+    for (const key in filters) {
+      const value = filters[key as keyof Filters];
+      if (Array.isArray(value)) {
+        prepared[key] = value;
+      } else {
+        prepared[key] = String(value);
+      }
+    }
+    return prepared;
+  };
+
   const handleGenerateComparison = async () => {
     if (!canCompare) return;
 
@@ -73,13 +87,13 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
     try {
       const result = await compareFleetData({
         scenarioA: {
-          filters: snapshots[0]!.filters as any,
+          filters: prepareFiltersForAI(snapshots[0]!.filters) as any,
           fleetAgeBrackets: snapshots[0]!.fleetAgeBrackets,
           regionalData: snapshots[0]!.regionalData,
           fleetByYearData: snapshots[0]!.fleetByYearData,
         },
         scenarioB: {
-          filters: snapshots[1]!.filters as any,
+          filters: prepareFiltersForAI(snapshots[1]!.filters) as any,
           fleetAgeBrackets: snapshots[1]!.fleetAgeBrackets,
           regionalData: snapshots[1]!.regionalData,
           fleetByYearData: snapshots[1]!.fleetByYearData,
