@@ -104,11 +104,13 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
           filters: prepareFiltersForAI(snapshots[0]!) as any,
           fleetAgeBrackets: snapshots[0]!.fleetAgeBrackets,
           regionalData: snapshots[0]!.regionalData,
+          fleetByYearData: snapshots[0]!.fleetByYearData,
         },
         scenarioB: {
           filters: prepareFiltersForAI(snapshots[1]!) as any,
           fleetAgeBrackets: snapshots[1]!.fleetAgeBrackets,
           regionalData: snapshots[1]!.regionalData,
+          fleetByYearData: snapshots[1]!.fleetByYearData,
         }
       });
       setAnalysis(result.comparison);
@@ -129,20 +131,18 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
 
     const doc = new jsPDF();
     
-    // Título
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.text(t('ai_comparison_title'), 14, 22);
 
-    // Converte o HTML da análise para um texto mais simples para o PDF
     const plainText = analysis
         .replace(/<br \/>/g, '\n')
-        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove asteriscos de negrito mas mantém o texto
-        .replace(/<h[1-6]>/g, '\n') // Adiciona quebra de linha antes de títulos
-        .replace(/<\/h[1-6]>/g, '\n\n') // Adiciona quebra de linha dupla depois de títulos
+        .replace(/\*\*(.*?)\*\*/g, '$1') 
+        .replace(/<h[1-6]>/g, '\n') 
+        .replace(/<\/h[1-6]>/g, '\n\n')
         .replace(/<p>/g, '')
         .replace(/<\/p>/g, '\n\n')
-        .replace(/<li>/g, '  - ') // Converte <li> para um item de lista
+        .replace(/<li>/g, '  - ') 
         .replace(/<\/li>/g, '\n')
         .replace(/<ul>|<\/ul>|<ol>|<\/ol>/g, '\n');
 
@@ -150,7 +150,6 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
     
-    // Adiciona o texto com quebra de linha automática
     const splitText = doc.splitTextToSize(plainText, 180);
     doc.text(splitText, 14, 35);
     
