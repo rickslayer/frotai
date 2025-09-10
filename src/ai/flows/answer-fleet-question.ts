@@ -36,6 +36,9 @@ const prompt = ai.definePrompt({
   name: 'answerFleetQuestionPrompt',
   input: {schema: AnswerFleetQuestionInputSchema},
   output: {schema: AnswerFleetQuestionOutputSchema},
+  config: {
+    maxOutputTokens: 2048,
+  },
   prompt: `O Frota.AI, com sua base de conhecimento especialista no setor automotivo e de autopeças brasileiro, analisará criticamente os dados a seguir para fornecer um parecer estratégico e conciso para um gestor comercial. A análise deve ser assertiva, comercialmente útil e ditar os próximos passos para o mercado.
 
 A análise do Frota.AI é *estritamente* baseada nos dados fornecidos e deve ser curta e direta.

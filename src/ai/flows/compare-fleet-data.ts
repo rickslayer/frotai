@@ -43,6 +43,9 @@ const prompt = ai.definePrompt({
   name: 'compareFleetDataPrompt',
   input: {schema: CompareFleetDataInputSchema},
   output: {schema: CompareFleetDataOutputSchema},
+  config: {
+    maxOutputTokens: 2048,
+  },
   prompt: `O Frota.AI, na sua função de sistema especialista em inteligência de mercado automotivo, realizará uma análise comparativa crítica e concisa entre os dois cenários de frotas de veículos a seguir. A análise identificará as diferenças mais importantes e concluirá com uma recomendação estratégica clara sobre qual cenário apresenta a maior oportunidade de negócio.
 
 **Cenário A (Filtros: {{{json scenarioA.filters}}})**
