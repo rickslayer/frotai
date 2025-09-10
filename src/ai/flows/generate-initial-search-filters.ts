@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -29,7 +30,7 @@ export type GenerateInitialSearchFiltersInput = z.infer<typeof GenerateInitialSe
 
 const GenerateInitialSearchFiltersOutputSchema = z.array(InitialSearchFiltersSchema);
 
-export type GenerateInitialSearchFiltersOutput = z.infer<typeof GenerateInitialSearchFiltersOutputSchema>;
+export type GenerateInitialSearchFiltersOutput = z-infer<typeof GenerateInitialSearchFiltersOutputSchema>;
 
 export async function generateInitialSearchFilters(
   input: GenerateInitialSearchFiltersInput
@@ -41,18 +42,18 @@ const prompt = ai.definePrompt({
   name: 'generateInitialSearchFiltersPrompt',
   input: {schema: GenerateInitialSearchFiltersInputSchema},
   output: {schema: GenerateInitialSearchFiltersOutputSchema},
-  prompt: `You are an AI assistant for an auto parts market analysis platform. Your goal is to suggest three relevant and interesting starting points for fleet analysis.
+  prompt: `O Frota.AI, como plataforma de análise de mercado de autopeças, deve sugerir três pontos de partida relevantes e interessantes para análise de frota.
 
-Given the user's region and a list of common vehicle models, create three filter suggestions. Each suggestion should focus on a specific, actionable analysis scenario.
+Com base na região do usuário e em uma lista de modelos de veículos comuns, crie três sugestões de filtros. Cada sugestão deve focar em um cenário de análise específico e acionável.
 
-User's Region: {{{userRegion}}}
-Common Models: {{{commonModels}}}
+Região do Usuário: {{{userRegion}}}
+Modelos Comuns: {{{commonModels}}}
 
-- Each suggestion should have a clear, concise description in Portuguese.
-- Pick a relevant state and city for the analysis.
-- Focus on popular models that are relevant for the auto parts market (e.g., high volume, older models).
+- Cada sugestão deve ter uma descrição clara e concisa em português.
+- Escolha um estado e cidade relevantes para a análise.
+- Foque em modelos populares que são relevantes para o mercado de autopeças (ex: alto volume, modelos mais antigos).
 
-Example Output (as a JSON array of InitialSearchFilters objects):
+Exemplo de Saída (como um array JSON de objetos InitialSearchFilters):
 [
   {
     "state": "São Paulo",

@@ -43,7 +43,7 @@ const prompt = ai.definePrompt({
   name: 'compareFleetDataPrompt',
   input: {schema: CompareFleetDataInputSchema},
   output: {schema: CompareFleetDataOutputSchema},
-  prompt: `Você é um diretor de inteligência de mercado sênior na indústria automotiva. Sua tarefa é realizar uma análise comparativa crítica entre dois cenários de frotas de veículos. A análise deve ser profunda, identificar as diferenças mais sutis e importantes, e concluir com uma recomendação estratégica clara sobre qual cenário apresenta a maior oportunidade de negócio.
+  prompt: `O Frota.AI, na sua função de sistema especialista em inteligência de mercado automotivo, realizará uma análise comparativa crítica entre os dois cenários de frotas de veículos a seguir. A análise identificará as diferenças mais importantes e concluirá com uma recomendação estratégica clara sobre qual cenário apresenta a maior oportunidade de negócio.
 
 **Cenário A (Filtros: {{{json scenarioA.filters}}})**
 - **Frota por Idade:** {{{json scenarioA.fleetAgeBrackets}}}
@@ -55,9 +55,9 @@ const prompt = ai.definePrompt({
 - **Frota por Região:** {{{json scenarioB.regionalData}}}
 - **Frota por Ano:** {{{json scenarioB.fleetByYearData}}}
 
-**Instruções para a Análise Comparativa Crítica:**
+**Instruções para a Análise Comparativa Crítica do Frota.AI:**
 
-1.  **Visão Geral Quantitativa:** Comece comparando os volumes totais. Qual cenário tem mais veículos? Qual a diferença percentual?
+1.  **Visão Geral Quantitativa:** Compare os volumes totais. Qual cenário tem mais veículos? Qual a diferença percentual?
 
 2.  **Análise Comparativa de Idade da Frota:**
     *   Compare as faixas etárias predominantes (ex: Novos, Usados) entre os dois cenários.
@@ -73,9 +73,9 @@ const prompt = ai.definePrompt({
 
 5.  **Conclusão e Recomendação Estratégica:**
     *   Com base em todos os pontos anteriores, qual cenário representa a **melhor oportunidade de negócio *agora*?**
-    *   Seja decisivo. Justifique sua escolha com base nos insights gerados. Exemplo: "Conclusão: Embora o Cenário A tenha um volume total maior, o Cenário B representa uma oportunidade de negócio superior e mais imediata. A combinação de uma frota mais velha e uma forte concentração geográfica no Sudeste permite uma operação mais rentável e com menor risco de estoque. Recomenda-se priorizar o desenvolvimento de produtos e a distribuição para atender às demandas específicas da frota do Cenário B."
+    *   Seja decisivo. Justifique a escolha com base nos insights gerados. Exemplo: "Conclusão: Embora o Cenário A tenha um volume total maior, o Cenário B representa uma oportunidade de negócio superior e mais imediata. A combinação de uma frota mais velha e uma forte concentração geográfica no Sudeste permite uma operação mais rentável e com menor risco de estoque. Recomenda-se priorizar o desenvolvimento de produtos e a distribuição para atender às demandas específicas da frota do Cenário B."
 
-**Formato:** Use Markdown (negrito, listas). A linguagem deve ser assertiva e profissional. A resposta deve estar em português.
+**Formato:** Use Markdown (negrito, listas). A linguagem deve ser assertiva e profissional, como a de um sistema especialista. A resposta deve estar em português.
 `,
 });
 
