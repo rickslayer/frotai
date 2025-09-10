@@ -84,3 +84,12 @@ export type PredictPartsDemandOutput = z.infer<typeof PredictPartsDemandOutputSc
 export type AnswerFleetQuestionOutput = {
   answer: string;
 };
+
+// Types for Comparison Analysis
+export type AnalysisSnapshot = {
+  filters: Filters;
+  totalVehicles: number;
+  fleetAgeBrackets: FleetAgeBracket[];
+  regionalData: RegionData[];
+  fleetByYearData: ChartData[];
+};

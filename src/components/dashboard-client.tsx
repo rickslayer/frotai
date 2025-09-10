@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import React, { useState, useMemo, useCallback, useRef } from 'react';
-import type { Vehicle, FilterOptions, Filters, FleetAgeBracket, ChartData, RegionData } from '@/types';
+import type { Vehicle, FilterOptions, Filters, FleetAgeBracket, ChartData, RegionData, AnalysisSnapshot } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
@@ -23,6 +23,9 @@ import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { Button } from './ui/button';
+import { BookCopy } from 'lucide-react';
+import ComparisonAnalysis from './dashboard/comparison-analysis';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -43,6 +46,9 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     version: '',
     year: '',
   });
+  
+  const [isComparing, setIsComparing] = useState(false);
+  const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
 
   const dashboardContentRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +101,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
             const exportButton = document.getElementById('export-button');
             if (exportButton) {
                 exportButton.style.display = 'none';
+            }
+             const compareButton = document.getElementById('compare-button');
+            if (compareButton) {
+                compareButton.style.display = 'none';
             }
         }
     }).then(canvas => {
@@ -249,6 +259,46 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
       .sort((a, b) => Number(a.name) - Number(b.name));
   }, [filteredData]);
 
+  const handleSaveSnapshot = () => {
+    const totalVehicles = filteredData.reduce((sum, item) => sum + item.quantity, 0);
+
+    const snapshot: AnalysisSnapshot = {
+      filters: { ...filters },
+      totalVehicles,
+      fleetAgeBrackets,
+      regionalData,
+      fleetByYearData
+    };
+    
+    setSnapshots(prev => {
+      if (!prev[0]) {
+        return [snapshot, prev[1]];
+      }
+      if (!prev[1]) {
+        return [prev[0], snapshot];
+      }
+      // If both are full, replace the second one
+      return [prev[0], snapshot];
+    });
+    setIsComparing(true);
+  };
+  
+  const handleClearSnapshot = (index: 0 | 1) => {
+    setSnapshots(prev => {
+        const newSnapshots = [...prev] as [AnalysisSnapshot | null, AnalysisSnapshot | null];
+        newSnapshots[index] = null;
+        if (newSnapshots[0] === null && newSnapshots[1] === null) {
+            setIsComparing(false);
+        }
+        return newSnapshots;
+    });
+  };
+
+  const handleClearAllSnapshots = () => {
+      setSnapshots([null, null]);
+      setIsComparing(false);
+  }
+
 
   return (
     <SidebarProvider>
@@ -265,12 +315,25 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           isFiltered={isFiltered}
         />
         <main ref={dashboardContentRef} className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
+           {isComparing && (
+            <div className="mb-4">
+              <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
+            </div>
+           )}
+
           {!isFiltered ? (
              <div className="flex flex-col h-full gap-8">
                <WelcomePlaceholder />
              </div>
           ) : (
             <>
+              <div className='flex justify-end'>
+                 <Button id="compare-button" onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
+                    <BookCopy className="mr-2 h-4 w-4"/>
+                    {t('save_for_comparison')}
+                </Button>
+              </div>
+
               <StatCards data={filteredData} filters={filters} />
 
                <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
