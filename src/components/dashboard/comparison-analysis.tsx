@@ -70,20 +70,16 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
 
   const canCompare = snapshots[0] && snapshots[1];
 
-  const prepareFiltersForAI = (snapshot: AnalysisSnapshot) => {
+  const prepareFiltersForAI = (snapshot: AnalysisSnapshot): Record<string, string | string[]> => {
     const prepared: Record<string, string | string[]> = {};
     const filters = snapshot.filters;
 
     for (const key in filters) {
         const filterKey = key as keyof Filters;
         const value = filters[filterKey];
-
+        
         if (filterKey === 'version') {
-            if (snapshot.availableVersionsCount && value.length === snapshot.availableVersionsCount) {
-                prepared[key] = t('all_versions'); 
-            } else {
-                prepared[key] = value;
-            }
+            prepared[key] = Array.isArray(value) ? value : [String(value)];
         } else {
             prepared[key] = String(value);
         }
