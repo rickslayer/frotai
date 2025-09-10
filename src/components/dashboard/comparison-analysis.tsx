@@ -119,11 +119,13 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
           filters: prepareFiltersForAI(snapshots[0]!) as any,
           fleetAgeBrackets: snapshots[0]!.fleetAgeBrackets,
           regionalData: snapshots[0]!.regionalData,
+          fleetByYearData: snapshots[0]!.fleetByYearData,
         },
         scenarioB: {
           filters: prepareFiltersForAI(snapshots[1]!) as any,
           fleetAgeBrackets: snapshots[1]!.fleetAgeBrackets,
           regionalData: snapshots[1]!.regionalData,
+          fleetByYearData: snapshots[1]!.fleetByYearData,
         }
       });
       setAnalysis(result.comparison);
@@ -152,8 +154,7 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
     // Converte o HTML da análise para um texto mais simples para o PDF
     const plainText = analysis
         .replace(/<br \/>/g, '\n')
-        .replace(/<\/?b>/g, '') // Remove tags <b>
-        .replace(/<\/?strong>/g, '') // Remove tags <strong>
+        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove asteriscos de negrito mas mantém o texto
         .replace(/<h[1-6]>/g, '\n') // Adiciona quebra de linha antes de títulos
         .replace(/<\/h[1-6]>/g, '\n\n') // Adiciona quebra de linha dupla depois de títulos
         .replace(/<p>/g, '')
@@ -203,10 +204,7 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
           <div className="space-y-4 pt-4">
              <Alert>
               <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center">
-                  <Terminal className="h-4 w-4 mr-2" />
-                  <AlertTitle>{t('ai_comparison_title')}</AlertTitle>
-                </div>
+                 <AlertTitle className="font-bold">{t('ai_comparison_title')}</AlertTitle>
                 <Button variant="ghost" size="icon" onClick={handleDownloadPdf} className="h-6 w-6">
                   <Download className="h-4 w-4" />
                 </Button>
