@@ -53,7 +53,7 @@ const prompt = ai.definePrompt({
   name: 'compareFleetDataPrompt',
   input: {schema: CompareFleetDataInputSchema},
   output: {schema: CompareFleetDataOutputSchema},
-  prompt: `Como um analista de mercado sênior para a indústria de autopeças, sua tarefa é criar uma análise comparativa, **curta e direta**, entre dois cenários de frota. Seja didático e foque no que é mais importante para um tomador de decisão (indústria, comprador, vendedor).
+  prompt: `A Frota.AI, apresenta uma análise direta e focada nas oportunidades:
 
 **Cenário A (Filtros: {{{json scenarioA.filters}}})**
 - **Frota por Idade:** {{{json scenarioA.fleetAgeBrackets}}}
