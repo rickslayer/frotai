@@ -112,7 +112,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                       options={filterOptions.versions.map(v => ({ value: v || 'base', label: v || t('base_model_version')}))}
                       selectedValues={filters.version}
                       onChange={(selected) => handleFilterValueChange('version', selected)}
-                      placeholder="Selecione a(s) Versão(ões)"
+                      placeholder={t('select_version_multi')}
                       disabled={!filters.model || filters.model === 'all'}
                    />
                 </AccordionContent>
