@@ -53,30 +53,24 @@ const prompt = ai.definePrompt({
   name: 'compareFleetDataPrompt',
   input: {schema: CompareFleetDataInputSchema},
   output: {schema: CompareFleetDataOutputSchema},
-  config: {
-    maxOutputTokens: 2048,
-  },
-  prompt: `O Frota.AI, na sua função de sistema especialista em inteligência de mercado automotivo, realizará uma análise comparativa crítica e concisa entre os dois cenários de frotas de veículos a seguir. A análise identificará as diferenças mais importantes e concluirá com uma recomendação estratégica clara sobre qual cenário apresenta a maior oportunidade de negócio.
+  prompt: `Como um analista de mercado sênior para a indústria de autopeças, sua tarefa é criar uma análise comparativa, **curta e direta**, entre dois cenários de frota. Seja didático e foque no que é mais importante para um tomador de decisão (indústria, comprador, vendedor).
 
 **Cenário A (Filtros: {{{json scenarioA.filters}}})**
 - **Frota por Idade:** {{{json scenarioA.fleetAgeBrackets}}}
 - **Frota por Região:** {{{json scenarioA.regionalData}}}
-- **Frota por Ano:** {{{json scenarioA.fleetByYearData}}}
 
 **Cenário B (Filtros: {{{json scenarioB.filters}}})**
 - **Frota por Idade:** {{{json scenarioB.fleetAgeBrackets}}}
 - **Frota por Região:** {{{json scenarioB.regionalData}}}
-- **Frota por Ano:** {{{json scenarioB.fleetByYearData}}}
 
-**Instruções para a Análise Comparativa Crítica e Concisa do Frota.AI:**
+**Instruções para sua Análise Estratégica (Seja Conciso):**
 
-1.  **Visão Geral:** Compare os volumes totais. Qual cenário tem mais veículos?
-2.  **Análise Comparativa de Idade:** Compare as faixas etárias predominantes. **Gere um Insight Crítico:** O que a diferença na idade média significa? Exemplo: "Cenário A tem 30% mais veículos na faixa 'Usados', indicando demanda mais imediata por peças de reposição."
-3.  **Análise Comparativa Regional:** Compare a distribuição geográfica. **Gere um Insight Estratégico:** Qual a implicação logística? Exemplo: "85% da frota do Cenário B está no Sudeste, permitindo uma distribuição mais focada e de menor custo."
-4.  **Análise Comparativa por Ano:** Compare os picos de produção. **Conecte com o Ciclo de Vida:** O que isso revela sobre o ciclo de manutenção? Exemplo: "O pico do Cenário A foi em 2018 (manutenção preventiva), enquanto o do Cenário B foi em 2014 (reparos complexos)."
-5.  **Conclusão e Recomendação Estratégica:** Qual cenário representa a **melhor oportunidade de negócio *agora*?** Seja decisivo e justifique com base nos insights gerados.
+1.  **Visão Geral:** Qual cenário tem o maior volume de veículos? Destaque a diferença percentual.
+2.  **Análise Comparativa de Idade:** Qual cenário tem a frota mais antiga? **Gere um Insight Crítico:** O que isso significa em termos de oportunidade de peças? (Ex: "Cenário A, com 40% de sua frota na faixa 'Usados', indica uma demanda imediata e forte por peças de manutenção e reparo, como suspensão e freios.")
+3.  **Análise Comparativa Regional:** Qual cenário possui uma frota mais concentrada geograficamente? **Gere uma Implicação Estratégica:** Qual a vantagem disso? (Ex: "A concentração de 80% da frota do Cenário B no Sudeste simplifica a logística e permite uma estratégia de distribuição mais agressiva e de menor custo.")
+4.  **Conclusão e Recomendação Final:** Com base nos pontos acima, qual cenário representa a **melhor oportunidade de negócio *agora* para um fabricante de autopeças?** Justifique sua recomendação em uma única frase.
 
-**Formato:** Use Markdown (negrito, listas). A linguagem deve ser assertiva, profissional e concisa. A resposta deve estar em português.
+**Formato:** Use Markdown (negrito, listas). A linguagem deve ser profissional, assertiva e extremamente concisa. A resposta deve estar em português.
 `,
 });
 
