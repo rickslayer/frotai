@@ -18,6 +18,7 @@
   "select_model": "Select Model",
   "all_models": "All Models",
   "select_version": "Select Version(s)",
+  "select_version_multi": "Select Version(s)",
   "all_versions": "All Versions",
   "select_all": "Select All",
   "clear_selection": "Clear Selection",

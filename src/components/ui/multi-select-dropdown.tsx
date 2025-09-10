@@ -91,7 +91,12 @@ export function MultiSelectDropdown({
         <ScrollArea className="max-h-60">
             {options.length > 1 && (
                 <>
-                    <DropdownMenuItem onSelect={handleSelectAll}>
+                    <DropdownMenuItem 
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          handleSelectAll();
+                        }}
+                    >
                         <Check
                             className={cn(
                                 "mr-2 h-4 w-4",
