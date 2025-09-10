@@ -9,8 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { useToast } from '@/hooks/use-toast';
 import type { AnalysisSnapshot, Filters } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Download, Loader2, Sparkles, Terminal, X } from 'lucide-react';
+import { Download, Loader2, Sparkles, Terminal, X, AlertCircle } from 'lucide-react';
 import { compareFleetData } from '@/ai/flows/compare-fleet-data';
+import jsPDF from 'jspdf';
 
 interface ComparisonAnalysisProps {
   snapshots: [AnalysisSnapshot | null, AnalysisSnapshot | null];
@@ -71,15 +72,19 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
   const canCompare = snapshots[0] && snapshots[1];
 
   const prepareFiltersForAI = (snapshot: AnalysisSnapshot): Record<string, string | string[]> => {
-    const prepared: Record<string, string | string[]> = {};
+    const prepared: Record<string, any> = {};
     const filters = snapshot.filters;
 
     for (const key in filters) {
         const filterKey = key as keyof Filters;
-        const value = filters[filterKey];
-        
+        let value = filters[filterKey];
+
         if (filterKey === 'version') {
-            prepared[key] = Array.isArray(value) ? value : [String(value)];
+            if (snapshot.availableVersionsCount && value.length === snapshot.availableVersionsCount) {
+                 prepared[key] = value
+            } else {
+                 prepared[key] = Array.isArray(value) ? value : [String(value)];
+            }
         } else {
             prepared[key] = String(value);
         }
@@ -114,13 +119,11 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
           filters: prepareFiltersForAI(snapshots[0]!) as any,
           fleetAgeBrackets: snapshots[0]!.fleetAgeBrackets,
           regionalData: snapshots[0]!.regionalData,
-          fleetByYearData: snapshots[0]!.fleetByYearData,
         },
         scenarioB: {
           filters: prepareFiltersForAI(snapshots[1]!) as any,
           fleetAgeBrackets: snapshots[1]!.fleetAgeBrackets,
           regionalData: snapshots[1]!.regionalData,
-          fleetByYearData: snapshots[1]!.fleetByYearData,
         }
       });
       setAnalysis(result.comparison);
@@ -136,18 +139,38 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
     }
   };
 
-   const handleDownloadText = () => {
+   const handleDownloadPdf = () => {
     if (!analysis) return;
 
-    const blob = new Blob([analysis.replace(/<br \/>/g, '\n').replace(/<\/?b>/g, '**')], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'frota-ai-comparative-analysis.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text(t('ai_comparison_title'), 14, 22);
+
+    // Converte o HTML da análise para um texto mais simples para o PDF
+    const plainText = analysis
+        .replace(/<br \/>/g, '\n')
+        .replace(/<\/?b>/g, '') // Remove tags <b>
+        .replace(/<\/?strong>/g, '') // Remove tags <strong>
+        .replace(/<h[1-6]>/g, '\n') // Adiciona quebra de linha antes de títulos
+        .replace(/<\/h[1-6]>/g, '\n\n') // Adiciona quebra de linha dupla depois de títulos
+        .replace(/<p>/g, '')
+        .replace(/<\/p>/g, '\n\n')
+        .replace(/<li>/g, '  - ') // Converte <li> para um item de lista
+        .replace(/<\/li>/g, '\n')
+        .replace(/<ul>|<\/ul>|<ol>|<\/ol>/g, '\n'); // Adiciona quebras de linha para listas
+
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    
+    // Adiciona o texto com quebra de linha automática
+    const splitText = doc.splitTextToSize(plainText, 180);
+    doc.text(splitText, 14, 35);
+    
+    doc.save('frota-ai-comparative-analysis.pdf');
   };
 
 
@@ -184,13 +207,20 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
                   <Terminal className="h-4 w-4 mr-2" />
                   <AlertTitle>{t('ai_comparison_title')}</AlertTitle>
                 </div>
-                <Button variant="ghost" size="icon" onClick={handleDownloadText} className="h-6 w-6">
+                <Button variant="ghost" size="icon" onClick={handleDownloadPdf} className="h-6 w-6">
                   <Download className="h-4 w-4" />
                 </Button>
               </div>
               <AlertDescription>
                 <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br />') }} />
               </AlertDescription>
+            </Alert>
+            <Alert variant="destructive" className="bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-300 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>{t('attention_title')}</AlertTitle>
+                <AlertDescription>
+                    {t('comparison_warning')}
+                </AlertDescription>
             </Alert>
           </div>
         )}
@@ -201,3 +231,5 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
 };
 
 export default ComparisonAnalysis;
+
+    

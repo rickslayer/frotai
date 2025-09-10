@@ -110,7 +110,11 @@
   "scenario_b": "Scenario B",
   "generate_comparison": "Generate Comparison",
   "generating_comparison": "Comparing scenarios...",
-  "ai_comparison_title": "AI Comparative Analysis",
+  "ai_comparison_title": "Comparative Analysis",
   "selected_versions": "{{count}} versions selected",
-  "version_limit_error": "For a better analysis, please compare a maximum of {{limit}} versions at a time, or select all versions."
+  "version_limit_error": "For a better analysis, please compare a maximum of {{limit}} versions at a time, or select all versions.",
+  "attention_title": "Attention",
+  "comparison_warning": "If the comparison text seems incomplete, please generate it again. If the error persists, contact our support."
 }
+
+    
