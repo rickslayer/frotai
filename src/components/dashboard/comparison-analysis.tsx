@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { useToast } from '@/hooks/use-toast';
 import type { AnalysisSnapshot } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Loader2, Sparkles, Terminal, X } from 'lucide-react';
+import { Download, Loader2, Sparkles, Terminal, X } from 'lucide-react';
 import { compareFleetData } from '@/ai/flows/compare-fleet-data';
 
 interface ComparisonAnalysisProps {
@@ -85,6 +85,20 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
     }
   };
 
+   const handleDownloadText = () => {
+    if (!analysis) return;
+
+    const blob = new Blob([analysis.replace(/<br \/>/g, '\n').replace(/<\/?b>/g, '**')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'frota-ai-comparative-analysis.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
 
   return (
     <Card className="w-full">
@@ -114,8 +128,15 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
          {analysis && (
           <div className="space-y-4 pt-4">
              <Alert>
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>{t('ai_comparison_title')}</AlertTitle>
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center">
+                  <Terminal className="h-4 w-4 mr-2" />
+                  <AlertTitle>{t('ai_comparison_title')}</AlertTitle>
+                </div>
+                <Button variant="ghost" size="icon" onClick={handleDownloadText} className="h-6 w-6">
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
               <AlertDescription>
                 <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br />') }} />
               </AlertDescription>

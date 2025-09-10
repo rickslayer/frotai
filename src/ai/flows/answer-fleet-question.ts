@@ -36,49 +36,39 @@ const prompt = ai.definePrompt({
   name: 'answerFleetQuestionPrompt',
   input: {schema: AnswerFleetQuestionInputSchema},
   output: {schema: AnswerFleetQuestionOutputSchema},
-  prompt: `O Frota.AI, com sua base de conhecimento especialista no setor automotivo e de autopeças brasileiro, analisará criticamente os dados a seguir para fornecer um parecer estratégico para um gestor comercial. A análise deve ser assertiva, comercialmente útil e ditar os próximos passos para o mercado.
+  prompt: `O Frota.AI, com sua base de conhecimento especialista no setor automotivo e de autopeças brasileiro, analisará criticamente os dados a seguir para fornecer um parecer estratégico e conciso para um gestor comercial. A análise deve ser assertiva, comercialmente útil e ditar os próximos passos para o mercado.
 
-A análise do Frota.AI é *estritamente* baseada nos dados fornecidos.
+A análise do Frota.AI é *estritamente* baseada nos dados fornecidos e deve ser curta e direta.
 
 **Contexto da Análise (Filtros Aplicados):**
 {{question}}
 
 **Dados Agregados para Análise Crítica:**
 
-1.  **Distribuição da Frota por Idade (em JSON):**
+1.  **Distribuição da Frota por Idade:**
     \`\`\`json
     {{{json data.fleetAgeBrackets}}}
     \`\`\`
 
-2.  **Distribuição Regional da Frota (em JSON):**
+2.  **Distribuição Regional da Frota:**
     \`\`\`json
     {{{json data.regionalData}}}
     \`\`\`
     
-3.  **Frota por Ano de Fabricação (em JSON):**
+3.  **Frota por Ano de Fabricação:**
     \`\`\`json
     {{{json data.fleetByYearData}}}
     \`\`\`
 
-**Instruções para a Análise Crítica e Assertiva do Frota.AI:**
+**Instruções para a Análise Crítica e Assertiva do Frota.AI (seja direto e conciso):**
 
-1.  **Síntese Executiva:** Comece com um parágrafo curto e direto que resume a principal conclusão da análise. Qual é a história que os dados contam?
-2.  **Análise por Idade da Frota:**
-    *   Identifique a(s) faixa(s) etária(s) predominante(s) (ex: "Usados (8-12 anos)").
-    *   Traduza isso em uma **oportunidade de negócio clara**. Exemplo: "A alta concentração de veículos com 8-12 anos (X mil unidades) indica uma demanda iminente e forte por peças de manutenção de alta quilometragem, como kits de embreagem, amortecedores e componentes de suspensão."
-    *   Seja específico sobre o tipo de peça que essa faixa etária demanda.
-3.  **Análise Regional:**
-    *   Aponte a região dominante e sua representatividade percentual e absoluta (ex: "A região Sudeste concentra 80% da frota analisada, com 150.000 veículos.").
-    *   Qual a **implicação estratégica** disso? Exemplo: "Isso solidifica o Sudeste como o mercado prioritário, exigindo um foco logístico e de distribuição para garantir a disponibilidade de peças para os modelos em questão."
-4.  **Análise por Ano de Fabricação:**
-    *   Identifique picos ou tendências significativas no gráfico de ano. Existe um ano específico com um volume muito alto?
-    *   Conecte essa informação com o ciclo de vida do veículo. Exemplo: "O pico de vendas em 2016, com 30.000 veículos, significa que essa safra de carros está entrando agora na sua segunda fase de grande manutenção (pós 7-8 anos), abrindo um mercado para peças mais complexas como bombas de combustível e alternadores."
-5.  **Recomendação Estratégica Final:** Conclua com 2-3 recomendações acionáveis e diretas para um fabricante ou distribuidor de autopeças. As recomendações devem ser uma consequência lógica das análises anteriores. Exemplo: "1. Priorizar o estoque de kits de correia dentada para o [Modelo do Filtro] anos 2015-2017. 2. Intensificar a distribuição e marketing na região Sudeste, com foco em centros urbanos. 3. Desenvolver campanhas promocionais para peças de freio e suspensão, que são as mais procuradas pela faixa etária dominante de 8-12 anos."
+1.  **Síntese Executiva:** Comece com um parágrafo curto resumindo a principal conclusão da análise.
+2.  **Análise por Idade da Frota:** Identifique a faixa etária predominante e traduza isso em uma **oportunidade de negócio clara e direta**. Exemplo: "A concentração de veículos com 8-12 anos indica forte demanda por peças de manutenção de alta quilometragem (ex: embreagem, amortecedores)."
+3.  **Análise Regional:** Aponte a região dominante e sua **implicação estratégica**. Exemplo: "O Sudeste concentra 80% da frota, exigindo foco logístico e de distribuição nesta região."
+4.  **Análise por Ano de Fabricação:** Identifique picos significativos e conecte com o ciclo de vida do veículo. Exemplo: "O pico de vendas em 2016 significa que esta safra entra agora na fase de grande manutenção, demandando peças mais complexas."
+5.  **Recomendação Estratégica Final:** Conclua com 2-3 recomendações acionáveis e diretas para um fabricante ou distribuidor de autopeças.
 
-**Formato da Resposta:**
-*   Use Markdown para formatar a resposta (negrito, listas).
-*   A linguagem deve ser profissional, direta e confiante, como a de um sistema especialista.
-*   A resposta final deve estar em português.
+**Formato:** Use Markdown (negrito, listas). Linguagem profissional, direta e confiante. A resposta final deve estar em português e ser concisa.
 `,
 });
 

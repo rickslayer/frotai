@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { answerFleetQuestion } from '@/ai/flows/answer-fleet-question';
 import type { Filters, Vehicle, RegionData, FleetAgeBracket, ChartData } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Loader2, Sparkles, Terminal } from 'lucide-react';
+import { Download, Loader2, Sparkles, Terminal } from 'lucide-react';
 
 interface FinalAnalysisProps {
   filters: Filters;
@@ -61,6 +61,21 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
     }
   };
 
+  const handleDownloadText = () => {
+    if (!analysis) return;
+
+    // Basic conversion from HTML to plain text for download
+    const blob = new Blob([analysis.replace(/<br \/>/g, '\n').replace(/<\/?b>/g, '**')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'frota-ai-analysis.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
 
   return (
     <Card className="flex flex-col h-full">
@@ -84,8 +99,15 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
         {analysis && (
           <div className="space-y-4 pt-4">
              <Alert>
-              <Terminal className="h-4 w-4" />
-              <AlertTitle>{t('ai_analysis_title')}</AlertTitle>
+              <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center">
+                  <Terminal className="h-4 w-4 mr-2" />
+                  <AlertTitle>{t('ai_analysis_title')}</AlertTitle>
+                </div>
+                 <Button variant="ghost" size="icon" onClick={handleDownloadText} className="h-6 w-6">
+                    <Download className="h-4 w-4" />
+                  </Button>
+              </div>
               <AlertDescription>
                 <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br />') }} />
               </AlertDescription>

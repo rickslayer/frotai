@@ -43,7 +43,7 @@ const prompt = ai.definePrompt({
   name: 'compareFleetDataPrompt',
   input: {schema: CompareFleetDataInputSchema},
   output: {schema: CompareFleetDataOutputSchema},
-  prompt: `O Frota.AI, na sua função de sistema especialista em inteligência de mercado automotivo, realizará uma análise comparativa crítica entre os dois cenários de frotas de veículos a seguir. A análise identificará as diferenças mais importantes e concluirá com uma recomendação estratégica clara sobre qual cenário apresenta a maior oportunidade de negócio.
+  prompt: `O Frota.AI, na sua função de sistema especialista em inteligência de mercado automotivo, realizará uma análise comparativa crítica e concisa entre os dois cenários de frotas de veículos a seguir. A análise identificará as diferenças mais importantes e concluirá com uma recomendação estratégica clara sobre qual cenário apresenta a maior oportunidade de negócio.
 
 **Cenário A (Filtros: {{{json scenarioA.filters}}})**
 - **Frota por Idade:** {{{json scenarioA.fleetAgeBrackets}}}
@@ -55,27 +55,15 @@ const prompt = ai.definePrompt({
 - **Frota por Região:** {{{json scenarioB.regionalData}}}
 - **Frota por Ano:** {{{json scenarioB.fleetByYearData}}}
 
-**Instruções para a Análise Comparativa Crítica do Frota.AI:**
+**Instruções para a Análise Comparativa Crítica e Concisa do Frota.AI:**
 
-1.  **Visão Geral Quantitativa:** Compare os volumes totais. Qual cenário tem mais veículos? Qual a diferença percentual?
+1.  **Visão Geral:** Compare os volumes totais. Qual cenário tem mais veículos?
+2.  **Análise Comparativa de Idade:** Compare as faixas etárias predominantes. **Gere um Insight Crítico:** O que a diferença na idade média significa? Exemplo: "Cenário A tem 30% mais veículos na faixa 'Usados', indicando demanda mais imediata por peças de reposição."
+3.  **Análise Comparativa Regional:** Compare a distribuição geográfica. **Gere um Insight Estratégico:** Qual a implicação logística? Exemplo: "85% da frota do Cenário B está no Sudeste, permitindo uma distribuição mais focada e de menor custo."
+4.  **Análise Comparativa por Ano:** Compare os picos de produção. **Conecte com o Ciclo de Vida:** O que isso revela sobre o ciclo de manutenção? Exemplo: "O pico do Cenário A foi em 2018 (manutenção preventiva), enquanto o do Cenário B foi em 2014 (reparos complexos)."
+5.  **Conclusão e Recomendação Estratégica:** Qual cenário representa a **melhor oportunidade de negócio *agora*?** Seja decisivo e justifique com base nos insights gerados.
 
-2.  **Análise Comparativa de Idade da Frota:**
-    *   Compare as faixas etárias predominantes (ex: Novos, Usados) entre os dois cenários.
-    *   **Gere um Insight Crítico:** O que a diferença na idade média da frota significa? Exemplo: "O Cenário A, apesar de menor em volume, possui uma concentração 30% maior de veículos na faixa 'Usados (8-12 anos)'. Isso indica uma demanda mais imediata e previsível por peças de reposição de alta quilometragem, como embreagens e suspensão, em comparação com o Cenário B, que é dominado por veículos mais novos."
-
-3.  **Análise Comparativa Regional:**
-    *   Compare a distribuição geográfica. Um cenário é mais concentrado regionalmente que o outro?
-    *   **Gere um Insight Estratégico:** Qual a implicação logística e de distribuição disso? Exemplo: "Enquanto o Cenário A está pulverizado pelo país, 85% da frota do Cenário B está na região Sudeste. Isso permite uma estratégia de distribuição mais focada e de menor custo para o Cenário B, otimizando o estoque nos centros de distribuição de SP e RJ."
-
-4.  **Análise Comparativa por Ano de Fabricação:**
-    *   Compare os picos de produção. Os anos de maior volume são diferentes?
-    *   **Conecte com o Ciclo de Vida do Produto:** O que isso revela sobre o ciclo de manutenção? Exemplo: "O pico do Cenário A foi em 2018, indicando que esses veículos estão entrando agora na fase de troca de itens de manutenção preventiva. Já o pico do Cenário B, em 2014, aponta para uma demanda por peças de reparo mais complexas e de maior valor agregado."
-
-5.  **Conclusão e Recomendação Estratégica:**
-    *   Com base em todos os pontos anteriores, qual cenário representa a **melhor oportunidade de negócio *agora*?**
-    *   Seja decisivo. Justifique a escolha com base nos insights gerados. Exemplo: "Conclusão: Embora o Cenário A tenha um volume total maior, o Cenário B representa uma oportunidade de negócio superior e mais imediata. A combinação de uma frota mais velha e uma forte concentração geográfica no Sudeste permite uma operação mais rentável e com menor risco de estoque. Recomenda-se priorizar o desenvolvimento de produtos e a distribuição para atender às demandas específicas da frota do Cenário B."
-
-**Formato:** Use Markdown (negrito, listas). A linguagem deve ser assertiva e profissional, como a de um sistema especialista. A resposta deve estar em português.
+**Formato:** Use Markdown (negrito, listas). A linguagem deve ser assertiva, profissional e concisa. A resposta deve estar em português.
 `,
 });
 
