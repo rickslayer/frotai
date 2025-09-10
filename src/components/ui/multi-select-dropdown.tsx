@@ -11,6 +11,8 @@ import { Badge } from "./badge";
 import { ScrollArea } from "./scroll-area";
 import { Separator } from "./separator";
 import { Checkbox } from "./checkbox";
+import { Label } from "./label";
+
 
 interface MultiSelectDropdownProps {
   options: { value: string; label: string }[];
@@ -65,7 +67,7 @@ export function MultiSelectDropdown({
         >
           <div className="flex gap-1 flex-wrap">
              {selectedValues.length > 0 ? (
-                isAllSelected ? (
+                isAllSelected || selectedValues.length === options.length ? (
                     <Badge variant="secondary" className="rounded-sm px-2 py-1">{t('all_versions')}</Badge>
                 ) : (
                     <>
@@ -79,37 +81,38 @@ export function MultiSelectDropdown({
       </PopoverTrigger>
        <PopoverContent className="w-80 p-0" align="start">
           <div className="p-2">
-            <Button
-              variant="ghost"
+            <div 
+              className="flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer"
               onClick={handleSelectAll}
-              className="w-full justify-start px-2"
             >
-              <Checkbox
+               <Checkbox
                 id="select-all"
                 checked={isAllSelected}
-                className="mr-2"
+                onCheckedChange={handleSelectAll}
               />
-              {isAllSelected ? t('clear_selection') : t('select_all')}
-            </Button>
+              <Label htmlFor="select-all" className="flex-1 cursor-pointer text-sm font-normal">
+                 {isAllSelected ? t('clear_selection') : t('select_all')}
+              </Label>
+            </div>
           </div>
           <Separator />
           <ScrollArea className="h-60">
             <div className="p-1">
               {options.map((option) => (
-                 <Button
-                  variant="ghost"
+                 <div
                   key={option.value}
+                  className="flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer"
                   onClick={() => handleSelect(option.value)}
-                  className="w-full justify-start px-2 font-normal"
                 >
                    <Checkbox
+                      id={`version-${option.value}`}
                       checked={selectedValues.includes(option.value)}
-                      className="mr-2"
+                      onCheckedChange={() => handleSelect(option.value)}
                    />
-                  <span className="truncate">
+                  <Label htmlFor={`version-${option.value}`} className="truncate flex-1 cursor-pointer font-normal text-sm">
                     {option.label}
-                  </span>
-                </Button>
+                  </Label>
+                </div>
               ))}
             </div>
           </ScrollArea>
