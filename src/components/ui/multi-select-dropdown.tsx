@@ -92,8 +92,7 @@ export function MultiSelectDropdown({
             {options.length > 1 && (
                 <>
                     <DropdownMenuItem 
-                        onSelect={(e) => {
-                          e.preventDefault();
+                        onSelect={() => {
                           handleSelectAll();
                         }}
                     >
@@ -111,8 +110,7 @@ export function MultiSelectDropdown({
             {options.map((option) => (
             <DropdownMenuItem
                 key={option.value}
-                onSelect={(e) => {
-                    e.preventDefault();
+                onSelect={() => {
                     handleSelect(option.value);
                 }}
             >
