@@ -110,5 +110,6 @@
   "scenario_b": "Scenario B",
   "generate_comparison": "Generate Comparison",
   "generating_comparison": "Comparing scenarios...",
-  "ai_comparison_title": "AI Comparative Analysis"
+  "ai_comparison_title": "AI Comparative Analysis",
+  "selected_versions": "{{count}} versions selected"
 }

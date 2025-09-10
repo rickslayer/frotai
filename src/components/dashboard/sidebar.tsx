@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { Car, MapPin, Calendar, SlidersHorizontal, FilterX } from 'lucide-react';
+import { Car, MapPin, Calendar, SlidersHorizontal, FilterX, ChevronRight } from 'lucide-react';
 import type { FilterOptions, Filters } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

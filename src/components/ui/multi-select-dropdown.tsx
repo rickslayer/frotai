@@ -3,18 +3,14 @@
 
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Badge } from "./badge";
 import { ScrollArea } from "./scroll-area";
+import { Separator } from "./separator";
+import { Checkbox } from "./checkbox";
 
 interface MultiSelectDropdownProps {
   options: { value: string; label: string }[];
@@ -59,60 +55,65 @@ export function MultiSelectDropdown({
   const isAllSelected = options.length > 0 && selectedValues.length === options.length;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild disabled={disabled}>
+    <Popover>
+      <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
+          disabled={disabled}
           className={cn("w-full justify-between h-auto min-h-10", className)}
         >
           <div className="flex gap-1 flex-wrap">
-            {selectedValues.length > 0 ? (
+             {selectedValues.length > 0 ? (
                 isAllSelected ? (
                     <Badge variant="secondary" className="rounded-sm px-2 py-1">{t('all_versions')}</Badge>
                 ) : (
-                    selectedValues.map((value) => (
-                        <Badge
-                            variant="secondary"
-                            key={value}
-                            className="rounded-sm px-2 py-1"
-                        >
-                            {getLabel(value)}
-                        </Badge>
-                    ))
+                    <>
+                      <Badge variant="secondary" className="rounded-sm px-2 py-1">{t('selected_versions', {count: selectedValues.length})}</Badge>
+                    </>
                 )
             ) : placeholder}
           </div>
-          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+          <ChevronRight className="h-4 w-4 shrink-0 opacity-50" />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-         <ScrollArea className="max-h-60">
-            {options.length > 1 && (
-                <>
-                    <DropdownMenuItem onSelect={handleSelectAll}>
-                        <Check className={cn("mr-2 h-4 w-4", isAllSelected ? "opacity-100" : "opacity-0")} />
-                        {isAllSelected ? t('clear_selection') : t('select_all')}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                </>
-            )}
-            {options.map((option) => (
-            <DropdownMenuItem key={option.value} onSelect={(e) => {
-              e.preventDefault();
-              handleSelect(option.value)
-            }}>
-                <Check
-                    className={cn(
-                        "mr-2 h-4 w-4",
-                        selectedValues.includes(option.value) ? "opacity-100" : "opacity-0"
-                    )}
-                />
-                {option.label}
-            </DropdownMenuItem>
-            ))}
-        </ScrollArea>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+       <PopoverContent className="w-80 p-0" align="start">
+          <div className="p-2">
+            <Button
+              variant="ghost"
+              onClick={handleSelectAll}
+              className="w-full justify-start px-2"
+            >
+              <Checkbox
+                id="select-all"
+                checked={isAllSelected}
+                className="mr-2"
+              />
+              {isAllSelected ? t('clear_selection') : t('select_all')}
+            </Button>
+          </div>
+          <Separator />
+          <ScrollArea className="h-60">
+            <div className="p-1">
+              {options.map((option) => (
+                 <Button
+                  variant="ghost"
+                  key={option.value}
+                  onClick={() => handleSelect(option.value)}
+                  className="w-full justify-start px-2 font-normal"
+                >
+                   <Checkbox
+                      checked={selectedValues.includes(option.value)}
+                      className="mr-2"
+                   />
+                  <span className="truncate">
+                    {option.label}
+                  </span>
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
+       </PopoverContent>
+    </Popover>
   );
 }
