@@ -45,6 +45,12 @@ const prompt = ai.definePrompt({
   output: {schema: CompareFleetDataOutputSchema},
   config: {
     maxOutputTokens: 2048,
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_NONE',
+      },
+    ]
   },
   prompt: `O Frota.AI, na sua função de sistema especialista em inteligência de mercado automotivo, realizará uma análise comparativa crítica e concisa entre os dois cenários de frotas de veículos a seguir. A análise identificará as diferenças mais importantes e concluirá com uma recomendação estratégica clara sobre qual cenário apresenta a maior oportunidade de negócio.
 
@@ -78,6 +84,9 @@ const compareFleetDataFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('AI failed to generate a comparison. The response was empty.');
+    }
+    return output;
   }
 );
