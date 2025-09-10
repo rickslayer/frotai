@@ -80,8 +80,8 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
         let value = filters[filterKey];
 
         if (filterKey === 'version') {
-            if (snapshot.availableVersionsCount && value.length === snapshot.availableVersionsCount) {
-                 prepared[key] = value
+             if (snapshot.availableVersionsCount && Array.isArray(value) && value.length === snapshot.availableVersionsCount) {
+                 prepared[key] = [t('all_versions')]; // Send a single-element array
             } else {
                  prepared[key] = Array.isArray(value) ? value : [String(value)];
             }
@@ -96,21 +96,6 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
   const handleGenerateComparison = async () => {
     if (!canCompare) return;
 
-     // Verifica o limite de versões para cada cenário
-    for (const snapshot of snapshots) {
-        if (snapshot && snapshot.filters.version.length > 5) {
-            if (!snapshot.availableVersionsCount || snapshot.filters.version.length !== snapshot.availableVersionsCount) {
-                toast({
-                    variant: 'destructive',
-                    title: t('error'),
-                    description: t('version_limit_error', { limit: 5 }),
-                });
-                return;
-            }
-        }
-    }
-
-
     setLoading(true);
     setAnalysis(null);
     try {
@@ -119,13 +104,11 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
           filters: prepareFiltersForAI(snapshots[0]!) as any,
           fleetAgeBrackets: snapshots[0]!.fleetAgeBrackets,
           regionalData: snapshots[0]!.regionalData,
-          fleetByYearData: snapshots[0]!.fleetByYearData,
         },
         scenarioB: {
           filters: prepareFiltersForAI(snapshots[1]!) as any,
           fleetAgeBrackets: snapshots[1]!.fleetAgeBrackets,
           regionalData: snapshots[1]!.regionalData,
-          fleetByYearData: snapshots[1]!.fleetByYearData,
         }
       });
       setAnalysis(result.comparison);
@@ -161,7 +144,7 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
         .replace(/<\/p>/g, '\n\n')
         .replace(/<li>/g, '  - ') // Converte <li> para um item de lista
         .replace(/<\/li>/g, '\n')
-        .replace(/<ul>|<\/ul>|<ol>|<\/ol>/g, '\n'); // Adiciona quebras de linha para listas
+        .replace(/<ul>|<\/ul>|<ol>|<\/ol>/g, '\n');
 
 
     doc.setFont('helvetica', 'normal');
@@ -229,5 +212,3 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
 };
 
 export default ComparisonAnalysis;
-
-    

@@ -26,6 +26,8 @@ import html2canvas from 'html2canvas';
 import { Button } from './ui/button';
 import { BookCopy } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -49,6 +51,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   
   const [isComparing, setIsComparing] = useState(false);
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
+  const [isVersionLimitModalOpen, setIsVersionLimitModalOpen] = useState(false);
 
   const dashboardContentRef = useRef<HTMLDivElement>(null);
 
@@ -262,6 +265,11 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   }, [filteredData]);
 
   const handleSaveSnapshot = () => {
+    if (filters.version.length > 5 && filters.version.length !== filterOptions.versions.length) {
+        setIsVersionLimitModalOpen(true);
+        return;
+    }
+
     const totalVehicles = filteredData.reduce((sum, item) => sum + item.quantity, 0);
 
     const snapshot: AnalysisSnapshot = {
@@ -323,6 +331,23 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
               <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
             </div>
            )}
+
+            <AlertDialog open={isVersionLimitModalOpen} onOpenChange={setIsVersionLimitModalOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>{t('attention_title')}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {t('version_limit_error', { limit: 5 })}
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogAction onClick={() => setIsVersionLimitModalOpen(false)}>
+                        {t('ok_close')}
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
 
           {!isFiltered ? (
              <div className="flex flex-col h-full gap-8">
