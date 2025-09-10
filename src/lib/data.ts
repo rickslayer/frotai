@@ -1,6 +1,7 @@
 import type { Vehicle } from '@/types';
 import fs from 'fs';
 import path from 'path';
+import { cache } from 'react';
 
 // Helper to split model name into base and version
 const splitModelAndVersion = (modelName: string): { model: string, version: string } => {
@@ -18,7 +19,7 @@ const splitModelAndVersion = (modelName: string): { model: string, version: stri
 };
 
 
-export function getFleetData(): Vehicle[] {
+export const getFleetData = cache((): Vehicle[] => {
   // Caminho para o arquivo rj.json na raiz do projeto.
   const filePath = path.join(process.cwd(), 'rj.json');
   let allVehicles: Vehicle[] = [];
@@ -71,4 +72,4 @@ export function getFleetData(): Vehicle[] {
   }
 
   return allVehicles;
-}
+});
