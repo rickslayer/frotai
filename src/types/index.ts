@@ -27,7 +27,7 @@ export type Filters = {
   city: string;
   manufacturer: string;
   model: string;
-  version: string;
+  version: string[];
   year: number | 'all' | '';
 };
 

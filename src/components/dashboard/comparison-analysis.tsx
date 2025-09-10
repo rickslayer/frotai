@@ -27,8 +27,14 @@ const SnapshotCard: FC<{ snapshot: AnalysisSnapshot | null; onClear: () => void;
     const filters = filterDisplayOrder
       .map(key => {
         const value = snapshot.filters[key];
-        if (value && value !== 'all' && value !== '') {
-          return { key: t(key), value: String(value) };
+        if (value && value !== 'all') {
+            if (Array.isArray(value)) {
+                if (value.length > 0) {
+                     return { key: t(key), value: value.join(', ') };
+                }
+            } else if (String(value) !== '') {
+                 return { key: t(key), value: String(value) };
+            }
         }
         return null;
       })

@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
 import { Combobox } from '../ui/combobox';
+import { MultiSelectDropdown } from '../ui/multi-select-dropdown';
 
 interface DashboardSidebarProps {
   filters: Filters;
@@ -23,7 +24,7 @@ interface DashboardSidebarProps {
 const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions }) => {
   const { t } = useTranslation();
   
-  const handleFilterValueChange = (key: keyof Filters, value: string) => {
+  const handleFilterValueChange = (key: keyof Filters, value: string | string[]) => {
     if (key === 'year') {
       onFilterChange({ year: value === 'all' ? 'all' : Number(value) });
     } else {
@@ -37,12 +38,13 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
       city: '',
       manufacturer: '',
       model: '',
-      version: '',
+      version: [],
       year: '',
     });
   };
 
-  const hasActiveFilters = Object.values(filters).some(f => f && f !== 'all');
+  const hasActiveFilters = Object.values(filters).some(f => (Array.isArray(f) ? f.length > 0 : f && f !== 'all'));
+
 
   return (
     <>
@@ -106,13 +108,13 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                     noResultsText={t('no_model_found')}
                     disabled={!filters.manufacturer || filters.manufacturer === 'all'}
                   />
-                   <Select value={filters.version} onValueChange={(value) => handleFilterValueChange('version', value)} disabled={!filters.model || filters.model === 'all'}>
-                    <SelectTrigger><SelectValue placeholder={t('select_version')} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('all_versions')}</SelectItem>
-                      {filterOptions.versions.map(v => <SelectItem key={v} value={v}>{v || t('base_model_version')}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                   <MultiSelectDropdown
+                      options={filterOptions.versions.map(v => ({ value: v || 'base', label: v || t('base_model_version')}))}
+                      selectedValues={filters.version}
+                      onChange={(selected) => handleFilterValueChange('version', selected)}
+                      placeholder={t('select_version')}
+                      disabled={!filters.model || filters.model === 'all'}
+                   />
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="time">

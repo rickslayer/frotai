@@ -43,7 +43,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     city: '',
     manufacturer: '',
     model: '',
-    version: '',
+    version: [],
     year: '',
   });
   
@@ -60,22 +60,22 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
             updated.city = '';
             updated.manufacturer = '';
             updated.model = '';
-            updated.version = '';
+            updated.version = [];
             updated.year = '';
         }
         if (Object.prototype.hasOwnProperty.call(newFilters, 'city')) {
             updated.manufacturer = '';
             updated.model = '';
-            updated.version = '';
+            updated.version = [];
             updated.year = '';
         }
         if (Object.prototype.hasOwnProperty.call(newFilters, 'manufacturer')) {
             updated.model = '';
-            updated.version = '';
+            updated.version = [];
             updated.year = '';
         }
         if (Object.prototype.hasOwnProperty.call(newFilters, 'model')) {
-            updated.version = '';
+            updated.version = [];
             updated.year = '';
         }
         if (Object.prototype.hasOwnProperty.call(newFilters, 'version')) {
@@ -159,19 +159,21 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
   };
   
   const filteredData = useMemo(() => {
-    if (Object.values(filters).every(f => f === '' || f === 'all')) {
+    if (Object.entries(filters).every(([key, value]) => (key === 'version' ? (value as string[]).length === 0 : value === '' || value === 'all'))) {
         return [];
     }
 
     return initialData.filter(item => {
       const { state, city, manufacturer, model, version, year } = filters;
+      
+      const itemVersion = item.version || 'base';
 
       return (
         (state === 'all' || state === '' || item.state === state) &&
         (city === 'all' || city === '' || item.city === city) &&
         (manufacturer === 'all' || manufacturer === '' || item.manufacturer === manufacturer) &&
         (model === 'all' || model === '' || item.model === model) &&
-        (version === 'all' || version === '' || item.version === version) &&
+        (version.length === 0 || version.includes(itemVersion)) &&
         (year === 'all' || year === '' || item.year === year)
       );
     });
@@ -205,11 +207,11 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         : dataFilteredByManufacturer;
 
     const versions = (filters.model && filters.model !== 'all')
-        ? [...new Set(dataFilteredByModel.map(item => item.version))].filter(Boolean).sort()
+        ? [...new Set(dataFilteredByModel.map(item => item.version))].sort()
         : [];
 
-    const dataFilteredByVersion = (filters.version && filters.version !== 'all')
-        ? dataFilteredByModel.filter(item => item.version === filters.version)
+    const dataFilteredByVersion = (filters.version.length > 0)
+        ? dataFilteredByModel.filter(item => filters.version.includes(item.version || 'base'))
         : dataFilteredByModel;
     
     const years = [...new Set(dataFilteredByVersion.map(item => item.year))].sort((a, b) => b - a);
@@ -219,7 +221,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
 
   
   const isFiltered = useMemo(() => {
-    return Object.values(filters).some(value => value !== '' && value !== 'all');
+    return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value !== '' && value !== 'all');
   }, [filters]);
 
   const fleetAgeBrackets = useMemo((): FleetAgeBracket[] => {
