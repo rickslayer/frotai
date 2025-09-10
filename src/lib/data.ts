@@ -2,8 +2,6 @@ import type { Vehicle } from '@/types';
 import fs from 'fs';
 import path from 'path';
 
-let fleetData: Vehicle[] | null = null;
-
 // Helper to split model name into base and version
 const splitModelAndVersion = (modelName: string): { model: string, version: string } => {
   const parts = modelName.split(' ');
@@ -21,10 +19,6 @@ const splitModelAndVersion = (modelName: string): { model: string, version: stri
 
 
 export function getFleetData(): Vehicle[] {
-  if (fleetData) {
-    return fleetData;
-  }
-
   // Caminho para o arquivo rj.json na raiz do projeto.
   const filePath = path.join(process.cwd(), 'rj.json');
   let allVehicles: Vehicle[] = [];
@@ -32,8 +26,7 @@ export function getFleetData(): Vehicle[] {
   try {
     if (!fs.existsSync(filePath)) {
       console.warn("Arquivo 'rj.json' não encontrado na raiz do projeto. O dashboard estará vazio.");
-      fleetData = [];
-      return fleetData;
+      return [];
     }
 
     console.log("Arquivo 'rj.json' encontrado na raiz. Lendo como JSON...");
@@ -43,8 +36,7 @@ export function getFleetData(): Vehicle[] {
 
     if (!Array.isArray(jsonData)) {
         console.warn("O arquivo 'rj.json' não contém um array de objetos JSON válido.");
-        fleetData = [];
-        return fleetData;
+        return [];
     }
 
     // Mapeia cada objeto JSON para o formato Vehicle
@@ -73,12 +65,10 @@ export function getFleetData(): Vehicle[] {
       console.log(`Sucesso! ${allVehicles.length} registros lidos de 'rj.json'.`);
     }
     
-    fleetData = allVehicles;
-    
   } catch (error) {
     console.error(`Erro ao ler ou processar o arquivo 'rj.json'. Verifique se é um JSON válido. Erro: ${(error as Error).message}`);
-    fleetData = []; // Retorna um array vazio em caso de erro.
+    return []; // Retorna um array vazio em caso de erro.
   }
 
-  return fleetData;
+  return allVehicles;
 }
