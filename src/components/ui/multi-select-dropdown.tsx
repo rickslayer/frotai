@@ -12,9 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "./badge";
 import { ScrollArea } from "./scroll-area";
@@ -90,33 +87,31 @@ export function MultiSelectDropdown({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>{t('select_version')}</DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="p-0">
-             <ScrollArea className="max-h-60">
-                {options.length > 1 && (
-                    <>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleSelectAll}>
-                            <Check className={cn("mr-2 h-4 w-4", isAllSelected ? "opacity-100" : "opacity-0")} />
-                            {isAllSelected ? t('clear_selection') : t('select_all')}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                    </>
-                )}
-                {options.map((option) => (
-                <DropdownMenuItem key={option.value} onSelect={(e) => e.preventDefault()} onClick={() => handleSelect(option.value)}>
-                    <Check
-                        className={cn(
-                            "mr-2 h-4 w-4",
-                            selectedValues.includes(option.value) ? "opacity-100" : "opacity-0"
-                        )}
-                    />
-                    {option.label}
-                </DropdownMenuItem>
-                ))}
-            </ScrollArea>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
+         <ScrollArea className="max-h-60">
+            {options.length > 1 && (
+                <>
+                    <DropdownMenuItem onSelect={handleSelectAll}>
+                        <Check className={cn("mr-2 h-4 w-4", isAllSelected ? "opacity-100" : "opacity-0")} />
+                        {isAllSelected ? t('clear_selection') : t('select_all')}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                </>
+            )}
+            {options.map((option) => (
+            <DropdownMenuItem key={option.value} onSelect={(e) => {
+              e.preventDefault();
+              handleSelect(option.value)
+            }}>
+                <Check
+                    className={cn(
+                        "mr-2 h-4 w-4",
+                        selectedValues.includes(option.value) ? "opacity-100" : "opacity-0"
+                    )}
+                />
+                {option.label}
+            </DropdownMenuItem>
+            ))}
+        </ScrollArea>
       </DropdownMenuContent>
     </DropdownMenu>
   );
