@@ -378,12 +378,12 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-            <div id="fleet-by-year-chart">
-                <FleetByYearChart data={filteredData} />
-            </div>
-            <div id="fleet-age-chart">
-                 <FleetAgeBracketChart data={filteredData} />
-            </div>
+          <div id="fleet-by-year-chart">
+            <FleetByYearChart data={filteredData} />
+          </div>
+          <div id="fleet-age-chart">
+            <FleetAgeBracketChart data={filteredData} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:gap-8">
@@ -455,5 +455,3 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 };
 
 export default DashboardClient;
-
-    
