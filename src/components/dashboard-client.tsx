@@ -33,6 +33,8 @@ import { useToast } from '@/hooks/use-toast';
 async function fetchApi(url: string) {
     const res = await fetch(url);
     if (!res.ok) {
+        const errorBody = await res.text();
+        console.error(`API Error Response Body for ${url}:`, errorBody);
         throw new Error(`Failed to fetch ${url}`);
     }
     return res.json();
