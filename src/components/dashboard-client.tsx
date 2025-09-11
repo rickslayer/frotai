@@ -32,13 +32,12 @@ import { useToast } from '@/hooks/use-toast';
 async function fetchApi(url: string) {
     const res = await fetch(url);
     if (!res.ok) {
-        throw new Error('Failed to fetch');
+        throw new Error(`Failed to fetch ${url}`);
     }
     return res.json();
 }
 
-
-const getFleetData = (filters: Filters): Promise<Vehicle[]> => {
+const buildQueryString = (filters: Partial<Filters>): string => {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
         if (value && value !== 'all') {
@@ -49,21 +48,17 @@ const getFleetData = (filters: Filters): Promise<Vehicle[]> => {
             }
         }
     });
-    return fetchApi(`/api/vehicles?${params.toString()}`);
+    return params.toString();
+}
+
+const getFleetData = (filters: Filters): Promise<Vehicle[]> => {
+    const queryString = buildQueryString(filters);
+    return fetchApi(`/api/vehicles?${queryString}`);
 };
 
 const getFilterOptions = (filters: Partial<Filters>): Promise<FilterOptions> => {
-     const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== 'all') {
-             if (Array.isArray(value)) {
-                if (value.length > 0) params.append(key, value.join(','));
-            } else {
-                 params.append(key, String(value));
-            }
-        }
-    });
-    return fetchApi(`/api/filter-options?${params.toString()}`);
+    const queryString = buildQueryString(filters);
+    return fetchApi(`/api/filter-options?${queryString}`);
 };
 
 
@@ -123,48 +118,25 @@ const DashboardClient: FC<DashboardClientProps> = () => {
 
 
   const fetchData = useCallback(async (currentFilters: Filters, filterKeyChanged?: keyof Filters) => {
-    // Only fetch data if at least one filter is active
     const hasActiveFilter = Object.values(currentFilters).some(v => (Array.isArray(v) ? v.length > 0 : v && v !== 'all'));
-    if (!hasActiveFilter) {
-      setFilteredData([]);
-       // If all filters are cleared, refetch initial options
-      if (!filterKeyChanged) {
-        setLoading(true);
-         try {
-            const options = await getFilterOptions({});
-            setFilterOptions(options);
-        } catch (error) {
-            console.error("Error fetching filter options:", error);
-        } finally {
-            setLoading(false);
-        }
-      }
-      return;
-    }
-
+    
     setLoading(true);
     try {
-      const [data, options] = await Promise.all([
-        getFleetData(currentFilters),
-        getFilterOptions(currentFilters)
-      ]);
+      // Fetch new data only if there are active filters
+      const data = hasActiveFilter ? await getFleetData(currentFilters) : [];
       setFilteredData(data);
 
-      setFilterOptions(prevOptions => {
-        const newOptions: FilterOptions = {
-            ...prevOptions,
-            cities: options.cities,
-            manufacturers: options.manufacturers,
-            models: options.models,
-            versions: options.versions,
-            years: options.years,
-        };
-        // Do not update states if a sub-filter is changed
-        if (filterKeyChanged === 'state' || !filterKeyChanged) {
-             newOptions.states = options.states;
-        }
-        return newOptions;
-      });
+      // Always refetch filter options to get the correct dependent values
+      const options = await getFilterOptions(currentFilters);
+       setFilterOptions(prevOptions => ({
+         // Keep all states available
+        states: prevOptions.states.length > 0 ? prevOptions.states : options.states, 
+        cities: options.cities,
+        manufacturers: options.manufacturers,
+        models: options.models,
+        versions: options.versions,
+        years: options.years,
+      }));
 
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -179,39 +151,38 @@ const DashboardClient: FC<DashboardClientProps> = () => {
   }, [toast, t]);
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
-    setFilters(prevFilters => {
-        const updated = { ...prevFilters, ...newFilters };
-        const changedKey = Object.keys(newFilters)[0] as keyof Filters;
-        
-        if (changedKey === 'state') {
-            updated.city = '';
-            updated.manufacturer = '';
-            updated.model = '';
-            updated.version = [];
-            updated.year = '';
-        }
-        if (changedKey === 'city') {
-            updated.manufacturer = '';
-            updated.model = '';
-            updated.version = [];
-            updated.year = '';
-        }
-        if (changedKey === 'manufacturer') {
-            updated.model = '';
-            updated.version = [];
-            updated.year = '';
-        }
-        if (changedKey === 'model') {
-            updated.version = [];
-            updated.year = '';
-        }
-        if (changedKey === 'version') {
-            updated.year = '';
-        }
-        fetchData(updated, changedKey);
-        return updated;
-    });
-}, [fetchData]);
+    const updated = { ...filters, ...newFilters };
+    const changedKey = Object.keys(newFilters)[0] as keyof Filters;
+    
+    if (changedKey === 'state') {
+        updated.city = '';
+        updated.manufacturer = '';
+        updated.model = '';
+        updated.version = [];
+        updated.year = '';
+    }
+    if (changedKey === 'city') {
+        updated.manufacturer = '';
+        updated.model = '';
+        updated.version = [];
+        updated.year = '';
+    }
+    if (changedKey === 'manufacturer') {
+        updated.model = '';
+        updated.version = [];
+        updated.year = '';
+    }
+    if (changedKey === 'model') {
+        updated.version = [];
+        updated.year = '';
+    }
+    if (changedKey === 'version') {
+        updated.year = '';
+    }
+    
+    setFilters(updated);
+    fetchData(updated, changedKey);
+  }, [filters, fetchData]);
 
   const handleExportPDF = () => {
     const input = dashboardContentRef.current;
