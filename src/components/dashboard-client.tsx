@@ -2,7 +2,7 @@
 'use client';
 
 import type { FC } from 'react';
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import type { Vehicle, FilterOptions, Filters, FleetAgeBracket, ChartData, RegionData, AnalysisSnapshot } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
@@ -24,22 +24,19 @@ import FinalAnalysis from './dashboard/final-analysis';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Button } from './ui/button';
-import { BookCopy } from 'lucide-react';
+import { BookCopy, Loader2 } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-
+import { getFleetData, getFilterOptions } from '@/lib/data';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardClientProps {
-  initialData: Vehicle[];
+  // No initial data needed anymore
 }
 
-const getBaseFilterOptions = (data: Vehicle[]): Pick<FilterOptions, 'states'> => {
-  const states = [...new Set(data.map(item => item.state))].sort();
-  return { states };
-};
-
-const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
+const DashboardClient: FC<DashboardClientProps> = () => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [filters, setFilters] = useState<Filters>({
     state: '',
     city: '',
@@ -48,6 +45,17 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
     version: [],
     year: '',
   });
+
+  const [filteredData, setFilteredData] = useState<Vehicle[]>([]);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+      states: [],
+      cities: [],
+      manufacturers: [],
+      models: [],
+      versions: [],
+      years: [],
+  });
+  const [loading, setLoading] = useState(false);
   
   const [isComparing, setIsComparing] = useState(false);
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
@@ -55,60 +63,106 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
 
   const dashboardContentRef = useRef<HTMLDivElement>(null);
 
+  // Fetch initial filter options (states) on component mount
+  useEffect(() => {
+    const fetchInitialOptions = async () => {
+        setLoading(true);
+        try {
+            const options = await getFilterOptions({});
+            setFilterOptions(options);
+        } catch (error) {
+            console.error("Failed to fetch initial filter options", error);
+            toast({
+                variant: 'destructive',
+                title: t('error'),
+                description: "Failed to load initial data. Please refresh.",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchInitialOptions();
+  }, [t, toast]);
+
+
+  const fetchData = useCallback(async (currentFilters: Filters) => {
+    // Only fetch data if at least one filter is active
+    const hasActiveFilter = Object.values(currentFilters).some(v => (Array.isArray(v) ? v.length > 0 : v && v !== 'all'));
+    if (!hasActiveFilter) {
+      setFilteredData([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const [data, options] = await Promise.all([
+        getFleetData(currentFilters),
+        getFilterOptions(currentFilters)
+      ]);
+      setFilteredData(data);
+      setFilterOptions(prevOptions => ({
+          ...prevOptions, // keep previous states
+          ...options
+      }));
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+       toast({
+            variant: 'destructive',
+            title: t('error'),
+            description: "Failed to fetch data. Please try again.",
+        });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast, t]);
+
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
-    setFilters(prev => {
-        const updated = { ...prev, ...newFilters };
-        // Reset subsequent filters when a parent filter changes
-        if (Object.prototype.hasOwnProperty.call(newFilters, 'state')) {
-            updated.city = '';
-            updated.manufacturer = '';
-            updated.model = '';
-            updated.version = [];
-            updated.year = '';
-        }
-        if (Object.prototype.hasOwnProperty.call(newFilters, 'city')) {
-            updated.manufacturer = '';
-            updated.model = '';
-            updated.version = [];
-            updated.year = '';
-        }
-        if (Object.prototype.hasOwnProperty.call(newFilters, 'manufacturer')) {
-            updated.model = '';
-            updated.version = [];
-            updated.year = '';
-        }
-        if (Object.prototype.hasOwnProperty.call(newFilters, 'model')) {
-            updated.version = [];
-            updated.year = '';
-        }
-        if (Object.prototype.hasOwnProperty.call(newFilters, 'version')) {
-            updated.year = '';
-        }
-        return updated;
-    });
-  }, []);
+    const updated = { ...filters, ...newFilters };
+      // Reset subsequent filters when a parent filter changes
+      if (Object.prototype.hasOwnProperty.call(newFilters, 'state')) {
+          updated.city = '';
+          updated.manufacturer = '';
+          updated.model = '';
+          updated.version = [];
+          updated.year = '';
+      }
+      if (Object.prototype.hasOwnProperty.call(newFilters, 'city')) {
+          updated.manufacturer = '';
+          updated.model = '';
+          updated.version = [];
+          updated.year = '';
+      }
+      if (Object.prototype.hasOwnProperty.call(newFilters, 'manufacturer')) {
+          updated.model = '';
+          updated.version = [];
+          updated.year = '';
+      }
+      if (Object.prototype.hasOwnProperty.call(newFilters, 'model')) {
+          updated.version = [];
+          updated.year = '';
+      }
+      if (Object.prototype.hasOwnProperty.call(newFilters, 'version')) {
+          updated.year = '';
+      }
+    setFilters(updated);
+    fetchData(updated);
+  }, [filters, fetchData]);
 
   const handleExportPDF = () => {
     const input = dashboardContentRef.current;
     if (!input) return;
 
-    // We can add a class to temporarily style the dashboard for export
     document.body.classList.add('exporting-pdf');
 
     html2canvas(input, {
-        scale: 2, // Higher scale for better quality
+        scale: 2, 
         useCORS: true,
         logging: false,
         onclone: (document) => {
-            // Remove the export button from the clone to avoid it appearing in the PDF
             const exportButton = document.getElementById('export-button');
-            if (exportButton) {
-                exportButton.style.display = 'none';
-            }
-             const compareButton = document.getElementById('compare-button');
-            if (compareButton) {
-                compareButton.style.display = 'none';
-            }
+            if (exportButton) exportButton.style.display = 'none';
+            const compareButton = document.getElementById('compare-button');
+            if (compareButton) compareButton.style.display = 'none';
         }
     }).then(canvas => {
         document.body.classList.remove('exporting-pdf');
@@ -119,109 +173,16 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
         const ratio = canvasWidth / canvasHeight;
-        const width = pdfWidth;
-        const height = width / ratio;
+        let width = pdfWidth;
+        let height = width / ratio;
 
-        // Check if the content fits on one page
-        if (height <= pdfHeight) {
-            pdf.addImage(imgData, 'PNG', 0, 0, width, height);
-        } else { // Handle multi-page content
-            let position = 0;
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            let remainingHeight = canvas.height;
-
-            while (remainingHeight > 0) {
-                const pageCanvas = document.createElement('canvas');
-                const pageCtx = pageCanvas.getContext('2d');
-                if (!pageCtx) return;
-
-                // A4 aspect ratio
-                const a4Ratio = 1.414;
-                const sourceHeight = canvas.width / (pdfWidth / pageHeight);
-
-                pageCanvas.width = canvas.width;
-                pageCanvas.height = Math.min(sourceHeight, remainingHeight);
-                
-                pageCtx.drawImage(canvas, 0, position, canvas.width, pageCanvas.height, 0, 0, canvas.width, pageCanvas.height);
-                
-                const pageImgData = pageCanvas.toDataURL('image/png');
-                if (position > 0) {
-                    pdf.addPage();
-                }
-                pdf.addImage(pageImgData, 'PNG', 0, 0, pdfWidth, pdfWidth / (pageCanvas.width / pageCanvas.height));
-                
-                position += pageCanvas.height;
-                remainingHeight -= pageCanvas.height;
-            }
-        }
+        pdf.addImage(imgData, 'PNG', 0, 0, width, height > pdfHeight ? pdfHeight : height);
 
         pdf.save(`frota-ai-report-${new Date().toISOString().slice(0,10)}.pdf`);
     }).catch(() => {
          document.body.classList.remove('exporting-pdf');
     });
   };
-  
-  const filteredData = useMemo(() => {
-    if (Object.entries(filters).every(([key, value]) => (key === 'version' ? (value as string[]).length === 0 : value === '' || value === 'all'))) {
-        return [];
-    }
-
-    return initialData.filter(item => {
-      const { state, city, manufacturer, model, version, year } = filters;
-      
-      const itemVersion = item.version || 'base';
-
-      return (
-        (state === 'all' || state === '' || item.state === state) &&
-        (city === 'all' || city === '' || item.city === city) &&
-        (manufacturer === 'all' || manufacturer === '' || item.manufacturer === manufacturer) &&
-        (model === 'all' || model === '' || item.model === model) &&
-        (version.length === 0 || version.includes(itemVersion)) &&
-        (year === 'all' || year === '' || item.year === year)
-      );
-    });
-  }, [initialData, filters]);
-  
-  const filterOptions = useMemo((): FilterOptions => {
-    const baseOptions = getBaseFilterOptions(initialData);
-
-    const dataFilteredByState = (filters.state && filters.state !== 'all')
-        ? initialData.filter(item => item.state === filters.state)
-        : initialData;
-    
-    const cities = (filters.state && filters.state !== 'all')
-        ? [...new Set(dataFilteredByState.map(item => item.city))].sort()
-        : [];
-
-    const dataFilteredByCity = (filters.city && filters.city !== 'all')
-        ? dataFilteredByState.filter(item => item.city === filters.city)
-        : dataFilteredByState;
-
-    const manufacturers = [...new Set(dataFilteredByCity.map(item => item.manufacturer))].sort();
-
-    const dataFilteredByManufacturer = (filters.manufacturer && filters.manufacturer !== 'all')
-        ? dataFilteredByCity.filter(item => item.manufacturer === filters.manufacturer)
-        : dataFilteredByCity;
-    
-    const models = [...new Set(dataFilteredByManufacturer.map(item => item.model))].sort();
-
-    const dataFilteredByModel = (filters.model && filters.model !== 'all')
-        ? dataFilteredByManufacturer.filter(item => item.model === filters.model)
-        : dataFilteredByManufacturer;
-
-    const versions = (filters.model && filters.model !== 'all')
-        ? [...new Set(dataFilteredByModel.map(item => item.version))].sort()
-        : [];
-
-    const dataFilteredByVersion = (filters.version.length > 0)
-        ? dataFilteredByModel.filter(item => filters.version.includes(item.version || 'base'))
-        : dataFilteredByModel;
-    
-    const years = [...new Set(dataFilteredByVersion.map(item => item.year))].sort((a, b) => b - a);
-
-    return { ...baseOptions, cities, manufacturers, models, versions, years };
-  }, [initialData, filters]);
-
   
   const isFiltered = useMemo(() => {
     return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value !== '' && value !== 'all');
@@ -288,7 +249,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
       if (!prev[1]) {
         return [prev[0], snapshot];
       }
-      // If both are full, replace the second one
       return [prev[0], snapshot];
     });
     setIsComparing(true);
@@ -352,6 +312,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData }) => {
           {!isFiltered ? (
              <div className="flex flex-col h-full gap-8">
                <WelcomePlaceholder />
+             </div>
+          ) : loading ? (
+             <div className="flex flex-1 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
              </div>
           ) : (
             <>
