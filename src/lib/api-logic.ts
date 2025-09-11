@@ -1,3 +1,4 @@
+
 import path from 'path';
 import fs from 'fs/promises';
 import { cache } from 'react';
@@ -31,7 +32,7 @@ const loadAndParseData = cache(async (): Promise<Vehicle[]> => {
 export const getFleetData = async (filters: Partial<Filters>): Promise<Vehicle[]> => {
   const allData = await loadAndParseData();
   if (!Object.values(filters).some(f => f && (Array.isArray(f) ? f.length > 0 : f !== 'all'))) {
-      return [];
+      return allData;
   }
   
   return allData.filter(item => {

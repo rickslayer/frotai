@@ -27,20 +27,21 @@ import { Button } from './ui/button';
 import { BookCopy, Loader2, ServerCrash } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { Skeleton } from './ui/skeleton';
 
+interface DashboardClientProps {
+  initialData: Vehicle[];
+  initialFilterOptions: FilterOptions;
+}
 
-const DashboardClient: FC = () => {
+const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterOptions }) => {
   const { t } = useTranslation();
-  const [data, setData] = useState<Vehicle[]>([]);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-      states: [], cities: [], manufacturers: [], models: [], versions: [], years: []
-  });
+  const [allData] = useState<Vehicle[]>(initialData);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>(initialFilterOptions);
   const [filters, setFilters] = useState<Filters>({
     state: '', city: '', manufacturer: '', model: '', version: [], year: '',
   });
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const [isComparing, setIsComparing] = useState(false);
@@ -48,61 +49,60 @@ const DashboardClient: FC = () => {
   const [isVersionLimitModalOpen, setIsVersionLimitModalOpen] = useState(false);
 
   const dashboardContentRef = useRef<HTMLDivElement>(null);
-  const initialLoad = useRef(true);
 
+  const filteredData = useMemo(() => {
+    const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value !== '' && value !== 'all');
+    if (!hasFilters) {
+        return [];
+    }
 
-  const fetchDataAndOptions = useCallback(async (currentFilters: Filters) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const query = new URLSearchParams();
-      Object.entries(currentFilters).forEach(([key, value]) => {
-        if (value) {
-          if (Array.isArray(value)) {
-            if (value.length > 0) query.append(key, value.join(','));
-          } else {
-            query.append(key, String(value));
-          }
-        }
-      });
-      
-      const [dataRes, optionsRes] = await Promise.all([
-        fetch(`/api/fleet-data?${query.toString()}`),
-        fetch(`/api/filter-options?${query.toString()}`)
-      ]);
+    return allData.filter(item => {
+        return Object.entries(filters).every(([key, value]) => {
+            if (value === '' || value === 'all' || (Array.isArray(value) && value.length === 0)) {
+                return true;
+            }
+            const itemValue = item[key as keyof Vehicle];
 
-      if (!dataRes.ok || !optionsRes.ok) {
-        throw new Error('Failed to fetch data');
+            if (Array.isArray(value)) {
+                return value.includes(itemValue as string);
+            }
+            
+            return String(itemValue).toLowerCase() === String(value).toLowerCase();
+        });
+    });
+  }, [filters, allData]);
+
+  const updateFilterOptions = useCallback(() => {
+      let tempFilteredData = allData;
+
+      if(filters.state && filters.state !== 'all') {
+          tempFilteredData = tempFilteredData.filter(d => d.state === filters.state);
       }
-
-      const [fleetData, newOptions] = await Promise.all([
-        dataRes.json(),
-        optionsRes.json()
-      ]);
-
-      setData(fleetData);
+      const availableCities = [...new Set(tempFilteredData.map(d => d.city))].sort();
       
-      setFilterOptions(prevOptions => ({
-        states: newOptions.states.length ? newOptions.states : prevOptions.states,
-        manufacturers: newOptions.manufacturers.length ? newOptions.manufacturers : prevOptions.manufacturers,
-        years: newOptions.years.length ? newOptions.years : prevOptions.years,
-        cities: newOptions.cities,
-        models: newOptions.models,
-        versions: newOptions.versions,
+      if(filters.manufacturer && filters.manufacturer !== 'all') {
+          tempFilteredData = tempFilteredData.filter(d => d.manufacturer === filters.manufacturer);
+      }
+      const availableModels = [...new Set(tempFilteredData.map(d => d.model))].sort();
+
+      if(filters.model && filters.model !== 'all') {
+          tempFilteredData = tempFilteredData.filter(d => d.model === filters.model);
+      }
+      const availableVersions = [...new Set(tempFilteredData.map(d => d.version))].sort();
+
+      setFilterOptions(prev => ({
+          ...prev,
+          cities: availableCities,
+          models: availableModels,
+          versions: availableVersions,
       }));
 
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      console.error(err);
-    } finally {
-      setLoading(false);
-      initialLoad.current = false;
-    }
-  }, []);
+  }, [filters, allData]);
+
 
   useEffect(() => {
-    fetchDataAndOptions(filters);
-  }, [filters, fetchDataAndOptions]);
+    updateFilterOptions();
+  }, [filters, updateFilterOptions]);
 
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
@@ -156,8 +156,6 @@ const DashboardClient: FC = () => {
     return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value !== '' && value !== 'all');
   }, [filters]);
   
-  const filteredData = data;
-
   const fleetAgeBrackets = useMemo((): FleetAgeBracket[] => {
     const currentYear = new Date().getFullYear();
     const brackets = {
@@ -224,7 +222,7 @@ const DashboardClient: FC = () => {
   }
 
   const renderContent = () => {
-    if (loading && initialLoad.current) {
+    if (loading) {
       return (
         <div className="grid h-full w-full place-items-center">
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -242,7 +240,6 @@ const DashboardClient: FC = () => {
                 <ServerCrash className="h-16 w-16" />
                 <h2 className="text-2xl font-bold">Erro ao carregar os dados</h2>
                 <p className="text-center">Não foi possível conectar à fonte de dados. Por favor, tente recarregar a página.<br/>Se o problema persistir, entre em contato com o suporte.</p>
-                <Button onClick={() => fetchDataAndOptions(filters)}>Tentar Novamente</Button>
             </div>
         </div>
        )

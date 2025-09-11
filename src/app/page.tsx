@@ -8,7 +8,10 @@ export default async function Home() {
 
   return (
     <main>
-      <DashboardClient />
+      <DashboardClient 
+        initialData={initialData} 
+        initialFilterOptions={initialFilterOptions} 
+      />
     </main>
   );
 }
