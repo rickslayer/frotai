@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -88,8 +89,8 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
                     dataKey="model"
                     position="insideLeft"
                     offset={8}
-                    className="fill-primary-foreground text-sm font-medium"
-                    formatter={(value: string) => value.slice(0, 25) + (value.length > 25 ? '...' : '')}
+                    className="fill-primary-foreground text-sm font-medium truncate"
+                    formatter={(value: string) => value}
                   />
                    <LabelList 
                       dataKey="quantity" 
@@ -113,3 +114,5 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
 };
 
 export default TopModelsChart;
+
+    

@@ -189,7 +189,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     tempDiv.querySelectorAll('li').forEach(li => {
         li.textContent = `  - ${li.textContent}\n`;
     });
-    tempDiv.querySelectorAll('strong, b').forEach(bold => {
+     tempDiv.querySelectorAll('strong, b').forEach(bold => {
         bold.textContent = `${bold.textContent}`; // Just get the text
     });
 
@@ -368,36 +368,38 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         </div>
 
         <StatCards data={filteredData} filters={filters} />
-        <div id="charts-grid" className="grid gap-4 md:gap-8">
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
+            <div id="fleet-by-year-chart" className="lg:col-span-2">
+                <FleetByYearChart data={filteredData} />
+            </div>
             <div id="regional-chart">
                 <RegionalFleetChart data={regionalData} />
             </div>
             <div id="top-models-chart">
                 <TopModelsChart data={filteredData} />
             </div>
-            <div id="fleet-by-year-chart" className="lg:col-span-3">
-                <FleetByYearChart data={filteredData} />
-            </div>
-            <div id="fleet-age-chart" className="lg:col-span-2">
+            <div id="fleet-age-chart">
                  <FleetAgeBracketChart data={filteredData} />
             </div>
-        </div>
-        
-        <div className="grid gap-4 md:gap-8">
-            <FinalAnalysis
-                filters={filters}
-                disabled={!isFiltered || filteredData.length === 0}
-                fleetAgeBrackets={fleetAgeBrackets}
-                regionalData={regionalData}
-                fleetByYearData={fleetByYearData}
-                onAnalysisGenerated={setGeneralAnalysis}
-            />
-            <PartDemandForecast
-                fleetAgeBrackets={fleetAgeBrackets}
-                filters={filters}
-                disabled={!isFiltered || filteredData.length === 0}
-                onDemandPredicted={setDemandAnalysis}
-            />
+            <div id="final-analysis-card" className="lg:col-span-2">
+                <FinalAnalysis
+                    filters={filters}
+                    disabled={!isFiltered || filteredData.length === 0}
+                    fleetAgeBrackets={fleetAgeBrackets}
+                    regionalData={regionalData}
+                    fleetByYearData={fleetByYearData}
+                    onAnalysisGenerated={setGeneralAnalysis}
+                />
+            </div>
+            <div id="part-demand-card" className="lg:col-span-2">
+                <PartDemandForecast
+                    fleetAgeBrackets={fleetAgeBrackets}
+                    filters={filters}
+                    disabled={!isFiltered || filteredData.length === 0}
+                    onDemandPredicted={setDemandAnalysis}
+                />
+            </div>
         </div>
       </>
     );
@@ -448,3 +450,5 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 };
 
 export default DashboardClient;
+
+    
