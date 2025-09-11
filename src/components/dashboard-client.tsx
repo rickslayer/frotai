@@ -85,77 +85,60 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   }, []);
 
   const filterOptions = useMemo<FilterOptions>(() => {
-    let filteredForOptions = allData;
-
-    // Sequentially filter data to generate options for each dropdown
-    if (filters.state && filters.state !== 'all') {
-        filteredForOptions = filteredForOptions.filter(d => d.state === filters.state);
-    }
-    const cities = [...new Set(filteredForOptions.map(d => d.city))].sort();
-
-    if (filters.city && filters.city !== 'all') {
-        filteredForOptions = filteredForOptions.filter(d => d.city === filters.city);
-    }
-    const manufacturers = [...new Set(filteredForOptions.map(d => d.manufacturer))].sort();
+    let temp_data = allData;
     
-    if (filters.manufacturer && filters.manufacturer !== 'all') {
-        filteredForOptions = filteredForOptions.filter(d => d.manufacturer === filters.manufacturer);
+    // Create options for State
+    const states = [...new Set(temp_data.map(d => d.state))].sort();
+
+    // Filter by State
+    if (filters.state) {
+      temp_data = temp_data.filter(d => d.state === filters.state);
     }
-    const models = [...new Set(filteredForOptions.map(d => d.model))].sort();
+
+    // Create options for City
+    const cities = [...new Set(temp_data.map(d => d.city))].sort();
+
+    // Filter by City
+    if (filters.city) {
+      temp_data = temp_data.filter(d => d.city === filters.city);
+    }
     
-    if (filters.model && filters.model !== 'all') {
-        filteredForOptions = filteredForOptions.filter(d => d.model === filters.model);
-    }
-    const versions = [...new Set(filteredForOptions.map(d => d.version))].sort();
-
-    if (filters.version && filters.version.length > 0) {
-        filteredForOptions = filteredForOptions.filter(d => filters.version.includes(d.version));
-    }
-    const years = [...new Set(filteredForOptions.map(d => d.year))].sort((a,b) => b - a);
-
-    // For options, we need to be broader. E.g., for cities, only filter by state.
-    // The previous logic was correct in principle but flawed in execution. Let's fix it.
-
-    let stateFiltered = allData;
-    if (filters.state && filters.state !== 'all') {
-        stateFiltered = allData.filter(d => d.state === filters.state);
-    }
-    const finalCities = [...new Set(stateFiltered.map(d => d.city))].sort();
+    // Create options for Manufacturer
+    const manufacturers = [...new Set(temp_data.map(d => d.manufacturer))].sort();
     
-    let cityFiltered = stateFiltered;
-    if (filters.city && filters.city !== 'all') {
-        cityFiltered = stateFiltered.filter(d => d.city === filters.city);
+    // Filter by manufacturer
+    if (filters.manufacturer) {
+      temp_data = temp_data.filter(d => d.manufacturer === filters.manufacturer);
     }
-    const finalManufacturers = [...new Set(cityFiltered.map(d => d.manufacturer))].sort();
-
-    let manufacturerFiltered = cityFiltered;
-    if (filters.manufacturer && filters.manufacturer !== 'all') {
-        manufacturerFiltered = cityFiltered.filter(d => d.manufacturer === filters.manufacturer);
+    
+    // Create options for Model
+    const models = [...new Set(temp_data.map(d => d.model))].sort();
+    
+    // Filter by model
+    if (filters.model) {
+      temp_data = temp_data.filter(d => d.model === filters.model);
     }
-    const finalModels = [...new Set(manufacturerFiltered.map(d => d.model))].sort();
+    
+    // Create options for Version
+    const versions = [...new Set(temp_data.map(d => d.version))].sort();
 
-    let modelFiltered = manufacturerFiltered;
-    if (filters.model && filters.model !== 'all') {
-        modelFiltered = manufacturerFiltered.filter(d => d.model === filters.model);
+    // Filter by version
+    if (filters.version.length) {
+      temp_data = temp_data.filter(d => filters.version.includes(d.version));
     }
-    const finalVersions = [...new Set(modelFiltered.map(d => d.version))].sort();
-
-    let versionFiltered = modelFiltered;
-    if (filters.version && filters.version.length > 0) {
-        versionFiltered = modelFiltered.filter(d => filters.version.includes(d.version));
-    }
-    const finalYears = [...new Set(versionFiltered.map(d => d.year))].sort((a, b) => b - a);
-
+    
+    const years = [...new Set(temp_data.map(d => d.year))].sort((a,b) => b-a);
+    
 
     return {
-      states: initialFilterOptions.states, // Always show all states
-      cities: finalCities,
-      manufacturers: finalManufacturers,
-      models: finalModels,
-      versions: finalVersions,
-      years: finalYears,
+      states: initialFilterOptions.states,
+      cities,
+      manufacturers,
+      models,
+      versions,
+      years,
     };
-  }, [filters, allData, initialFilterOptions.states]);
+}, [filters, allData, initialFilterOptions]);
 
   const filteredData = useMemo(() => {
     const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
@@ -179,100 +162,18 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         });
     });
   }, [filters, allData]);
-
-  const stats = useMemo(() => {
-    if (!filteredData.length) {
-      return { totalVehicles: 0, topCity: '-', topModel: '-', topRegion: '-' };
+  
+  const stateFilteredData = useMemo(() => {
+    if (!filters.state || filters.state === 'all') {
+      return [];
     }
-
-    const totalVehicles = filteredData.reduce((sum, item) => sum + item.quantity, 0);
-
-    const citySales = filteredData.reduce((acc, item) => {
-        acc[item.city] = (acc[item.city] || 0) + item.quantity;
-        return acc;
-    }, {} as Record<string, number>);
-    const topCity = Object.keys(citySales).reduce((a, b) => citySales[a] > citySales[b] ? a : b, '-');
-
-    const modelSales = filteredData.reduce((acc, item) => {
-      const key = item.fullName;
-      acc[key] = (acc[key] || 0) + item.quantity;
-      return acc;
-    }, {} as Record<string, number>);
-    const topModel = Object.keys(modelSales).reduce((a, b) => modelSales[a] > modelSales[b] ? a : b, '-');
-
-    const regionData = getRegionData(filteredData, allData);
-    const topRegion = regionData.reduce((a, b) => a.quantity > b.quantity ? a : b).name;
-
-    return { 
-        totalVehicles: totalVehicles.toLocaleString(), 
-        topCity, 
-        topModel, 
-        topRegion: t(topRegion as any) 
-    };
-  }, [filteredData, allData, t]);
-
-
-  const addBase64ImageToPdf = async (doc: jsPDF, elementId: string, y: number, title: string) => {
-      const element = document.getElementById(elementId);
-      if (element) {
-        // Temporarily change background to white for capture
-        const originalBg = element.style.backgroundColor;
-        element.style.backgroundColor = '#FFFFFF';
-
-        const canvas = await html2canvas(element, { 
-            scale: 2, 
-            useCORS: true, 
-            logging: false,
-            backgroundColor: '#FFFFFF'
-        });
-
-        // Restore original background
-        element.style.backgroundColor = originalBg;
-
-        const contentWidth = doc.internal.pageSize.getWidth() - 28;
-        const ratio = canvas.width / canvas.height;
-        const imgHeight = contentWidth / ratio;
-
-        if (y + imgHeight + 20 > doc.internal.pageSize.getHeight()) {
-            doc.addPage();
-            y = 20;
-        }
-
-        doc.setFontSize(14);
-        doc.text(title, 14, y);
-        y += 10;
-        
-        doc.addImage(imgData, 'PNG', 14, y, contentWidth, imgHeight);
-        return y + imgHeight + 15;
-      }
-      return y;
-  };
-
-  const formatTextForPdf = (htmlText: string | null | undefined): string => {
-    if (!htmlText) return '';
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlText
-        .replace(/\n/g, '<br>')
-        .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/g, '\n**$1**\n')
-        .replace(/<p[^>]*>(.*?)<\/p>/g, '$1\n')
-        .replace(/<li>/g, '  - ')
-        .replace(/<\/li>/g, '\n')
-        .replace(/<ul>|<\/ul>|<ol>|<\/ol>/g, '\n')
-        .replace(/\*\*(.*?)\*\*/g, '$1');
-    
-    // Remove tags but keep content, then clean up extra newlines
-    const textContent = (tempDiv.textContent || tempDiv.innerText || "");
-
-    return textContent.replace(/(\r\n|\n|\r){2,}/g, '\n\n').trim();
-};
-
-
+    return allData.filter(item => item.state === filters.state);
+  }, [filters.state, allData]);
 
   const handleExportPDF = async () => {
     const doc = new jsPDF('p', 'mm', 'a4');
-    let y = 20; // Initial Y position
+    let y = 20;
 
-    // Title
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text('Relatório de Análise de Frota - Frota.AI', 14, y);
@@ -282,7 +183,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     doc.text(new Date().toLocaleDateString('pt-BR', { dateStyle: 'full' }), 14, y);
     y += 15;
 
-    // Helper to add a section
     const addSection = (title: string, value: string) => {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
@@ -292,15 +192,44 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
       doc.text(value, 60, y);
       y += 8;
     };
+    
+    const stats = {
+      totalVehicles: filteredData.reduce((sum, item) => sum + item.quantity, 0).toLocaleString(),
+      topCity: Object.keys(filteredData.reduce((acc, item) => {
+          acc[item.city] = (acc[item.city] || 0) + item.quantity;
+          return acc;
+      }, {} as Record<string, number>)).reduce((a, b, _, arr) => arr[a] > arr[b] ? a : b, '-'),
+      topModel: Object.keys(filteredData.reduce((acc, item) => {
+          const key = item.fullName;
+          acc[key] = (acc[key] || 0) + item.quantity;
+          return acc;
+      }, {} as Record<string, number>)).reduce((a, b, _, arr) => arr[a] > arr[b] ? a : b, '-'),
+      topRegion: t(getRegionData(filteredData, allData).reduce((a, b) => a.quantity > b.quantity ? a : b).name as any)
+    };
 
-    // Stat Cards Section
+
     addSection(t('total_vehicles'), stats.totalVehicles);
     addSection(t('main_city'), stats.topCity);
     addSection(t('main_model'), stats.topModel);
     addSection(t('main_region'), stats.topRegion);
-    y += 5; // Extra space after section
+    y += 5;
 
-    // AI General Analysis
+    const formatTextForPdf = (htmlText: string | null | undefined): string => {
+      if (!htmlText) return '';
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlText
+          .replace(/\n/g, '<br>')
+          .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/g, '\n**$1**\n')
+          .replace(/<p[^>]*>(.*?)<\/p>/g, '$1\n')
+          .replace(/<li>/g, '  - ')
+          .replace(/<\/li>/g, '\n')
+          .replace(/<ul>|<\/ul>|<ol>|<\/ol>/g, '\n')
+          .replace(/\*\*(.*?)\*\*/g, '$1');
+      
+      const textContent = (tempDiv.textContent || tempDiv.innerText || "");
+      return textContent.replace(/(\r\n|\n|\r){2,}/g, '\n\n').trim();
+    };
+
     if (generalAnalysis) {
       if (y > 250) { doc.addPage(); y = 20; }
       doc.setFont('helvetica', 'bold');
@@ -315,7 +244,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
       y += (splitText.length * 5) + 10;
     }
 
-    // AI Demand Forecast
     if (demandAnalysis && demandAnalysis.predictions.length > 0) {
         if (y > 200) { doc.addPage(); y = 20; }
         doc.setFont('helvetica', 'bold');
@@ -342,6 +270,45 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
             y += (opportunityText.length * 4) + 8;
         });
     }
+
+    const addBase64ImageToPdf = async (doc: jsPDF, elementId: string, y: number, title: string): Promise<number> => {
+      const element = document.getElementById(elementId);
+      if (element) {
+        const originalBg = element.style.backgroundColor;
+        element.style.backgroundColor = '#FFFFFF';
+
+        try {
+          const canvas = await html2canvas(element, { 
+              scale: 2, 
+              useCORS: true, 
+              logging: false,
+              backgroundColor: '#FFFFFF'
+          });
+          
+          const imgData = canvas.toDataURL('image/png');
+          const contentWidth = doc.internal.pageSize.getWidth() - 28;
+          const ratio = canvas.width / canvas.height;
+          const imgHeight = contentWidth / ratio;
+
+          if (y + imgHeight + 20 > doc.internal.pageSize.getHeight()) {
+              doc.addPage();
+              y = 20;
+          }
+
+          doc.setFontSize(14);
+          doc.text(title, 14, y);
+          y += 10;
+          
+          doc.addImage(imgData, 'PNG', 14, y, contentWidth, imgHeight);
+          y += imgHeight + 15;
+        } catch (error) {
+          console.error(`Error capturing element ${elementId}:`, error);
+        } finally {
+           element.style.backgroundColor = originalBg;
+        }
+      }
+      return y;
+  };
 
     y = await addBase64ImageToPdf(doc, 'regional-chart', y, t('regional_fleet_analysis'));
     y = await addBase64ImageToPdf(doc, 'top-models-chart', y, t('top_models_by_volume', { count: 5 }));
@@ -427,7 +394,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 
     return (
        <>
-        <StatCards data={filteredData} filters={filters} />
+        <StatCards data={filteredData} stateData={stateFilteredData} filters={filters} />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
             <div id="regional-chart">
@@ -437,7 +404,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
                 <TopModelsChart data={filteredData} />
             </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           <div id="fleet-by-year-chart">
             <FleetByYearChart data={filteredData} />
@@ -458,6 +425,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
                   onAnalysisGenerated={setGeneralAnalysis}
               />
           </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:gap-8">
           <div id="part-demand-card">
               <PartDemandForecast
                   fleetAgeBrackets={fleetAgeBrackets}
@@ -487,7 +456,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
           isFiltered={isFiltered}
         />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
-            <div className="flex flex-col gap-4">
+             <div className="flex flex-col gap-4">
               <div className="flex justify-end items-center gap-4">
                   {isFiltered && (
                     <Button onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
