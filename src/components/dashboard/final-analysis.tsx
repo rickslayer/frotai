@@ -18,9 +18,10 @@ interface FinalAnalysisProps {
   fleetAgeBrackets: FleetAgeBracket[];
   regionalData: RegionData[];
   fleetByYearData: ChartData[];
+  onAnalysisGenerated: (analysis: string | null) => void;
 }
 
-const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrackets, regionalData, fleetByYearData }) => {
+const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrackets, regionalData, fleetByYearData, onAnalysisGenerated }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -29,6 +30,7 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
   const handleGenerateAnalysis = async () => {
     setLoading(true);
     setAnalysis(null);
+    onAnalysisGenerated(null);
     try {
       const activeFilters = Object.entries(filters)
         .filter(([, value]) => value && value !== 'all')
@@ -49,6 +51,7 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
       });
 
       setAnalysis(result.answer);
+      onAnalysisGenerated(result.answer);
     } catch (error) {
       console.error('Error generating final analysis:', error);
       toast({
@@ -64,11 +67,10 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
   const handleDownloadText = () => {
     if (!analysis) return;
 
-    // Basic conversion from HTML to plain text for download
-    const blob = new Blob([analysis.replace(/<br \/>/g, '\n').replace(/<\/?b>/g, '**')], { type: 'text/plain' });
+    const blob = new Blob([analysis.replace(/<br \/>/g, '\n').replace(/<\/?[^>]+(>|$)/g, "")], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
+a.href = url;
     a.download = 'frota-ai-analysis.txt';
     document.body.appendChild(a);
     a.click();

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -17,9 +18,10 @@ interface PartDemandForecastProps {
   fleetAgeBrackets: FleetAgeBracket[];
   filters: Filters;
   disabled: boolean;
+  onDemandPredicted: (result: PredictPartsDemandOutput | null) => void;
 }
 
-const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, filters, disabled }) => {
+const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, filters, disabled, onDemandPredicted }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [partCategory, setPartCategory] = useState('');
@@ -29,6 +31,7 @@ const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, fil
   const handlePredictDemand = async () => {
     setLoading(true);
     setResult(null);
+    onDemandPredicted(null);
     try {
       const demand = await predictPartsDemand({
         fleetAgeBrackets,
@@ -39,6 +42,7 @@ const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, fil
         }
       });
       setResult(demand);
+      onDemandPredicted(demand);
     } catch (error) {
       console.error('Error predicting parts demand:', error);
       toast({

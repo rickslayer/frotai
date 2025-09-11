@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import React, { useState, useMemo, useCallback, useRef } from 'react';
-import type { Vehicle, FilterOptions, Filters, FleetAgeBracket, ChartData, RegionData, AnalysisSnapshot } from '@/types';
+import type { Vehicle, FilterOptions, Filters, FleetAgeBracket, ChartData, RegionData, AnalysisSnapshot, PredictPartsDemandOutput } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
@@ -22,7 +22,6 @@ import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { Button } from './ui/button';
 import { BookCopy } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
@@ -45,7 +44,9 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
   const [isVersionLimitModalOpen, setIsVersionLimitModalOpen] = useState(false);
 
-  const dashboardContentRef = useRef<HTMLDivElement>(null);
+  const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
+  const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
+
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => {
@@ -119,35 +120,143 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     });
   }, [filters, allData]);
 
-  const handleExportPDF = () => {
-    const input = dashboardContentRef.current;
-    if (!input) return;
+  const stats = useMemo(() => {
+    if (!filteredData.length) {
+      return { totalVehicles: 0, topCity: '-', topModel: '-', topRegion: '-' };
+    }
 
-    document.body.classList.add('exporting-pdf');
+    const totalVehicles = filteredData.reduce((sum, item) => sum + item.quantity, 0);
 
-    html2canvas(input, {
-        scale: 2, useCORS: true, logging: false,
-        onclone: (document) => {
-            document.getElementById('export-button')?.remove();
-            document.getElementById('compare-button')?.remove();
-        }
-    }).then(canvas => {
-        document.body.classList.remove('exporting-pdf');
+    const citySales = filteredData.reduce((acc, item) => {
+        acc[item.city] = (acc[item.city] || 0) + item.quantity;
+        return acc;
+    }, {} as Record<string, number>);
+    const topCity = Object.keys(citySales).reduce((a, b) => citySales[a] > citySales[b] ? a : b, '-');
+
+    const modelSales = filteredData.reduce((acc, item) => {
+      const key = item.fullName;
+      acc[key] = (acc[key] || 0) + item.quantity;
+      return acc;
+    }, {} as Record<string, number>);
+    const topModel = Object.keys(modelSales).reduce((a, b) => modelSales[a] > modelSales[b] ? a : b, '-');
+
+    const regionData = getRegionData(filteredData, allData);
+    const topRegion = regionData.reduce((a, b) => a.quantity > b.quantity ? a : b).name;
+
+    return { 
+        totalVehicles: totalVehicles.toLocaleString(), 
+        topCity, 
+        topModel, 
+        topRegion: t(topRegion as any) 
+    };
+  }, [filteredData, allData, t]);
+
+
+  const addBase64ImageToPdf = async (doc: jsPDF, elementId: string, y: number, title: string) => {
+      const element = document.getElementById(elementId);
+      if (element) {
+        // Dynamically import html2canvas
+        const html2canvas = (await import('html2canvas')).default;
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
         const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const ratio = canvas.width / canvas.height;
-        let width = pdfWidth;
-        let height = width / ratio;
 
-        pdf.addImage(imgData, 'PNG', 0, 0, width, height > pdfHeight ? pdfHeight : height);
-        pdf.save(`frota-ai-report-${new Date().toISOString().slice(0,10)}.pdf`);
-    }).catch(() => {
-         document.body.classList.remove('exporting-pdf');
-    });
+        doc.setFontSize(14);
+        doc.text(title, 14, y);
+        y += 10;
+        
+        const contentWidth = doc.internal.pageSize.getWidth() - 28;
+        const ratio = canvas.width / canvas.height;
+        const height = contentWidth / ratio;
+        doc.addImage(imgData, 'PNG', 14, y, contentWidth, height);
+        return y + height + 10;
+      }
+      return y;
   };
-  
+
+
+  const handleExportPDF = async () => {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    let y = 20; // Initial Y position
+
+    // Title
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('Relatório de Análise de Frota - Frota.AI', 14, y);
+    y += 10;
+    doc.setFontSize(10);
+    doc.text(new Date().toLocaleDateString('pt-BR', { dateStyle: 'full' }), 14, y);
+    y += 15;
+
+    // Helper to add a section
+    const addSection = (title: string, value: string) => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text(title, 14, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.text(value, 60, y);
+      y += 8;
+    };
+
+    // Stat Cards Section
+    addSection(t('total_vehicles'), stats.totalVehicles);
+    addSection(t('main_city'), stats.topCity);
+    addSection(t('main_model'), stats.topModel);
+    addSection(t('main_region'), stats.topRegion);
+    y += 5; // Extra space after section
+
+    // AI General Analysis
+    if (generalAnalysis) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text(t('ai_analysis_title'), 14, y);
+      y += 8;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      const splitText = doc.splitTextToSize(generalAnalysis.replace(/<\/?[^>]+(>|$)/g, ""), 180);
+      doc.text(splitText, 14, y);
+      y += (splitText.length * 5) + 10;
+    }
+
+    // AI Demand Forecast
+    if (demandAnalysis && demandAnalysis.predictions.length > 0) {
+        doc.addPage();
+        y = 20;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(t('part_demand_forecast_title'), 14, y);
+        y += 10;
+
+        demandAnalysis.predictions.forEach(pred => {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.text(`${pred.partName} (Demanda: ${pred.demandLevel})`, 14, y);
+            y += 6;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            const reasonText = doc.splitTextToSize(`Razão: ${pred.reason}`, 180);
+            doc.text(reasonText, 14, y);
+            y += (reasonText.length * 4) + 2;
+            
+            const opportunityText = doc.splitTextToSize(`Oportunidade: ${pred.opportunity}`, 180);
+            doc.text(opportunityText, 14, y);
+            y += (opportunityText.length * 4) + 8;
+        });
+    }
+
+    if (y > 270) { doc.addPage(); y = 20; }
+    y = await addBase64ImageToPdf(doc, 'regional-chart', y, t('regional_fleet_analysis'));
+
+    if (y > 250) { doc.addPage(); y = 20; }
+    y = await addBase64ImageToPdf(doc, 'top-models-chart', y, t('top_models_by_volume', { count: 5 }));
+
+    if (y > 250) { doc.addPage(); y = 20; }
+    y = await addBase64ImageToPdf(doc, 'fleet-by-year-chart', y, t('fleet_by_year'));
+
+    doc.save(`frota-ai-report-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   const isFiltered = useMemo(() => {
     return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
   }, [filters]);
@@ -232,32 +341,35 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         </div>
 
         <StatCards data={filteredData} filters={filters} />
-        <div className="grid gap-4 md:gap-8 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-            <RegionalFleetChart data={regionalData} />
+        <div id="charts-grid" className="grid gap-4 md:gap-8 lg:grid-cols-5">
+            <div id="regional-chart" className="lg:col-span-3">
+                <RegionalFleetChart data={regionalData} />
+            </div>
+            <div id="top-models-chart" className="lg:col-span-2">
+                <TopModelsChart data={filteredData} />
+            </div>
+            <div id="fleet-by-year-chart" className="lg:col-span-3">
+                <FleetByYearChart data={filteredData} />
+            </div>
+            <div id="fleet-age-chart" className="lg:col-span-2">
+                 <FleetAgeBracketChart data={filteredData} />
+            </div>
         </div>
-        <div className="lg:col-span-2">
-            <TopModelsChart data={filteredData} />
-        </div>
-        </div>
+        
         <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
-        <FleetByYearChart data={filteredData} />
-        <FleetAgeBracketChart data={filteredData} />
-        </div>
-        <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-        <FinalAnalysis
-            filters={filters}
-            disabled={!isFiltered || filteredData.length === 0}
-            fleetAgeBrackets={fleetAgeBrackets}
-            regionalData={regionalData}
-            fleetByYearData={fleetByYearData}
+            <FinalAnalysis
+                filters={filters}
+                disabled={!isFiltered || filteredData.length === 0}
+                fleetAgeBrackets={fleetAgeBrackets}
+                regionalData={regionalData}
+                fleetByYearData={fleetByYearData}
+                onAnalysisGenerated={setGeneralAnalysis}
             />
-        </div>
-        <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-        <PartDemandForecast
-            fleetAgeBrackets={fleetAgeBrackets}
-            filters={filters}
-            disabled={!isFiltered || filteredData.length === 0}
+            <PartDemandForecast
+                fleetAgeBrackets={fleetAgeBrackets}
+                filters={filters}
+                disabled={!isFiltered || filteredData.length === 0}
+                onDemandPredicted={setDemandAnalysis}
             />
         </div>
       </>
@@ -279,7 +391,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
           onExport={handleExportPDF} 
           isFiltered={isFiltered}
         />
-        <main ref={dashboardContentRef} className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
+        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
            {isComparing && (
             <div className="mb-4">
               <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
