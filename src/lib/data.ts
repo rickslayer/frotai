@@ -1,5 +1,6 @@
+
 import type { Vehicle } from '@/types';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import { cache } from 'react';
 
@@ -19,20 +20,13 @@ const splitModelAndVersion = (modelName: string): { model: string, version: stri
 };
 
 
-export const getFleetData = cache((): Vehicle[] => {
+export const getFleetData = cache(async (): Promise<Vehicle[]> => {
   // Caminho para o arquivo rj.json na raiz do projeto.
   const filePath = path.join(process.cwd(), 'rj.json');
-  let allVehicles: Vehicle[] = [];
-
+  
   try {
-    if (!fs.existsSync(filePath)) {
-      console.warn("Arquivo 'rj.json' não encontrado na raiz do projeto. O dashboard estará vazio.");
-      return [];
-    }
-
-    console.log("Arquivo 'rj.json' encontrado na raiz. Lendo como JSON...");
-    
-    const fileContent = fs.readFileSync(filePath, 'utf8');
+    console.log("Lendo arquivo 'rj.json' de forma assíncrona...");
+    const fileContent = await fs.readFile(filePath, 'utf8');
     const jsonData = JSON.parse(fileContent);
 
     if (!Array.isArray(jsonData)) {
@@ -58,7 +52,7 @@ export const getFleetData = cache((): Vehicle[] => {
         };
     }) as Vehicle[];
     
-    allVehicles = vehicles.filter(v => v.manufacturer && v.model && v.year);
+    const allVehicles = vehicles.filter(v => v.manufacturer && v.model && v.year);
     
     if (allVehicles.length === 0) {
        console.warn("O arquivo 'rj.json' foi lido, mas nenhum registro válido foi processado.");
@@ -66,10 +60,14 @@ export const getFleetData = cache((): Vehicle[] => {
       console.log(`Sucesso! ${allVehicles.length} registros lidos de 'rj.json'.`);
     }
     
+    return allVehicles;
+    
   } catch (error) {
-    console.error(`Erro ao ler ou processar o arquivo 'rj.json'. Verifique se é um JSON válido. Erro: ${(error as Error).message}`);
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        console.warn("Arquivo 'rj.json' não encontrado na raiz do projeto. O dashboard estará vazio.");
+    } else {
+        console.error(`Erro ao ler ou processar o arquivo 'rj.json'. Verifique se é um JSON válido. Erro: ${(error as Error).message}`);
+    }
     return []; // Retorna um array vazio em caso de erro.
   }
-
-  return allVehicles;
 });
