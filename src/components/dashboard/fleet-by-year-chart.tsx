@@ -47,13 +47,13 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
 
 
   return (
-    <Card className="flex flex-col h-full">
+    <Card>
       <CardHeader>
         <CardTitle>{t('fleet_by_year')}</CardTitle>
         <CardDescription>{t('fleet_by_year_description')}</CardDescription>
       </CardHeader>
-      <CardContent className='flex-grow'>
-        <ChartContainer config={chartConfig} className="h-full min-h-[150px] w-full">
+      <CardContent>
+        <ChartContainer config={chartConfig} className="w-full">
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={150}>
               <LineChart
