@@ -102,6 +102,7 @@ const DashboardClient: FC<DashboardClientProps> = () => {
     setLoading(true);
     try {
       const optionsPromise = getFilterOptions(currentFilters);
+      // Only fetch vehicle data if it's not an initial load (i.e., at least one filter is applied)
       const dataPromise = isInitialLoad ? Promise.resolve([]) : getFleetData(currentFilters);
       
       const [options, data] = await Promise.all([optionsPromise, dataPromise]);
@@ -123,15 +124,20 @@ const DashboardClient: FC<DashboardClientProps> = () => {
     }
   }, [toast, t]);
 
+
+  // Initial data load
   useEffect(() => {
+    // Fetch only the filter options on the initial load.
+    // The main data will be fetched when the user applies the first filter.
     fetchDataAndOptions({ state: '', city: '', manufacturer: '', model: '', version: [], year: '' }, true);
-  }, [fetchDataAndOptions]);
+  }, []); // Removed fetchDataAndOptions from dependency array to ensure it runs only once on mount
 
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     const updated = { ...filters, ...newFilters };
     const changedKey = Object.keys(newFilters)[0] as keyof Filters;
     
+    // Reset dependent filters when a parent filter changes
     let filtersToReset: Partial<Filters> = {};
     if (changedKey === 'state') {
         filtersToReset = { city: '', manufacturer: '', model: '', version: [], year: '' };
@@ -147,7 +153,7 @@ const DashboardClient: FC<DashboardClientProps> = () => {
     
     const finalFilters = { ...updated, ...filtersToReset };
     setFilters(finalFilters);
-    fetchDataAndOptions(finalFilters);
+    fetchDataAndOptions(finalFilters, false); // always fetch data on subsequent changes
   }, [filters, fetchDataAndOptions]);
 
   const handleExportPDF = () => {

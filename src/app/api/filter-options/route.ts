@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     await dbConnect();
-    const Model = getModel('carros');
+    const Model = getModel('carros'); // CORREÇÃO: Usar a coleção 'carros'
 
     const query: Record<string, any> = {};
     searchParams.forEach((value, key) => {
@@ -24,9 +24,13 @@ export async function GET(request: NextRequest) {
         }
       }
     });
-
-    const states = await Model.distinct('state', {});
-    const cities = await Model.distinct('city', query.state ? { state: query.state } : {});
+    
+    const states = await Model.distinct('state', query);
+    
+    const citiesQuery = { ...query };
+    if(query.state) citiesQuery.state = query.state;
+    const cities = await Model.distinct('city', citiesQuery);
+    
     const manufacturers = await Model.distinct('manufacturer', query);
     const models = await Model.distinct('model', query);
     const versions = await Model.distinct('version', query);
