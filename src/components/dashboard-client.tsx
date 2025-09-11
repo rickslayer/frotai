@@ -51,15 +51,14 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     setFilters(prev => {
         const updated = { ...prev, ...newFilters };
         
-        // Cascade filter clearing
-        if ('state' in newFilters) {
+        if ('state' in newFilters && newFilters.state !== prev.state) {
             updated.city = '';
         }
-        if ('manufacturer' in newFilters) {
+        if ('manufacturer' in newFilters && newFilters.manufacturer !== prev.manufacturer) {
             updated.model = '';
             updated.version = [];
         }
-        if ('model' in newFilters) {
+        if ('model' in newFilters && newFilters.model !== prev.model) {
              updated.version = [];
         }
 
@@ -68,22 +67,26 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   }, []);
 
   const filterOptions = useMemo<FilterOptions>(() => {
-    let filteredForOptions = allData;
+    let dataForOptions = allData;
 
     if (filters.state && filters.state !== 'all') {
-      filteredForOptions = filteredForOptions.filter(d => d.state === filters.state);
+      dataForOptions = dataForOptions.filter(d => d.state === filters.state);
     }
-    const cities = [...new Set(filteredForOptions.map(d => d.city))].sort();
+    const cities = [...new Set(dataForOptions.map(d => d.city))].sort();
 
+    
+    let manufacturerFilteredData = allData;
     if (filters.manufacturer && filters.manufacturer !== 'all') {
-        filteredForOptions = filteredForOptions.filter(d => d.manufacturer === filters.manufacturer);
+        manufacturerFilteredData = manufacturerFilteredData.filter(d => d.manufacturer === filters.manufacturer);
     }
-    const models = [...new Set(filteredForOptions.map(d => d.model))].sort();
-
+    const models = [...new Set(manufacturerFilteredData.map(d => d.model))].sort();
+    
+    let modelFilteredData = manufacturerFilteredData;
     if (filters.model && filters.model !== 'all') {
-        filteredForOptions = filteredForOptions.filter(d => d.model === filters.model);
+        modelFilteredData = modelFilteredData.filter(d => d.model === filters.model);
     }
-    const versions = [...new Set(filteredForOptions.map(d => d.version))].sort();
+    const versions = [...new Set(modelFilteredData.map(d => d.version))].sort();
+
 
     return {
       ...initialFilterOptions,
@@ -264,7 +267,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar collapsible="none">
         <DashboardSidebar
           filters={filters}
           onFilterChange={handleFilterChange}

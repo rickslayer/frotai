@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { Car, MapPin, Calendar, SlidersHorizontal, FilterX, ChevronRight } from 'lucide-react';
+import { Car, MapPin, Calendar, SlidersHorizontal, FilterX } from 'lucide-react';
 import type { FilterOptions, Filters } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -52,24 +52,23 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
         <div className="flex h-14 items-center justify-between px-4 lg:h-[60px] lg:px-2">
             <Link href="/" className="flex items-center gap-3 font-semibold text-primary">
               <Car className="h-6 w-6" />
-              <span className="text-lg text-foreground group-data-[collapsible=icon]:hidden">Frota.AI</span>
+              <span className="text-lg text-foreground">Frota.AI</span>
             </Link>
-            <SidebarTrigger className='hidden lg:flex' />
         </div>
         <Separator />
       </SidebarHeader>
       <SidebarContent>
         <ScrollArea className="flex-1">
           <div className="p-4">
-            <h2 className="mb-4 text-lg font-semibold tracking-tight group-data-[collapsible=icon]:hidden">{t('filters')}</h2>
+            <h2 className="mb-4 text-lg font-semibold tracking-tight">{t('filters')}</h2>
             <Accordion type="multiple" defaultValue={['location', 'vehicle', 'time']} className="w-full">
               <AccordionItem value="location">
                 <AccordionTrigger>
                   <div className='flex items-center gap-2'>
-                    <MapPin className="h-4 w-4" /> <span className='group-data-[collapsible=icon]:hidden'>{t('location')}</span>
+                    <MapPin className="h-4 w-4" /> <span>{t('location')}</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="space-y-4 pt-4 group-data-[collapsible=icon]:hidden">
+                <AccordionContent className="space-y-4 pt-4">
                   <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
@@ -88,10 +87,10 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
               <AccordionItem value="vehicle">
                 <AccordionTrigger>
                   <div className='flex items-center gap-2'>
-                    <SlidersHorizontal className="h-4 w-4" /> <span className='group-data-[collapsible=icon]:hidden'>{t('vehicle')}</span>
+                    <SlidersHorizontal className="h-4 w-4" /> <span>{t('vehicle')}</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="space-y-4 pt-4 group-data-[collapsible=icon]:hidden">
+                <AccordionContent className="space-y-4 pt-4">
                   <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
                     <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                     <SelectContent>
@@ -120,10 +119,10 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
               <AccordionItem value="time">
                 <AccordionTrigger>
                   <div className='flex items-center gap-2'>
-                    <Calendar className="h-4 w-4" /> <span className='group-data-[collapsible=icon]:hidden'>{t('manufacturing_year')}</span>
+                    <Calendar className="h-4 w-4" /> <span>{t('manufacturing_year')}</span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="pt-4 group-data-[collapsible=icon]:hidden">
+                <AccordionContent className="pt-4">
                    <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                     <SelectContent>
@@ -142,7 +141,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
          <div className="mt-auto p-4">
           <Button variant="ghost" className="w-full justify-center" onClick={clearFilters} disabled={!hasActiveFilters}>
              <FilterX className="mr-2 h-4 w-4" />
-            <span className='group-data-[collapsible=icon]:hidden'>{t('clear_all_filters')}</span>
+            <span>{t('clear_all_filters')}</span>
           </Button>
         </div>
       </SidebarFooter>

@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -175,13 +176,13 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, open, setOpen, openMobile, setOpenMobile } = useSidebar()
 
     if (collapsible === "none") {
       return (
         <div
           className={cn(
-            "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground",
+            "hidden lg:flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground border-r",
             className
           )}
           ref={ref}
