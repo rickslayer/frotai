@@ -1,11 +1,14 @@
 
 import DashboardClient from "@/components/dashboard-client";
+import { getFleetData, getFilterOptions } from '@/lib/data';
 
-export default function Home() {
-  // Data will now be fetched on the client side based on interactions
+export default async function Home() {
+  const initialData = await getFleetData({});
+  const initialFilterOptions = await getFilterOptions({});
+
   return (
     <main>
-      <DashboardClient />
+      <DashboardClient initialData={initialData} initialFilterOptions={initialFilterOptions} />
     </main>
   );
 }

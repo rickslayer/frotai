@@ -2,7 +2,7 @@
 'use client';
 
 import type { FC } from 'react';
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import type { Vehicle, FilterOptions, Filters, FleetAgeBracket, ChartData, RegionData, AnalysisSnapshot } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
@@ -27,51 +27,15 @@ import { Button } from './ui/button';
 import { BookCopy, Loader2 } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
-
-
-async function fetchApi(url: string) {
-    const res = await fetch(url);
-    if (!res.ok) {
-        const errorBody = await res.text();
-        console.error(`API Error Response Body for ${url}:`, errorBody);
-        throw new Error(`Failed to fetch ${url}`);
-    }
-    return res.json();
-}
-
-const buildQueryString = (filters: Partial<Filters>): string => {
-    const params = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== 'all') {
-            if (Array.isArray(value)) {
-                if (value.length > 0) params.append(key, value.join(','));
-            } else {
-                 params.append(key, String(value));
-            }
-        }
-    });
-    return params.toString();
-}
-
-const getFleetData = (filters: Filters): Promise<Vehicle[]> => {
-    const queryString = buildQueryString(filters);
-    return fetchApi(`/api/carros?${queryString}`);
-};
-
-const getFilterOptions = (filters: Partial<Filters>): Promise<FilterOptions> => {
-    const queryString = buildQueryString(filters);
-    return fetchApi(`/api/filter-options?${queryString}`);
-};
 
 
 interface DashboardClientProps {
-  // No initial data needed anymore
+  initialData: Vehicle[];
+  initialFilterOptions: FilterOptions;
 }
 
-const DashboardClient: FC<DashboardClientProps> = () => {
+const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterOptions }) => {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [filters, setFilters] = useState<Filters>({
     state: '',
     city: '',
@@ -80,17 +44,6 @@ const DashboardClient: FC<DashboardClientProps> = () => {
     version: [],
     year: '',
   });
-
-  const [filteredData, setFilteredData] = useState<Vehicle[]>([]);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-      states: [],
-      cities: [],
-      manufacturers: [],
-      models: [],
-      versions: [],
-      years: [],
-  });
-  const [loading, setLoading] = useState(true);
   
   const [isComparing, setIsComparing] = useState(false);
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
@@ -98,63 +51,9 @@ const DashboardClient: FC<DashboardClientProps> = () => {
 
   const dashboardContentRef = useRef<HTMLDivElement>(null);
 
-  const fetchDataAndOptions = useCallback(async (currentFilters: Filters, isInitialLoad = false) => {
-    setLoading(true);
-    try {
-      const optionsPromise = getFilterOptions(currentFilters);
-      // Only fetch vehicle data if it's not an initial load (i.e., at least one filter is applied)
-      const dataPromise = isInitialLoad ? Promise.resolve([]) : getFleetData(currentFilters);
-      
-      const [options, data] = await Promise.all([optionsPromise, dataPromise]);
-
-      setFilterOptions(options);
-      if (!isInitialLoad) {
-          setFilteredData(data);
-      }
-      
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-       toast({
-            variant: 'destructive',
-            title: t('error'),
-            description: "Failed to fetch data. Please try again.",
-        });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast, t]);
-
-
-  // Initial data load
-  useEffect(() => {
-    // Fetch only the filter options on the initial load.
-    // The main data will be fetched when the user applies the first filter.
-    fetchDataAndOptions({ state: '', city: '', manufacturer: '', model: '', version: [], year: '' }, true);
-  }, []); // Removed fetchDataAndOptions from dependency array to ensure it runs only once on mount
-
-
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
-    const updated = { ...filters, ...newFilters };
-    const changedKey = Object.keys(newFilters)[0] as keyof Filters;
-    
-    // Reset dependent filters when a parent filter changes
-    let filtersToReset: Partial<Filters> = {};
-    if (changedKey === 'state') {
-        filtersToReset = { city: '', manufacturer: '', model: '', version: [], year: '' };
-    } else if (changedKey === 'city') {
-        filtersToReset = { manufacturer: '', model: '', version: [], year: '' };
-    } else if (changedKey === 'manufacturer') {
-        filtersToReset = { model: '', version: [], year: '' };
-    } else if (changedKey === 'model') {
-        filtersToReset = { version: [], year: '' };
-    } else if (changedKey === 'version') {
-        filtersToReset = { year: '' };
-    }
-    
-    const finalFilters = { ...updated, ...filtersToReset };
-    setFilters(finalFilters);
-    fetchDataAndOptions(finalFilters, false); // always fetch data on subsequent changes
-  }, [filters, fetchDataAndOptions]);
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
 
   const handleExportPDF = () => {
     const input = dashboardContentRef.current;
@@ -195,6 +94,20 @@ const DashboardClient: FC<DashboardClientProps> = () => {
   const isFiltered = useMemo(() => {
     return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value !== '' && value !== 'all');
   }, [filters]);
+  
+  const filteredData = useMemo(() => {
+    if (!isFiltered) return [];
+    return initialData.filter(item => {
+      return (
+        (filters.state === 'all' || filters.state === '' || item.state === filters.state) &&
+        (filters.city === 'all' || filters.city === '' || item.city === filters.city) &&
+        (filters.manufacturer === 'all' || filters.manufacturer === '' || item.manufacturer === filters.manufacturer) &&
+        (filters.model === 'all' || filters.model === '' || item.model === filters.model) &&
+        (filters.version.length === 0 || filters.version.includes(item.version)) &&
+        (filters.year === 'all' || filters.year === '' || item.year === filters.year)
+      );
+    });
+  }, [filters, initialData, isFiltered]);
 
   const fleetAgeBrackets = useMemo((): FleetAgeBracket[] => {
     const currentYear = new Date().getFullYear();
@@ -234,7 +147,7 @@ const DashboardClient: FC<DashboardClientProps> = () => {
   }, [filteredData]);
 
   const handleSaveSnapshot = () => {
-    if (filters.version.length > 5 && filters.version.length !== filterOptions.versions.length) {
+    if (filters.version.length > 5 && filters.version.length !== initialFilterOptions.versions.length) {
         setIsVersionLimitModalOpen(true);
         return;
     }
@@ -247,7 +160,7 @@ const DashboardClient: FC<DashboardClientProps> = () => {
       fleetAgeBrackets,
       regionalData,
       fleetByYearData,
-      availableVersionsCount: filterOptions.versions.length
+      availableVersionsCount: initialFilterOptions.versions.length
     };
     
     setSnapshots(prev => {
@@ -285,7 +198,7 @@ const DashboardClient: FC<DashboardClientProps> = () => {
         <DashboardSidebar
           filters={filters}
           onFilterChange={handleFilterChange}
-          filterOptions={filterOptions}
+          filterOptions={initialFilterOptions}
         />
       </Sidebar>
       <SidebarInset>
@@ -317,11 +230,7 @@ const DashboardClient: FC<DashboardClientProps> = () => {
             </AlertDialog>
 
 
-          {loading ? (
-             <div className="flex flex-1 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-             </div>
-          ) : !isFiltered ? (
+          {!isFiltered ? (
              <div className="flex flex-col h-full gap-8">
                <WelcomePlaceholder />
              </div>
