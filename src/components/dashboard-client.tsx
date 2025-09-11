@@ -2,7 +2,7 @@
 'use client';
 
 import type { FC } from 'react';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Vehicle, FilterOptions, Filters, FleetAgeBracket, ChartData, RegionData, AnalysisSnapshot, PredictPartsDemandOutput } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
@@ -26,6 +26,7 @@ import { Button } from './ui/button';
 import { BookCopy } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import html2canvas from 'html2canvas';
 
 interface DashboardClientProps {
   initialData: Vehicle[];
@@ -155,8 +156,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   const addBase64ImageToPdf = async (doc: jsPDF, elementId: string, y: number, title: string) => {
       const element = document.getElementById(elementId);
       if (element) {
-        // Dynamically import html2canvas
-        const html2canvas = (await import('html2canvas')).default;
         const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
         const imgData = canvas.toDataURL('image/png');
 
@@ -173,16 +172,31 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
       return y;
   };
 
-  const formatTextForPdf = (htmlText: string) => {
-    return htmlText
-      .replace(/<br \/>/g, '\n')
-      .replace(/<\/?b>/g, '') // Remove bold tags but keep text
-      .replace(/<strong>/g, '')
-      .replace(/<\/strong>/g, '')
-      .replace(/<li>/g, '  - ')
-      .replace(/<\/li>/g, '\n')
-      .replace(/<\/?[^>]+(>|$)/g, ""); // Remove any remaining HTML tags
-  };
+  const formatTextForPdf = (htmlText: string | null | undefined): string => {
+    if (!htmlText) return '';
+    
+    // Create a temporary div to parse the HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlText.replace(/\n/g, '<br/>'); // Standardize line breaks
+
+    // Replace semantic HTML with text and line breaks
+    tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(header => {
+        header.textContent = `\n${header.textContent}\n`;
+    });
+    tempDiv.querySelectorAll('p').forEach(p => {
+        p.textContent = `${p.textContent}\n`;
+    });
+    tempDiv.querySelectorAll('li').forEach(li => {
+        li.textContent = `  - ${li.textContent}\n`;
+    });
+    tempDiv.querySelectorAll('strong, b').forEach(bold => {
+        bold.textContent = `${bold.textContent}`; // Just get the text
+    });
+
+    // Use textContent to strip remaining tags and get the formatted text
+    return tempDiv.textContent || '';
+};
+
 
 
   const handleExportPDF = async () => {
@@ -239,6 +253,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         y += 10;
 
         demandAnalysis.predictions.forEach(pred => {
+            if (y > 270) { doc.addPage(); y = 20; }
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(11);
             doc.text(`${pred.partName} (Demanda: ${pred.demandLevel})`, 14, y);
@@ -368,7 +383,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
             </div>
         </div>
         
-        <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
+        <div className="grid gap-4 md:gap-8">
             <FinalAnalysis
                 filters={filters}
                 disabled={!isFiltered || filteredData.length === 0}
@@ -433,5 +448,3 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 };
 
 export default DashboardClient;
-
-    
