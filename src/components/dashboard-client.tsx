@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FC } from 'react';
@@ -27,8 +26,46 @@ import { Button } from './ui/button';
 import { BookCopy, Loader2 } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { getFleetData, getFilterOptions } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
+
+
+async function fetchApi(url: string) {
+    const res = await fetch(url);
+    if (!res.ok) {
+        throw new Error('Failed to fetch');
+    }
+    return res.json();
+}
+
+
+const getFleetData = (filters: Filters): Promise<Vehicle[]> => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== 'all') {
+            if (Array.isArray(value)) {
+                if (value.length > 0) params.append(key, value.join(','));
+            } else {
+                 params.append(key, String(value));
+            }
+        }
+    });
+    return fetchApi(`/api/vehicles?${params.toString()}`);
+};
+
+const getFilterOptions = (filters: Partial<Filters>): Promise<FilterOptions> => {
+     const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+        if (value && value !== 'all') {
+             if (Array.isArray(value)) {
+                if (value.length > 0) params.append(key, value.join(','));
+            } else {
+                 params.append(key, String(value));
+            }
+        }
+    });
+    return fetchApi(`/api/filter-options?${params.toString()}`);
+};
+
 
 interface DashboardClientProps {
   // No initial data needed anymore
@@ -71,7 +108,7 @@ const DashboardClient: FC<DashboardClientProps> = () => {
             const options = await getFilterOptions({});
             setFilterOptions(options);
         } catch (error) {
-            console.error("Failed to fetch initial filter options", error);
+            console.error("Error fetching filter options from API:", (error as Error).message);
             toast({
                 variant: 'destructive',
                 title: t('error'),

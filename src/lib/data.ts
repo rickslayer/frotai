@@ -2,12 +2,12 @@
 
 import type { Vehicle, Filters, FilterOptions } from '@/types';
 import { cache } from 'react';
-import { getVehicles } from './api-logic';
+import { getVehicles as getVehiclesFromDb } from './api-logic';
 
-// Fetches the actual vehicle data based on filters
+// This function is intended to be used on the server side
 export const getFleetData = cache(async (filters: Filters): Promise<Vehicle[]> => {
   try {
-    const data = await getVehicles(filters);
+    const data = await getVehiclesFromDb(filters);
     return data;
   } catch (error) {
     console.error("Error fetching data directly:", (error as Error).message);
@@ -15,15 +15,10 @@ export const getFleetData = cache(async (filters: Filters): Promise<Vehicle[]> =
   }
 });
 
-
-// Fetches the available options for filters, can be dependent on other filters
+// This function is intended to be used on the server side
 export const getFilterOptions = cache(async (filters: Partial<Filters>): Promise<FilterOptions> => {
   try {
-    // This could be a separate endpoint, but for simplicity we reuse the main one
-    // and derive options from the returned data on the client.
-    // A more optimized approach would be a dedicated API endpoint `/api/filter-options`
-    // that runs aggregation queries on the database.
-    const data: Vehicle[] = await getVehicles(filters);
+    const data: Vehicle[] = await getVehiclesFromDb(filters);
 
     // Derive options from the data
     const states = [...new Set(data.map(item => item.state))].sort();
@@ -39,4 +34,3 @@ export const getFilterOptions = cache(async (filters: Partial<Filters>): Promise
      return { states:[], cities: [], manufacturers: [], models: [], versions: [], years: [] };
   }
 });
-
