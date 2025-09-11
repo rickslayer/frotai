@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { useTranslation } from 'react-i18next';
-import { SidebarHeader, SidebarTrigger, SidebarContent, SidebarFooter } from '../ui/sidebar';
+import { SidebarHeader, SidebarContent, SidebarFooter } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
 import { Combobox } from '../ui/combobox';
 import { MultiSelectDropdown } from '../ui/multi-select-dropdown';
@@ -74,21 +74,21 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                     <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
                     <SelectContent>
                        <SelectItem value="all">{t('all_regions')}</SelectItem>
-                      {filterOptions.regions.map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
+                      {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value)} disabled={!filters.region || filters.region === 'all'}>
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
                        <SelectItem value="all">{t('all_states')}</SelectItem>
-                      {filterOptions.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value)} disabled={!filters.state || filters.state === 'all'}>
                     <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_cities')}</SelectItem>
-                      {filterOptions.cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      {(filterOptions.cities || []).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </AccordionContent>
@@ -104,11 +104,11 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                     <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
-                      {filterOptions.manufacturers.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      {(filterOptions.manufacturers || []).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Combobox 
-                    items={filterOptions.models.map(m => ({ value: m, label: m }))}
+                    items={(filterOptions.models || []).map(m => ({ value: m, label: m }))}
                     value={filters.model}
                     onChange={(value) => handleFilterValueChange('model', value)}
                     placeholder={t('select_model')}
@@ -117,7 +117,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                     disabled={!filters.manufacturer || filters.manufacturer === 'all'}
                   />
                    <MultiSelectDropdown
-                      options={filterOptions.versions.map(v => ({ value: v || 'base', label: v || t('base_model_version')}))}
+                      options={(filterOptions.versions || []).map(v => ({ value: v || 'base', label: v || t('base_model_version')}))}
                       selectedValues={filters.version}
                       onChange={(selected) => handleFilterValueChange('version', selected)}
                       placeholder={t('select_version_multi')}
@@ -136,7 +136,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                     <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_years')}</SelectItem>
-                      {filterOptions.years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                      {(filterOptions.years || []).map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </AccordionContent>
