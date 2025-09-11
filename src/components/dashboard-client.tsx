@@ -93,42 +93,55 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   }, []);
 
   const filterOptions = useMemo<FilterOptions>(() => {
-      let data_f = allData;
-      
-      const regions = [...new Set(data_f.map(d => stateToRegionMap[d.state.toUpperCase()]).filter(Boolean))].sort();
+    let filteredDataForOptions = allData;
 
-      if (filters.region && filters.region !== 'all') {
-        const statesInRegion = regionToStatesMap[filters.region] || [];
-        data_f = data_f.filter(d => statesInRegion.includes(d.state.toUpperCase()));
-      }
-      const states = [...new Set(data_f.map(d => d.state))].sort();
+    // Region (for its own options, independent)
+    const regions = [...new Set(filteredDataForOptions.map(d => stateToRegionMap[d.state.toUpperCase()]).filter(Boolean))].sort();
 
-      if (filters.state && filters.state !== 'all') {
-        data_f = data_f.filter(d => d.state === filters.state);
-      }
-      const cities = [...new Set(data_f.map(d => d.city))].sort();
+    // State
+    let stateData = filteredDataForOptions;
+    if (filters.region && filters.region !== 'all') {
+      const statesInRegion = regionToStatesMap[filters.region] || [];
+      stateData = stateData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
+    }
+    const states = [...new Set(stateData.map(d => d.state))].sort();
 
-      if (filters.city && filters.city !== 'all') {
-        data_f = data_f.filter(d => d.city === filters.city);
-      }
-      const manufacturers = [...new Set(data_f.map(d => d.manufacturer))].sort();
+    // City
+    let cityData = stateData;
+    if (filters.state && filters.state !== 'all') {
+        cityData = cityData.filter(d => d.state === filters.state);
+    }
+    const cities = [...new Set(cityData.map(d => d.city))].sort();
 
-      if (filters.manufacturer && filters.manufacturer !== 'all') {
-        data_f = data_f.filter(d => d.manufacturer === filters.manufacturer);
-      }
-      const models = [...new Set(data_f.map(d => d.model))].sort();
+    // Manufacturer
+    let manufacturerData = cityData;
+    if (filters.city && filters.city !== 'all') {
+        manufacturerData = manufacturerData.filter(d => d.city === filters.city);
+    }
+    const manufacturers = [...new Set(manufacturerData.map(d => d.manufacturer))].sort();
 
-      if (filters.model && filters.model !== 'all') {
-        data_f = data_f.filter(d => d.model === filters.model);
-      }
-      const versions = [...new Set(data_f.map(d => d.version))].sort();
+    // Model
+    let modelData = manufacturerData;
+    if (filters.manufacturer && filters.manufacturer !== 'all') {
+        modelData = modelData.filter(d => d.manufacturer === filters.manufacturer);
+    }
+    const models = [...new Set(modelData.map(d => d.model))].sort();
 
-      if (filters.version.length > 0) {
-        data_f = data_f.filter(d => filters.version.includes(d.version));
-      }
-      const years = [...new Set(data_f.map(d => d.year))].sort((a,b) => b-a);
-
-      return {
+    // Version
+    let versionData = modelData;
+    if (filters.model && filters.model !== 'all') {
+        versionData = versionData.filter(d => d.model === filters.model);
+    }
+    const versions = [...new Set(versionData.map(d => d.version))].sort();
+    
+    // Year
+    let yearData = versionData;
+    if (filters.version.length > 0) {
+      yearData = yearData.filter(d => filters.version.includes(d.version));
+    }
+    const years = [...new Set(yearData.map(d => d.year))].sort((a,b) => b-a);
+    
+    return {
         regions,
         states,
         cities,
@@ -136,8 +149,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         models,
         versions,
         years,
-      };
-  }, [filters, allData]);
+    };
+}, [filters, allData]);
 
   const filteredData = useMemo(() => {
     const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
@@ -151,8 +164,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
                 return true;
             }
             if (key === 'region') {
-                const statesInRegion = regionToStatesMap[value as string] || [];
-                return statesInRegion.includes(item.state.toUpperCase());
+                const regionOfItem = stateToRegionMap[item.state.toUpperCase()];
+                return regionOfItem === value;
             }
             if (key === 'year') {
                 return item.year === Number(value);
@@ -459,12 +472,12 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
             <div className="flex justify-end items-center gap-4">
-                {isFiltered && (
+              {isFiltered && (
                 <Button onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
-                    <BookCopy className="mr-2 h-4 w-4"/>
-                    {t('save_for_comparison')}
+                  <BookCopy className="mr-2 h-4 w-4"/>
+                  {t('save_for_comparison')}
                 </Button>
-                )}
+              )}
             </div>
 
             {isComparing && (
