@@ -4,27 +4,39 @@ import fs from 'fs/promises';
 import { cache } from 'react';
 import type { Vehicle, FilterOptions } from '@/types';
 
+// Helper function to extract manufacturer, model, and version
+const extractVehicleDetails = (modelString: string) => {
+    const parts = modelString.split(' ');
+    const model = parts.shift() || ''; // First word is the model
+    const version = parts.join(' '); // The rest is the version
+    return { model, version };
+};
+
+
 // Memoize the data loading and parsing process.
 const loadAndParseData = cache(async (): Promise<Vehicle[]> => {
-  const jsonFilePath = path.join(process.cwd(), 'src', 'data', 'example.json');
+  const jsonFilePath = path.join(process.cwd(), 'src', 'data', 'rj.json');
   try {
     const jsonFile = await fs.readFile(jsonFilePath, 'utf8');
     const data = JSON.parse(jsonFile);
 
     // Map the new data structure to the existing Vehicle type
-    return data.map((row: any) => ({
-      id: row.ID,
-      manufacturer: row.Marca,
-      model: row.Modelo,
-      version: row.Versao || '',
-      fullName: `${row.Modelo} ${row.Versao || ''}`.trim(),
-      year: parseInt(row.Ano, 10) || 0,
-      quantity: parseInt(row.Quantidade, 10) || 0,
-      state: row.Estado,
-      city: row.Município,
-    })).filter((v: Vehicle) => v.quantity > 0 && v.year > 0);
+    return data.map((row: any) => {
+        const { model, version } = extractVehicleDetails(row.Modelo);
+        return {
+            id: row.ID,
+            manufacturer: row.Marca,
+            model: model,
+            version: version,
+            fullName: `${model} ${version}`.trim(),
+            year: parseInt(row.Ano, 10) || 0,
+            quantity: parseInt(row.Quantidade, 10) || 0,
+            state: row.Estado,
+            city: row.Município,
+        }
+    }).filter((v: Vehicle) => v.quantity > 0 && v.year > 0);
   } catch (error) {
-    console.error("Error reading or parsing example.json:", error);
+    console.error("Error reading or parsing rj.json:", error);
     return [];
   }
 });
@@ -46,3 +58,4 @@ export const getFilterOptions = async (): Promise<FilterOptions> => {
 
     return { states, cities, manufacturers, models, versions, years };
 };
+
