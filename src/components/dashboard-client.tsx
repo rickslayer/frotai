@@ -92,54 +92,70 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     });
   }, []);
 
-  const filterOptions = useMemo<FilterOptions>(() => {
-    let filteredDataForOptions = allData;
+ const filterOptions = useMemo<FilterOptions>(() => {
+    let tempFilteredData = allData;
 
-    // Region (for its own options, independent)
-    const regions = [...new Set(filteredDataForOptions.map(d => stateToRegionMap[d.state.toUpperCase()]).filter(Boolean))].sort();
-
-    // State
-    let stateData = filteredDataForOptions;
+    // Sequentially apply all active filters except the one being calculated
     if (filters.region && filters.region !== 'all') {
       const statesInRegion = regionToStatesMap[filters.region] || [];
-      stateData = stateData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
+      tempFilteredData = tempFilteredData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
     }
-    const states = [...new Set(stateData.map(d => d.state))].sort();
-
-    // City
-    let cityData = stateData;
     if (filters.state && filters.state !== 'all') {
-        cityData = cityData.filter(d => d.state === filters.state);
+        tempFilteredData = tempFilteredData.filter(d => d.state === filters.state);
     }
-    const cities = [...new Set(cityData.map(d => d.city))].sort();
-
-    // Manufacturer
-    let manufacturerData = cityData;
     if (filters.city && filters.city !== 'all') {
-        manufacturerData = manufacturerData.filter(d => d.city === filters.city);
+        tempFilteredData = tempFilteredData.filter(d => d.city === filters.city);
     }
-    const manufacturers = [...new Set(manufacturerData.map(d => d.manufacturer))].sort();
-
-    // Model
-    let modelData = manufacturerData;
     if (filters.manufacturer && filters.manufacturer !== 'all') {
-        modelData = modelData.filter(d => d.manufacturer === filters.manufacturer);
+        tempFilteredData = tempFilteredData.filter(d => d.manufacturer === filters.manufacturer);
     }
-    const models = [...new Set(modelData.map(d => d.model))].sort();
-
-    // Version
-    let versionData = modelData;
     if (filters.model && filters.model !== 'all') {
-        versionData = versionData.filter(d => d.model === filters.model);
+        tempFilteredData = tempFilteredData.filter(d => d.model === filters.model);
     }
-    const versions = [...new Set(versionData.map(d => d.version))].sort();
-    
-    // Year
-    let yearData = versionData;
     if (filters.version.length > 0) {
-      yearData = yearData.filter(d => filters.version.includes(d.version));
+        tempFilteredData = tempFilteredData.filter(d => filters.version.includes(d.version));
     }
-    const years = [...new Set(yearData.map(d => d.year))].sort((a,b) => b-a);
+     if (filters.year && filters.year !== 'all') {
+        tempFilteredData = tempFilteredData.filter(d => d.year === Number(filters.year));
+    }
+
+    // Now, calculate the unique options for each filter based on the *partially* filtered data
+    const calculateOptions = (key: keyof Vehicle, currentFilter: string | string[] | number | 'all') => {
+        let dataForOption = allData;
+        if (filters.region && filters.region !== 'all' && key !== 'region') {
+          const statesInRegion = regionToStatesMap[filters.region] || [];
+          dataForOption = dataForOption.filter(d => statesInRegion.includes(d.state.toUpperCase()));
+        }
+        if (filters.state && filters.state !== 'all' && key !== 'state') {
+            dataForOption = dataForOption.filter(d => d.state === filters.state);
+        }
+        if (filters.city && filters.city !== 'all' && key !== 'city') {
+            dataForOption = dataForOption.filter(d => d.city === filters.city);
+        }
+        if (filters.manufacturer && filters.manufacturer !== 'all' && key !== 'manufacturer') {
+            dataForOption = dataForOption.filter(d => d.manufacturer === filters.manufacturer);
+        }
+        if (filters.model && filters.model !== 'all' && key !== 'model') {
+            dataForOption = dataForOption.filter(d => d.model === filters.model);
+        }
+        if (Array.isArray(filters.version) && filters.version.length > 0 && key !== 'version') {
+            dataForOption = dataForOption.filter(d => filters.version.includes(d.version));
+        }
+        if (filters.year && filters.year !== 'all' && key !== 'year') {
+             dataForOption = dataForOption.filter(d => d.year === Number(filters.year));
+        }
+
+        const options = [...new Set(dataForOption.map(d => d[key as keyof Vehicle]))] as (string | number)[];
+        return options.sort();
+    };
+    
+    const regions = [...new Set(allData.map(d => stateToRegionMap[d.state.toUpperCase()]).filter(Boolean))].sort();
+    const states = calculateOptions('state', filters.state) as string[];
+    const cities = calculateOptions('city', filters.city) as string[];
+    const manufacturers = calculateOptions('manufacturer', filters.manufacturer) as string[];
+    const models = calculateOptions('model', filters.model) as string[];
+    const versions = calculateOptions('version', filters.version) as string[];
+    const years = (calculateOptions('year', filters.year) as number[]).sort((a,b) => b-a);
     
     return {
         regions,
@@ -234,7 +250,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
       if (!htmlText) return '';
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = htmlText
-          .replace(/\n/g, '<br>')
+          .replace(/\\n/g, '<br>')
           .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/g, '\n**$1**\n')
           .replace(/<p[^>]*>(.*?)<\/p>/g, '$1\n')
           .replace(/<li>/g, '  - ')
@@ -243,7 +259,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
           .replace(/\*\*(.*?)\*\*/g, '$1');
       
       const textContent = (tempDiv.textContent || tempDiv.innerText || "");
-      return textContent.replace(/(\r\n|\n|\r){2,}/g, '\n\n').trim();
+      return textContent.replace(/(\\r\\n|\n|\r){2,}/g, '\n\n').trim();
     };
 
     if (generalAnalysis) {
@@ -471,13 +487,15 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
           isFiltered={isFiltered}
         />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
-            <div className="flex justify-end items-center gap-4">
-              {isFiltered && (
-                <Button onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
-                  <BookCopy className="mr-2 h-4 w-4"/>
-                  {t('save_for_comparison')}
-                </Button>
-              )}
+             <div className="flex justify-between items-center gap-4">
+                <div>
+                  {isFiltered && (
+                    <Button onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
+                      <BookCopy className="mr-2 h-4 w-4"/>
+                      {t('save_for_comparison')}
+                    </Button>
+                  )}
+                </div>
             </div>
 
             {isComparing && (
