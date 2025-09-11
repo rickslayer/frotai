@@ -1,6 +1,6 @@
+
 // src/app/api/filter-options/route.ts
 import { NextResponse, type NextRequest } from 'next/server';
-import { getVehicles } from '@/lib/api-logic';
 import { dbConnect, getModel } from '@/lib/mongodb';
 
 export async function GET(request: NextRequest) {
