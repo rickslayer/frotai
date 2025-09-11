@@ -1,26 +1,31 @@
 
-
 // src/app/api/[collection]/route.ts
 import { NextResponse, type NextRequest } from 'next/server';
-import { getVehicles } from '@/lib/api-logic';
 import { dbConnect, getModel } from '@/lib/mongodb';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { collection: string } }
 ) {
-    if (params.collection !== 'vehicles') {
-        return NextResponse.json({ error: 'Collection not found' }, { status: 404 });
-    }
-
   try {
     const { searchParams } = new URL(request.url);
     const filters: Record<string, any> = {};
     searchParams.forEach((value, key) => {
-        filters[key] = value;
+        if (value && value !== 'all') {
+            if (key === 'version' && typeof value === 'string' && value.length > 0) {
+                filters[key] = { $in: value.split(',') };
+            } else if (key === 'year' && !isNaN(Number(value))) {
+                filters[key] = Number(value);
+            } else {
+                 filters[key] = value;
+            }
+        }
     });
 
-    const data = await getVehicles(filters);
+    await dbConnect();
+    const Model = getModel(params.collection);
+    const data = await Model.find(filters).lean();
+
     return NextResponse.json(data);
   } catch (error) {
     console.error("API GET Error:", error);

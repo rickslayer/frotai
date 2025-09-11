@@ -56,7 +56,7 @@ const buildQueryString = (filters: Partial<Filters>): string => {
 
 const getFleetData = (filters: Filters): Promise<Vehicle[]> => {
     const queryString = buildQueryString(filters);
-    return fetchApi(`/api/vehicles?${queryString}`);
+    return fetchApi(`/api/carros?${queryString}`);
 };
 
 const getFilterOptions = (filters: Partial<Filters>): Promise<FilterOptions> => {
@@ -98,28 +98,19 @@ const DashboardClient: FC<DashboardClientProps> = () => {
 
   const dashboardContentRef = useRef<HTMLDivElement>(null);
 
-  const fetchData = useCallback(async (currentFilters: Filters) => {
+  const fetchDataAndOptions = useCallback(async (currentFilters: Filters, isInitialLoad = false) => {
     setLoading(true);
-    const hasActiveFilter = Object.values(currentFilters).some(v => (Array.isArray(v) ? v.length > 0 : v && v !== 'all'));
-    
     try {
-      const dataPromise = hasActiveFilter ? getFleetData(currentFilters) : Promise.resolve([]);
-      // Always fetch filter options
       const optionsPromise = getFilterOptions(currentFilters);
+      const dataPromise = isInitialLoad ? Promise.resolve([]) : getFleetData(currentFilters);
       
-      const [data, options] = await Promise.all([dataPromise, optionsPromise]);
+      const [options, data] = await Promise.all([optionsPromise, dataPromise]);
 
-      setFilteredData(data);
-      // When updating options, preserve the full list of states
-      setFilterOptions(prevOptions => ({
-        states: options.states.length > 0 ? options.states : prevOptions.states,
-        cities: options.cities,
-        manufacturers: options.manufacturers,
-        models: options.models,
-        versions: options.versions,
-        years: options.years,
-      }));
-
+      setFilterOptions(options);
+      if (!isInitialLoad) {
+          setFilteredData(data);
+      }
+      
     } catch (error) {
       console.error('Failed to fetch data:', error);
        toast({
@@ -132,48 +123,32 @@ const DashboardClient: FC<DashboardClientProps> = () => {
     }
   }, [toast, t]);
 
-  // Fetch initial filter options (states) on component mount
   useEffect(() => {
-    const fetchInitialOptions = async () => {
-        setLoading(true);
-        try {
-            const options = await getFilterOptions({});
-            setFilterOptions(options);
-        } catch (error) {
-            console.error("Error fetching filter options from API:", (error as Error).message);
-            toast({
-                variant: 'destructive',
-                title: t('error'),
-                description: "Failed to load initial data. Please refresh.",
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-    fetchInitialOptions();
-  }, [t, toast]);
+    fetchDataAndOptions({ state: '', city: '', manufacturer: '', model: '', version: [], year: '' }, true);
+  }, [fetchDataAndOptions]);
 
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
-    let updated = { ...filters, ...newFilters };
+    const updated = { ...filters, ...newFilters };
     const changedKey = Object.keys(newFilters)[0] as keyof Filters;
     
-    // Cascade filter clearing
+    let filtersToReset: Partial<Filters> = {};
     if (changedKey === 'state') {
-        updated = { ...updated, city: '', manufacturer: '', model: '', version: [], year: '' };
+        filtersToReset = { city: '', manufacturer: '', model: '', version: [], year: '' };
     } else if (changedKey === 'city') {
-        updated = { ...updated, manufacturer: '', model: '', version: [], year: '' };
+        filtersToReset = { manufacturer: '', model: '', version: [], year: '' };
     } else if (changedKey === 'manufacturer') {
-        updated = { ...updated, model: '', version: [], year: '' };
+        filtersToReset = { model: '', version: [], year: '' };
     } else if (changedKey === 'model') {
-        updated = { ...updated, version: [], year: '' };
+        filtersToReset = { version: [], year: '' };
     } else if (changedKey === 'version') {
-        updated = { ...updated, year: '' };
+        filtersToReset = { year: '' };
     }
     
-    setFilters(updated);
-    fetchData(updated);
-  }, [filters, fetchData]);
+    const finalFilters = { ...updated, ...filtersToReset };
+    setFilters(finalFilters);
+    fetchDataAndOptions(finalFilters);
+  }, [filters, fetchDataAndOptions]);
 
   const handleExportPDF = () => {
     const input = dashboardContentRef.current;
@@ -392,5 +367,3 @@ const DashboardClient: FC<DashboardClientProps> = () => {
 };
 
 export default DashboardClient;
-
-    
