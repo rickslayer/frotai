@@ -41,14 +41,54 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     state: '', city: '', manufacturer: '', model: '', version: [], year: '',
   });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
   const [isComparing, setIsComparing] = useState(false);
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
   const [isVersionLimitModalOpen, setIsVersionLimitModalOpen] = useState(false);
 
   const dashboardContentRef = useRef<HTMLDivElement>(null);
+
+  const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
+    setFilters(prev => {
+        const updated = { ...prev, ...newFilters };
+        // Cascade filter clearing
+        if (newFilters.state !== undefined && newFilters.state !== prev.state) {
+            updated.city = '';
+        }
+        if (newFilters.manufacturer !== undefined && newFilters.manufacturer !== prev.manufacturer) {
+            updated.model = '';
+            updated.version = [];
+        }
+        if (newFilters.model !== undefined && newFilters.model !== prev.model) {
+            updated.version = [];
+        }
+        
+        // Update dependent filter options
+        let tempFilteredData = allData;
+        if(updated.state && updated.state !== 'all') {
+            tempFilteredData = tempFilteredData.filter(d => d.state === updated.state);
+        }
+        const availableCities = [...new Set(tempFilteredData.map(d => d.city))].sort();
+        
+        if(updated.manufacturer && updated.manufacturer !== 'all') {
+            tempFilteredData = tempFilteredData.filter(d => d.manufacturer === updated.manufacturer);
+        }
+        const availableModels = [...new Set(tempFilteredData.map(d => d.model))].sort();
+
+        if(updated.model && updated.model !== 'all') {
+            tempFilteredData = tempFilteredData.filter(d => d.model === updated.model);
+        }
+        const availableVersions = [...new Set(tempFilteredData.map(d => d.version))].sort();
+
+        setFilterOptions(prevOptions => ({
+            ...prevOptions,
+            cities: availableCities,
+            models: availableModels,
+            versions: availableVersions,
+        }));
+        
+        return updated;
+    });
+  }, [allData]);
 
   const filteredData = useMemo(() => {
     const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value !== '' && value !== 'all');
@@ -71,57 +111,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         });
     });
   }, [filters, allData]);
-
-  const updateFilterOptions = useCallback(() => {
-      let tempFilteredData = allData;
-
-      if(filters.state && filters.state !== 'all') {
-          tempFilteredData = tempFilteredData.filter(d => d.state === filters.state);
-      }
-      const availableCities = [...new Set(tempFilteredData.map(d => d.city))].sort();
-      
-      if(filters.manufacturer && filters.manufacturer !== 'all') {
-          tempFilteredData = tempFilteredData.filter(d => d.manufacturer === filters.manufacturer);
-      }
-      const availableModels = [...new Set(tempFilteredData.map(d => d.model))].sort();
-
-      if(filters.model && filters.model !== 'all') {
-          tempFilteredData = tempFilteredData.filter(d => d.model === filters.model);
-      }
-      const availableVersions = [...new Set(tempFilteredData.map(d => d.version))].sort();
-
-      setFilterOptions(prev => ({
-          ...prev,
-          cities: availableCities,
-          models: availableModels,
-          versions: availableVersions,
-      }));
-
-  }, [filters, allData]);
-
-
-  useEffect(() => {
-    updateFilterOptions();
-  }, [filters, updateFilterOptions]);
-
-
-  const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
-    setFilters(prev => {
-        const updated = { ...prev, ...newFilters };
-        // Cascade filter clearing
-        if (newFilters.state !== undefined && newFilters.state !== prev.state) {
-            updated.city = '';
-        }
-        if (newFilters.manufacturer !== undefined && newFilters.manufacturer !== prev.manufacturer) {
-            updated.model = '';
-            updated.version = [];
-        }
-        if (newFilters.model !== undefined && newFilters.model !== prev.model) {
-            updated.version = [];
-        }
-        return updated;
-    });
-  }, []);
 
   const handleExportPDF = () => {
     const input = dashboardContentRef.current;
@@ -222,29 +211,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   }
 
   const renderContent = () => {
-    if (loading) {
-      return (
-        <div className="grid h-full w-full place-items-center">
-            <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <p className="text-lg">Carregando dados...</p>
-            </div>
-        </div>
-      )
-    }
-
-    if (error) {
-       return (
-        <div className="grid h-full w-full place-items-center">
-            <div className="flex flex-col items-center gap-4 text-destructive">
-                <ServerCrash className="h-16 w-16" />
-                <h2 className="text-2xl font-bold">Erro ao carregar os dados</h2>
-                <p className="text-center">Não foi possível conectar à fonte de dados. Por favor, tente recarregar a página.<br/>Se o problema persistir, entre em contato com o suporte.</p>
-            </div>
-        </div>
-       )
-    }
-    
     if (!isFiltered) {
         return <WelcomePlaceholder />;
     }
@@ -336,3 +302,5 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 };
 
 export default DashboardClient;
+
+    
