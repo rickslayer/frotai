@@ -53,15 +53,21 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     setFilters(prev => {
         const updated = { ...prev, ...newFilters };
         
+        // Reset dependent filters on change
         if ('state' in newFilters && newFilters.state !== prev.state) {
             updated.city = '';
         }
         if ('manufacturer' in newFilters && newFilters.manufacturer !== prev.manufacturer) {
             updated.model = '';
             updated.version = [];
+            updated.year = '';
         }
         if ('model' in newFilters && newFilters.model !== prev.model) {
              updated.version = [];
+             updated.year = '';
+        }
+        if ('version' in newFilters && JSON.stringify(newFilters.version) !== JSON.stringify(prev.version)) {
+            updated.year = '';
         }
 
         return updated;
@@ -71,23 +77,32 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   const filterOptions = useMemo<FilterOptions>(() => {
     let dataForOptions = allData;
 
+    // Filter cities based on state
     if (filters.state && filters.state !== 'all') {
       dataForOptions = dataForOptions.filter(d => d.state === filters.state);
     }
     const cities = [...new Set(dataForOptions.map(d => d.city))].sort();
 
-    
+    // Filter models based on manufacturer
     let manufacturerFilteredData = allData;
     if (filters.manufacturer && filters.manufacturer !== 'all') {
         manufacturerFilteredData = manufacturerFilteredData.filter(d => d.manufacturer === filters.manufacturer);
     }
     const models = [...new Set(manufacturerFilteredData.map(d => d.model))].sort();
     
+    // Filter versions based on model
     let modelFilteredData = manufacturerFilteredData;
     if (filters.model && filters.model !== 'all') {
         modelFilteredData = modelFilteredData.filter(d => d.model === filters.model);
     }
     const versions = [...new Set(modelFilteredData.map(d => d.version))].sort();
+
+    // Filter years based on manufacturer, model, and version
+    let versionFilteredData = modelFilteredData;
+    if (Array.isArray(filters.version) && filters.version.length > 0) {
+        versionFilteredData = versionFilteredData.filter(d => filters.version.includes(d.version));
+    }
+    const years = [...new Set(versionFilteredData.map(d => d.year))].sort((a,b) => b - a);
 
 
     return {
@@ -95,6 +110,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
       cities,
       models,
       versions,
+      years,
     };
   }, [filters, allData, initialFilterOptions]);
 
@@ -156,42 +172,50 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   const addBase64ImageToPdf = async (doc: jsPDF, elementId: string, y: number, title: string) => {
       const element = document.getElementById(elementId);
       if (element) {
-        const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false });
+        // Temporarily change background to white for capture
+        const originalBg = element.style.backgroundColor;
+        element.style.backgroundColor = '#FFFFFF';
+
+        const canvas = await html2canvas(element, { 
+            scale: 2, 
+            useCORS: true, 
+            logging: false,
+            backgroundColor: '#FFFFFF'
+        });
+
+        // Restore original background
+        element.style.backgroundColor = originalBg;
+
         const imgData = canvas.toDataURL('image/png');
+        const contentWidth = doc.internal.pageSize.getWidth() - 28;
+        const ratio = canvas.width / canvas.height;
+        const imgHeight = contentWidth / ratio;
+
+        if (y + imgHeight + 20 > doc.internal.pageSize.getHeight()) {
+            doc.addPage();
+            y = 20;
+        }
 
         doc.setFontSize(14);
         doc.text(title, 14, y);
         y += 10;
         
-        const contentWidth = doc.internal.pageSize.getWidth() - 28;
-        const ratio = canvas.width / canvas.height;
-        const height = contentWidth / ratio;
-        doc.addImage(imgData, 'PNG', 14, y, contentWidth, height);
-        return y + height + 10;
+        doc.addImage(imgData, 'PNG', 14, y, contentWidth, imgHeight);
+        return y + imgHeight + 15;
       }
       return y;
   };
 
   const formatTextForPdf = (htmlText: string | null | undefined): string => {
     if (!htmlText) return '';
-    
-    // Create a temporary div to parse the HTML
     const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlText.replace(/<br\s*\/?>/gi, '\n');
-
-    // Process semantic elements
-    tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(header => {
-        header.textContent = `\n${header.textContent}\n`;
-    });
-    tempDiv.querySelectorAll('p, div').forEach(p => {
-        p.insertAdjacentText('afterend', '\n');
-    });
-    tempDiv.querySelectorAll('li').forEach(li => {
-        li.textContent = `  - ${li.textContent}\n`;
-    });
-     tempDiv.querySelectorAll('strong, b').forEach(bold => {
-        bold.textContent = `${bold.textContent}`; 
-    });
+    tempDiv.innerHTML = htmlText
+        .replace(/\n/g, '<br>')
+        .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/g, '\n**$1**\n')
+        .replace(/<p[^>]*>(.*?)<\/p>/g, '$1\n')
+        .replace(/<li[^>]*>(.*?)<\/li>/g, '  - $1')
+        .replace(/<ul[^>]*>|<\/ul>|<ol[^>]*>|<\/ol>/g, '\n')
+        .replace(/\*\*(.*?)\*\*/g, '$1');
 
     return (tempDiv.textContent || '').replace(/(\r\n|\n|\r){2,}/g, '\n\n').trim();
 };
@@ -207,6 +231,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     doc.setFontSize(18);
     doc.text('Relatório de Análise de Frota - Frota.AI', 14, y);
     y += 10;
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.text(new Date().toLocaleDateString('pt-BR', { dateStyle: 'full' }), 14, y);
     y += 15;
@@ -231,6 +256,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 
     // AI General Analysis
     if (generalAnalysis) {
+      if (y > 250) { doc.addPage(); y = 20; }
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
       doc.text(t('ai_analysis_title'), 14, y);
@@ -271,14 +297,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         });
     }
 
-    if (y > 270) { doc.addPage(); y = 20; }
     y = await addBase64ImageToPdf(doc, 'regional-chart', y, t('regional_fleet_analysis'));
-
-    if (y > 250) { doc.addPage(); y = 20; }
     y = await addBase64ImageToPdf(doc, 'top-models-chart', y, t('top_models_by_volume', { count: 5 }));
-
-    if (y > 250) { doc.addPage(); y = 20; }
     y = await addBase64ImageToPdf(doc, 'fleet-by-year-chart', y, t('fleet_by_year'));
+    y = await addBase64ImageToPdf(doc, 'fleet-age-chart', y, t('fleet_by_age_bracket'));
 
     doc.save(`frota-ai-report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
@@ -379,8 +401,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:gap-8">
-          <div id="final-analysis-card">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
+          <div id="final-analysis-card" className="lg:col-span-1">
               <FinalAnalysis
                   filters={filters}
                   disabled={!isFiltered || filteredData.length === 0}
@@ -390,7 +412,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
                   onAnalysisGenerated={setGeneralAnalysis}
               />
           </div>
-          <div id="part-demand-card">
+          <div id="part-demand-card" className="lg:col-span-1">
               <PartDemandForecast
                   fleetAgeBrackets={fleetAgeBrackets}
                   filters={filters}
@@ -420,16 +442,16 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
             <div className="flex flex-col gap-4">
-              {isFiltered && (
-                <div className='flex justify-end'>
+              <div className="flex justify-end items-center gap-4">
+                {isFiltered && (
                   <Button id="compare-button" onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
                     <BookCopy className="mr-2 h-4 w-4"/>
                     {t('save_for_comparison')}
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
               {isComparing && (
-                <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
+                  <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
               )}
             </div>
             
