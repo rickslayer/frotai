@@ -173,6 +173,17 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
       return y;
   };
 
+  const formatTextForPdf = (htmlText: string) => {
+    return htmlText
+      .replace(/<br \/>/g, '\n')
+      .replace(/<\/?b>/g, '') // Remove bold tags but keep text
+      .replace(/<strong>/g, '')
+      .replace(/<\/strong>/g, '')
+      .replace(/<li>/g, '  - ')
+      .replace(/<\/li>/g, '\n')
+      .replace(/<\/?[^>]+(>|$)/g, ""); // Remove any remaining HTML tags
+  };
+
 
   const handleExportPDF = async () => {
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -213,15 +224,15 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
       y += 8;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      const splitText = doc.splitTextToSize(generalAnalysis.replace(/<\/?[^>]+(>|$)/g, ""), 180);
+      const formattedText = formatTextForPdf(generalAnalysis);
+      const splitText = doc.splitTextToSize(formattedText, 180);
       doc.text(splitText, 14, y);
       y += (splitText.length * 5) + 10;
     }
 
     // AI Demand Forecast
     if (demandAnalysis && demandAnalysis.predictions.length > 0) {
-        doc.addPage();
-        y = 20;
+        if (y > 200) { doc.addPage(); y = 20; }
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
         doc.text(t('part_demand_forecast_title'), 14, y);
@@ -235,11 +246,12 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
-            const reasonText = doc.splitTextToSize(`Razão: ${pred.reason}`, 180);
+            
+            const reasonText = doc.splitTextToSize(`Razão: ${formatTextForPdf(pred.reason)}`, 180);
             doc.text(reasonText, 14, y);
             y += (reasonText.length * 4) + 2;
             
-            const opportunityText = doc.splitTextToSize(`Oportunidade: ${pred.opportunity}`, 180);
+            const opportunityText = doc.splitTextToSize(`Oportunidade: ${formatTextForPdf(pred.opportunity)}`, 180);
             doc.text(opportunityText, 14, y);
             y += (opportunityText.length * 4) + 8;
         });
@@ -421,3 +433,5 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 };
 
 export default DashboardClient;
+
+    

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -46,13 +47,13 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
 
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle>{t('fleet_by_year')}</CardTitle>
         <CardDescription>{t('fleet_by_year_description')}</CardDescription>
       </CardHeader>
       <CardContent className='flex-grow'>
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+        <ChartContainer config={chartConfig} className="h-full min-h-[300px] w-full">
           {chartData.length > 0 ? (
             <LineChart
               accessibilityLayer
@@ -81,7 +82,7 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
               />
             </LineChart>
           ) : (
-            <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
               {t('no_data_for_filters')}
             </div>
           )}
@@ -92,3 +93,5 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
 };
 
 export default FleetByYearChart;
+
+    
