@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { Car, MapPin, Calendar, SlidersHorizontal, FilterX } from 'lucide-react';
+import { Car, MapPin, Calendar, SlidersHorizontal, FilterX, Globe } from 'lucide-react';
 import type { FilterOptions, Filters } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,6 +34,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
 
   const clearFilters = () => {
     onFilterChange({
+      region: '',
       state: '',
       city: '',
       manufacturer: '',
@@ -69,9 +70,17 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value)}>
+                   <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value)}>
+                    <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
+                    <SelectContent>
+                       <SelectItem value="all">{t('all_regions')}</SelectItem>
+                      {filterOptions.regions.map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value)} disabled={!filters.region || filters.region === 'all'}>
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
+                       <SelectItem value="all">{t('all_states')}</SelectItem>
                       {filterOptions.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>

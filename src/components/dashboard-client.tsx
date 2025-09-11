@@ -17,7 +17,7 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import RegionalFleetChart from './dashboard/regional-fleet-chart';
-import { getRegionData } from '@/lib/regions';
+import { getRegionData, regionToStatesMap, stateToRegionMap, allRegions } from '@/lib/regions';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
@@ -38,7 +38,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   const [allData] = useState<Vehicle[]>(initialData);
   
   const [filters, setFilters] = useState<Filters>({
-    state: '', city: '', manufacturer: '', model: '', version: [], year: '',
+    region: '', state: '', city: '', manufacturer: '', model: '', version: [], year: '',
   });
 
   const [isComparing, setIsComparing] = useState(false);
@@ -54,6 +54,14 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         const updated = { ...prev, ...newFilters };
         
         // Reset dependent filters on change
+        if ('region' in newFilters && newFilters.region !== prev.region) {
+          updated.state = '';
+          updated.city = '';
+          updated.manufacturer = '';
+          updated.model = '';
+          updated.version = [];
+          updated.year = '';
+        }
         if ('state' in newFilters && newFilters.state !== prev.state) {
             updated.city = '';
             updated.manufacturer = '';
@@ -85,60 +93,51 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   }, []);
 
   const filterOptions = useMemo<FilterOptions>(() => {
-    let temp_data = allData;
-    
-    // Create options for State
-    const states = [...new Set(temp_data.map(d => d.state))].sort();
+      let data_f = allData;
+      
+      const regions = [...new Set(data_f.map(d => stateToRegionMap[d.state.toUpperCase()]).filter(Boolean))].sort();
 
-    // Filter by State
-    if (filters.state) {
-      temp_data = temp_data.filter(d => d.state === filters.state);
-    }
+      if (filters.region && filters.region !== 'all') {
+        const statesInRegion = regionToStatesMap[filters.region] || [];
+        data_f = data_f.filter(d => statesInRegion.includes(d.state.toUpperCase()));
+      }
+      const states = [...new Set(data_f.map(d => d.state))].sort();
 
-    // Create options for City
-    const cities = [...new Set(temp_data.map(d => d.city))].sort();
+      if (filters.state && filters.state !== 'all') {
+        data_f = data_f.filter(d => d.state === filters.state);
+      }
+      const cities = [...new Set(data_f.map(d => d.city))].sort();
 
-    // Filter by City
-    if (filters.city) {
-      temp_data = temp_data.filter(d => d.city === filters.city);
-    }
-    
-    // Create options for Manufacturer
-    const manufacturers = [...new Set(temp_data.map(d => d.manufacturer))].sort();
-    
-    // Filter by manufacturer
-    if (filters.manufacturer) {
-      temp_data = temp_data.filter(d => d.manufacturer === filters.manufacturer);
-    }
-    
-    // Create options for Model
-    const models = [...new Set(temp_data.map(d => d.model))].sort();
-    
-    // Filter by model
-    if (filters.model) {
-      temp_data = temp_data.filter(d => d.model === filters.model);
-    }
-    
-    // Create options for Version
-    const versions = [...new Set(temp_data.map(d => d.version))].sort();
+      if (filters.city && filters.city !== 'all') {
+        data_f = data_f.filter(d => d.city === filters.city);
+      }
+      const manufacturers = [...new Set(data_f.map(d => d.manufacturer))].sort();
 
-    // Filter by version
-    if (filters.version.length) {
-      temp_data = temp_data.filter(d => filters.version.includes(d.version));
-    }
-    
-    const years = [...new Set(temp_data.map(d => d.year))].sort((a,b) => b-a);
-    
+      if (filters.manufacturer && filters.manufacturer !== 'all') {
+        data_f = data_f.filter(d => d.manufacturer === filters.manufacturer);
+      }
+      const models = [...new Set(data_f.map(d => d.model))].sort();
 
-    return {
-      states: initialFilterOptions.states,
-      cities,
-      manufacturers,
-      models,
-      versions,
-      years,
-    };
-}, [filters, allData, initialFilterOptions]);
+      if (filters.model && filters.model !== 'all') {
+        data_f = data_f.filter(d => d.model === filters.model);
+      }
+      const versions = [...new Set(data_f.map(d => d.version))].sort();
+
+      if (filters.version.length > 0) {
+        data_f = data_f.filter(d => filters.version.includes(d.version));
+      }
+      const years = [...new Set(data_f.map(d => d.year))].sort((a,b) => b-a);
+
+      return {
+        regions,
+        states,
+        cities,
+        manufacturers,
+        models,
+        versions,
+        years,
+      };
+  }, [filters, allData]);
 
   const filteredData = useMemo(() => {
     const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
@@ -150,6 +149,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         return Object.entries(filters).every(([key, value]) => {
             if (value === '' || value === 'all' || (Array.isArray(value) && value.length === 0)) {
                 return true;
+            }
+            if (key === 'region') {
+                const statesInRegion = regionToStatesMap[value as string] || [];
+                return statesInRegion.includes(item.state.toUpperCase());
             }
             if (key === 'year') {
                 return item.year === Number(value);
@@ -413,7 +416,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
             <FleetAgeBracketChart data={filteredData} />
           </div>
         </div>
-
         <div className="grid grid-cols-1 gap-4 md:gap-8">
           <div id="final-analysis-card">
               <FinalAnalysis
@@ -456,19 +458,18 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
           isFiltered={isFiltered}
         />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
-             <div className="flex flex-col gap-4">
-              <div className="flex justify-end items-center gap-4">
-                  {isFiltered && (
-                    <Button onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
-                      <BookCopy className="mr-2 h-4 w-4"/>
-                      {t('save_for_comparison')}
-                    </Button>
-                  )}
-              </div>
-              {isComparing && (
-                  <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
-              )}
+            <div className="flex justify-end items-center gap-4">
+                {isFiltered && (
+                <Button onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
+                    <BookCopy className="mr-2 h-4 w-4"/>
+                    {t('save_for_comparison')}
+                </Button>
+                )}
             </div>
+
+            {isComparing && (
+                <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
+            )}
             
             <AlertDialog open={isVersionLimitModalOpen} onOpenChange={setIsVersionLimitModalOpen}>
                 <AlertDialogContent>

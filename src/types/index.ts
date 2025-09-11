@@ -14,6 +14,7 @@ export type Vehicle = {
 };
 
 export type FilterOptions = {
+  regions: string[];
   manufacturers: string[];
   models: string[];
   versions: string[];
@@ -23,6 +24,7 @@ export type FilterOptions = {
 };
 
 export type Filters = {
+  region: string;
   state: string;
   city: string;
   manufacturer: string;

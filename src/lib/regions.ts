@@ -8,11 +8,19 @@ export type RegionData = {
 };
 
 export const stateToRegionMap: Record<string, string> = {
-    'ACRE': 'Norte', 'AMAPA': 'Norte', 'AMAZONAS': 'Norte', 'PARA': 'Norte', 'RONDONIA': 'Norte', 'RORAIMA': 'Norte', 'TOCANTINS': 'Norte',
-    'ALAGOAS': 'Nordeste', 'BAHIA': 'Nordeste', 'CEARA': 'Nordeste', 'MARANHAO': 'Nordeste', 'PARAIBA': 'Nordeste', 'PERNAMBUCO': 'Nordeste', 'PIAUI': 'Nordeste', 'RIO GRANDE DO NORTE': 'Nordeste', 'SERGIPE': 'Nordeste',
-    'GOIAS': 'Centro-Oeste', 'MATO GROSSO': 'Centro-Oeste', 'MATO GROSSO DO SUL': 'Centro-Oeste', 'DISTRITO FEDERAL': 'Centro-Oeste',
-    'ESPIRITO SANTO': 'Sudeste', 'MINAS GERAIS': 'Sudeste', 'RIO DE JANEIRO': 'Sudeste', 'SAO PAULO': 'Sudeste',
-    'PARANA': 'Sul', 'RIO GRANDE DO SUL': 'Sul', 'SANTA CATARINA': 'Sul',
+    'AC': 'Norte', 'AP': 'Norte', 'AM': 'Norte', 'PA': 'Norte', 'RO': 'Norte', 'RR': 'Norte', 'TO': 'Norte',
+    'AL': 'Nordeste', 'BA': 'Nordeste', 'CE': 'Nordeste', 'MA': 'Nordeste', 'PB': 'Nordeste', 'PE': 'Nordeste', 'PI': 'Nordeste', 'RN': 'Nordeste', 'SE': 'Nordeste',
+    'GO': 'Centro-Oeste', 'MT': 'Centro-Oeste', 'MS': 'Centro-Oeste', 'DF': 'Centro-Oeste',
+    'ES': 'Sudeste', 'MG': 'Sudeste', 'RJ': 'Sudeste', 'SP': 'Sudeste',
+    'PR': 'Sul', 'RS': 'Sul', 'SC': 'Sul',
+};
+
+export const regionToStatesMap: Record<string, string[]> = {
+    'Norte': ['AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO'],
+    'Nordeste': ['AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'PI', 'RN', 'SE'],
+    'Centro-Oeste': ['GO', 'MT', 'MS', 'DF'],
+    'Sudeste': ['ES', 'MG', 'RJ', 'SP'],
+    'Sul': ['PR', 'RS', 'SC'],
 };
 
 
@@ -24,18 +32,18 @@ const regionColors: Record<string, string> = {
   'Centro-Oeste': 'hsl(var(--chart-5))',
 };
 
-const allRegions = ['Sudeste', 'Nordeste', 'Sul', 'Norte', 'Centro-Oeste'];
+export const allRegions = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];
 
 
 export function getRegionData(data: Vehicle[], allData: Vehicle[]): RegionData[] {
   const sourceData = data.length > 0 ? data : allData;
 
   const regionalTotals: Record<string, number> = {
-    'Sudeste': 0,
-    'Nordeste': 0,
-    'Sul': 0,
     'Norte': 0,
+    'Nordeste': 0,
     'Centro-Oeste': 0,
+    'Sudeste': 0,
+    'Sul': 0,
   };
 
   sourceData.forEach(vehicle => {
