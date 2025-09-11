@@ -64,7 +64,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
         <CardDescription>{t('top_models_by_volume_description_short')}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
+        <ChartContainer config={chartConfig} className="h-full min-h-[300px] w-full">
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -73,12 +73,12 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
                 layout="vertical"
                 margin={{
                   left: 10,
-                  right: 10,
+                  right: 40,
                   top: 0,
                   bottom: 0,
                 }}
               >
-                <YAxis dataKey="model" type="category" hide />
+                <YAxis dataKey="model" type="category" width={0} tick={false} />
                 <XAxis dataKey="quantity" type="number" hide />
                 <Tooltip
                   cursor={{ fill: 'hsl(var(--muted))' }}
@@ -103,7 +103,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-[250px] w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
               {t('no_data_available')}
             </div>
           )}

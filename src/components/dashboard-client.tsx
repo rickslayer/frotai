@@ -183,18 +183,19 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(header => {
         header.textContent = `\n${header.textContent}\n`;
     });
-    tempDiv.querySelectorAll('p').forEach(p => {
-        p.textContent = `${p.textContent}\n`;
-    });
-    tempDiv.querySelectorAll('li').forEach(li => {
-        li.textContent = `  - ${li.textContent}\n`;
+    tempDiv.querySelectorAll('p, div, br').forEach(p => {
+        p.insertAdjacentText('afterend', '\n');
     });
      tempDiv.querySelectorAll('strong, b').forEach(bold => {
-        bold.textContent = `${bold.textContent}`; // Just get the text
+        bold.textContent = `${bold.textContent}`; // Just get the text, no extra decoration
+    });
+     tempDiv.querySelectorAll('li').forEach(li => {
+        li.textContent = `  - ${li.textContent}\n`;
     });
 
     // Use textContent to strip remaining tags and get the formatted text
-    return tempDiv.textContent || '';
+    // Replace multiple newlines with a single one for cleaner output
+    return (tempDiv.textContent || '').replace(/(\r\n|\n|\r){2,}/g, '\n\n').trim();
 };
 
 
@@ -370,16 +371,16 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         <StatCards data={filteredData} filters={filters} />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
-            <div id="fleet-by-year-chart" className="lg:col-span-2">
-                <FleetByYearChart data={filteredData} />
-            </div>
             <div id="regional-chart">
                 <RegionalFleetChart data={regionalData} />
             </div>
             <div id="top-models-chart">
                 <TopModelsChart data={filteredData} />
             </div>
-            <div id="fleet-age-chart">
+            <div id="fleet-by-year-chart" className="lg:col-span-2">
+                <FleetByYearChart data={filteredData} />
+            </div>
+            <div id="fleet-age-chart" className="lg:col-span-2">
                  <FleetAgeBracketChart data={filteredData} />
             </div>
             <div id="final-analysis-card" className="lg:col-span-2">

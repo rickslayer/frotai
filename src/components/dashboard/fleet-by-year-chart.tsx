@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import { useMemo } from 'react';
-import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   Card,
   CardContent,
@@ -55,34 +55,36 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
       <CardContent className='flex-grow'>
         <ChartContainer config={chartConfig} className="h-full min-h-[300px] w-full">
           {chartData.length > 0 ? (
-            <LineChart
-              accessibilityLayer
-              data={chartData}
-              margin={{ left: 12, right: 12 }}
-            >
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="year"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickFormatter={(value) => String(value)}
-              />
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-              <Tooltip
-                cursor={false}
-                content={<ChartTooltipContent indicator="line" />}
-              />
-              <Line
-                dataKey="quantity"
-                type="natural"
-                stroke="var(--color-quantity)"
-                strokeWidth={2}
-                dot={true}
-              />
-            </LineChart>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart
+                accessibilityLayer
+                data={chartData}
+                margin={{ left: 12, right: 30, top: 10, bottom: 10 }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="year"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) => String(value)}
+                />
+                <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                <Tooltip
+                  cursor={false}
+                  content={<ChartTooltipContent indicator="line" />}
+                />
+                <Line
+                  dataKey="quantity"
+                  type="natural"
+                  stroke="var(--color-quantity)"
+                  strokeWidth={2}
+                  dot={true}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
               {t('no_data_for_filters')}
             </div>
           )}
