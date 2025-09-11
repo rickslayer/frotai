@@ -2,7 +2,7 @@
 'use client';
 
 import type { FC } from 'react';
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import type { Vehicle, FilterOptions, Filters, FleetAgeBracket, ChartData, RegionData, AnalysisSnapshot } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
@@ -24,7 +24,7 @@ import FinalAnalysis from './dashboard/final-analysis';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Button } from './ui/button';
-import { BookCopy, Loader2, ServerCrash } from 'lucide-react';
+import { BookCopy } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 
@@ -36,7 +36,7 @@ interface DashboardClientProps {
 const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterOptions }) => {
   const { t } = useTranslation();
   const [allData] = useState<Vehicle[]>(initialData);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>(initialFilterOptions);
+  
   const [filters, setFilters] = useState<Filters>({
     state: '', city: '', manufacturer: '', model: '', version: [], year: '',
   });
@@ -50,48 +50,51 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => {
         const updated = { ...prev, ...newFilters };
+        
         // Cascade filter clearing
-        if (newFilters.state !== undefined && newFilters.state !== prev.state) {
+        if (newFilters.state !== undefined) { // If state is changed
             updated.city = '';
         }
-        if (newFilters.manufacturer !== undefined && newFilters.manufacturer !== prev.manufacturer) {
+        if (newFilters.manufacturer !== undefined) { // If manufacturer is changed
             updated.model = '';
             updated.version = [];
         }
-        if (newFilters.model !== undefined && newFilters.model !== prev.model) {
-            updated.version = [];
+        if (newFilters.model !== undefined) { // If model is changed
+             updated.version = [];
         }
-        
-        // Update dependent filter options
-        let tempFilteredData = allData;
-        if(updated.state && updated.state !== 'all') {
-            tempFilteredData = tempFilteredData.filter(d => d.state === updated.state);
-        }
-        const availableCities = [...new Set(tempFilteredData.map(d => d.city))].sort();
-        
-        if(updated.manufacturer && updated.manufacturer !== 'all') {
-            tempFilteredData = tempFilteredData.filter(d => d.manufacturer === updated.manufacturer);
-        }
-        const availableModels = [...new Set(tempFilteredData.map(d => d.model))].sort();
 
-        if(updated.model && updated.model !== 'all') {
-            tempFilteredData = tempFilteredData.filter(d => d.model === updated.model);
-        }
-        const availableVersions = [...new Set(tempFilteredData.map(d => d.version))].sort();
-
-        setFilterOptions(prevOptions => ({
-            ...prevOptions,
-            cities: availableCities,
-            models: availableModels,
-            versions: availableVersions,
-        }));
-        
         return updated;
     });
-  }, [allData]);
+  }, []);
+
+  const filterOptions = useMemo<FilterOptions>(() => {
+    let filteredForOptions = allData;
+
+    if (filters.state && filters.state !== 'all') {
+      filteredForOptions = filteredForOptions.filter(d => d.state === filters.state);
+    }
+    const cities = [...new Set(filteredForOptions.map(d => d.city))].sort();
+
+    if (filters.manufacturer && filters.manufacturer !== 'all') {
+        filteredForOptions = filteredForOptions.filter(d => d.manufacturer === filters.manufacturer);
+    }
+    const models = [...new Set(filteredForOptions.map(d => d.model))].sort();
+
+    if (filters.model && filters.model !== 'all') {
+        filteredForOptions = filteredForOptions.filter(d => d.model === filters.model);
+    }
+    const versions = [...new Set(filteredForOptions.map(d => d.version))].sort();
+
+    return {
+      ...initialFilterOptions,
+      cities,
+      models,
+      versions,
+    };
+  }, [filters, allData, initialFilterOptions]);
 
   const filteredData = useMemo(() => {
-    const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value !== '' && value !== 'all');
+    const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
     if (!hasFilters) {
         return [];
     }
@@ -101,12 +104,13 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
             if (value === '' || value === 'all' || (Array.isArray(value) && value.length === 0)) {
                 return true;
             }
+            if (key === 'year') {
+                return item.year === Number(value);
+            }
             const itemValue = item[key as keyof Vehicle];
-
             if (Array.isArray(value)) {
                 return value.includes(itemValue as string);
             }
-            
             return String(itemValue).toLowerCase() === String(value).toLowerCase();
         });
     });
@@ -142,7 +146,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   };
   
   const isFiltered = useMemo(() => {
-    return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value !== '' && value !== 'all');
+    return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
   }, [filters]);
   
   const fleetAgeBrackets = useMemo((): FleetAgeBracket[] => {
