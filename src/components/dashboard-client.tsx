@@ -359,13 +359,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 
     return (
        <>
-        <div className='flex justify-end'>
-            <Button id="compare-button" onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
-            <BookCopy className="mr-2 h-4 w-4"/>
-            {t('save_for_comparison')}
-        </Button>
-        </div>
-
         <StatCards data={filteredData} filters={filters} />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
@@ -426,12 +419,20 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
           isFiltered={isFiltered}
         />
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
-           {isComparing && (
-            <div className="mb-4">
-              <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
+            <div className="flex flex-col gap-4">
+              {isFiltered && (
+                <div className='flex justify-end'>
+                  <Button id="compare-button" onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
+                    <BookCopy className="mr-2 h-4 w-4"/>
+                    {t('save_for_comparison')}
+                  </Button>
+                </div>
+              )}
+              {isComparing && (
+                <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
+              )}
             </div>
-           )}
-
+            
             <AlertDialog open={isVersionLimitModalOpen} onOpenChange={setIsVersionLimitModalOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
