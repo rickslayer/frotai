@@ -56,6 +56,16 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         // Reset dependent filters on change
         if ('state' in newFilters && newFilters.state !== prev.state) {
             updated.city = '';
+            updated.manufacturer = '';
+            updated.model = '';
+            updated.version = [];
+            updated.year = '';
+        }
+        if ('city' in newFilters && newFilters.city !== prev.city) {
+            updated.manufacturer = '';
+            updated.model = '';
+            updated.version = [];
+            updated.year = '';
         }
         if ('manufacturer' in newFilters && newFilters.manufacturer !== prev.manufacturer) {
             updated.model = '';
@@ -75,44 +85,77 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   }, []);
 
   const filterOptions = useMemo<FilterOptions>(() => {
-    let dataForOptions = allData;
+    let filteredForOptions = allData;
 
-    // Filter cities based on state
+    // Sequentially filter data to generate options for each dropdown
     if (filters.state && filters.state !== 'all') {
-      dataForOptions = dataForOptions.filter(d => d.state === filters.state);
+        filteredForOptions = filteredForOptions.filter(d => d.state === filters.state);
     }
-    const cities = [...new Set(dataForOptions.map(d => d.city))].sort();
+    const cities = [...new Set(filteredForOptions.map(d => d.city))].sort();
 
-    // Filter models based on manufacturer
-    let manufacturerFilteredData = allData;
-    if (filters.manufacturer && filters.manufacturer !== 'all') {
-        manufacturerFilteredData = manufacturerFilteredData.filter(d => d.manufacturer === filters.manufacturer);
+    if (filters.city && filters.city !== 'all') {
+        filteredForOptions = filteredForOptions.filter(d => d.city === filters.city);
     }
-    const models = [...new Set(manufacturerFilteredData.map(d => d.model))].sort();
+    const manufacturers = [...new Set(filteredForOptions.map(d => d.manufacturer))].sort();
     
-    // Filter versions based on model
-    let modelFilteredData = manufacturerFilteredData;
+    if (filters.manufacturer && filters.manufacturer !== 'all') {
+        filteredForOptions = filteredForOptions.filter(d => d.manufacturer === filters.manufacturer);
+    }
+    const models = [...new Set(filteredForOptions.map(d => d.model))].sort();
+    
     if (filters.model && filters.model !== 'all') {
-        modelFilteredData = modelFilteredData.filter(d => d.model === filters.model);
+        filteredForOptions = filteredForOptions.filter(d => d.model === filters.model);
     }
-    const versions = [...new Set(modelFilteredData.map(d => d.version))].sort();
+    const versions = [...new Set(filteredForOptions.map(d => d.version))].sort();
 
-    // Filter years based on manufacturer, model, and version
-    let versionFilteredData = modelFilteredData;
-    if (Array.isArray(filters.version) && filters.version.length > 0) {
-        versionFilteredData = versionFilteredData.filter(d => filters.version.includes(d.version));
+    if (filters.version && filters.version.length > 0) {
+        filteredForOptions = filteredForOptions.filter(d => filters.version.includes(d.version));
     }
-    const years = [...new Set(versionFilteredData.map(d => d.year))].sort((a,b) => b - a);
+    const years = [...new Set(filteredForOptions.map(d => d.year))].sort((a,b) => b - a);
+
+    // For options, we need to be broader. E.g., for cities, only filter by state.
+    // The previous logic was correct in principle but flawed in execution. Let's fix it.
+
+    let stateFiltered = allData;
+    if (filters.state && filters.state !== 'all') {
+        stateFiltered = allData.filter(d => d.state === filters.state);
+    }
+    const finalCities = [...new Set(stateFiltered.map(d => d.city))].sort();
+    
+    let cityFiltered = stateFiltered;
+    if (filters.city && filters.city !== 'all') {
+        cityFiltered = stateFiltered.filter(d => d.city === filters.city);
+    }
+    const finalManufacturers = [...new Set(cityFiltered.map(d => d.manufacturer))].sort();
+
+    let manufacturerFiltered = cityFiltered;
+    if (filters.manufacturer && filters.manufacturer !== 'all') {
+        manufacturerFiltered = cityFiltered.filter(d => d.manufacturer === filters.manufacturer);
+    }
+    const finalModels = [...new Set(manufacturerFiltered.map(d => d.model))].sort();
+
+    let modelFiltered = manufacturerFiltered;
+    if (filters.model && filters.model !== 'all') {
+        modelFiltered = manufacturerFiltered.filter(d => d.model === filters.model);
+    }
+    const finalVersions = [...new Set(modelFiltered.map(d => d.version))].sort();
+
+    let versionFiltered = modelFiltered;
+    if (filters.version && filters.version.length > 0) {
+        versionFiltered = modelFiltered.filter(d => filters.version.includes(d.version));
+    }
+    const finalYears = [...new Set(versionFiltered.map(d => d.year))].sort((a, b) => b - a);
 
 
     return {
-      ...initialFilterOptions,
-      cities,
-      models,
-      versions,
-      years,
+      states: initialFilterOptions.states, // Always show all states
+      cities: finalCities,
+      manufacturers: finalManufacturers,
+      models: finalModels,
+      versions: finalVersions,
+      years: finalYears,
     };
-  }, [filters, allData, initialFilterOptions]);
+  }, [filters, allData, initialFilterOptions.states]);
 
   const filteredData = useMemo(() => {
     const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
@@ -186,7 +229,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         // Restore original background
         element.style.backgroundColor = originalBg;
 
-        const imgData = canvas.toDataURL('image/png');
         const contentWidth = doc.internal.pageSize.getWidth() - 28;
         const ratio = canvas.width / canvas.height;
         const imgHeight = contentWidth / ratio;
@@ -213,11 +255,15 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         .replace(/\n/g, '<br>')
         .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/g, '\n**$1**\n')
         .replace(/<p[^>]*>(.*?)<\/p>/g, '$1\n')
-        .replace(/<li[^>]*>(.*?)<\/li>/g, '  - $1')
-        .replace(/<ul[^>]*>|<\/ul>|<ol[^>]*>|<\/ol>/g, '\n')
+        .replace(/<li>/g, '  - ')
+        .replace(/<\/li>/g, '\n')
+        .replace(/<ul>|<\/ul>|<ol>|<\/ol>/g, '\n')
         .replace(/\*\*(.*?)\*\*/g, '$1');
+    
+    // Remove tags but keep content, then clean up extra newlines
+    const textContent = (tempDiv.textContent || tempDiv.innerText || "");
 
-    return (tempDiv.textContent || '').replace(/(\r\n|\n|\r){2,}/g, '\n\n').trim();
+    return textContent.replace(/(\r\n|\n|\r){2,}/g, '\n\n').trim();
 };
 
 
@@ -391,7 +437,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
                 <TopModelsChart data={filteredData} />
             </div>
         </div>
-
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           <div id="fleet-by-year-chart">
             <FleetByYearChart data={filteredData} />
@@ -401,8 +447,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
-          <div id="final-analysis-card" className="lg:col-span-1">
+        <div className="grid grid-cols-1 gap-4 md:gap-8">
+          <div id="final-analysis-card">
               <FinalAnalysis
                   filters={filters}
                   disabled={!isFiltered || filteredData.length === 0}
@@ -412,7 +458,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
                   onAnalysisGenerated={setGeneralAnalysis}
               />
           </div>
-          <div id="part-demand-card" className="lg:col-span-1">
+          <div id="part-demand-card">
               <PartDemandForecast
                   fleetAgeBrackets={fleetAgeBrackets}
                   filters={filters}
@@ -443,12 +489,12 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
             <div className="flex flex-col gap-4">
               <div className="flex justify-end items-center gap-4">
-                {isFiltered && (
-                  <Button id="compare-button" onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
-                    <BookCopy className="mr-2 h-4 w-4"/>
-                    {t('save_for_comparison')}
-                  </Button>
-                )}
+                  {isFiltered && (
+                    <Button onClick={handleSaveSnapshot} disabled={!isFiltered || filteredData.length === 0}>
+                      <BookCopy className="mr-2 h-4 w-4"/>
+                      {t('save_for_comparison')}
+                    </Button>
+                  )}
               </div>
               {isComparing && (
                   <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
