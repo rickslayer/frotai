@@ -98,6 +98,39 @@ const DashboardClient: FC<DashboardClientProps> = () => {
 
   const dashboardContentRef = useRef<HTMLDivElement>(null);
 
+  const fetchDataAndOptions = useCallback(async (currentFilters: Filters, filterKeyChanged?: keyof Filters) => {
+    const hasActiveFilter = Object.values(currentFilters).some(v => (Array.isArray(v) ? v.length > 0 : v && v !== 'all'));
+    
+    setLoading(true);
+    try {
+      const dataPromise = hasActiveFilter ? getFleetData(currentFilters) : Promise.resolve([]);
+      const optionsPromise = getFilterOptions(currentFilters);
+      
+      const [data, options] = await Promise.all([dataPromise, optionsPromise]);
+
+      setFilteredData(data);
+      setFilterOptions(prevOptions => ({
+         // Keep all states available unless they are fetched for the first time
+        states: options.states.length > 0 ? options.states : prevOptions.states, 
+        cities: options.cities,
+        manufacturers: options.manufacturers,
+        models: options.models,
+        versions: options.versions,
+        years: options.years,
+      }));
+
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+       toast({
+            variant: 'destructive',
+            title: t('error'),
+            description: "Failed to fetch data. Please try again.",
+        });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast, t]);
+
   // Fetch initial filter options (states) on component mount
   useEffect(() => {
     const fetchInitialOptions = async () => {
@@ -119,39 +152,6 @@ const DashboardClient: FC<DashboardClientProps> = () => {
     fetchInitialOptions();
   }, [t, toast]);
 
-
-  const fetchData = useCallback(async (currentFilters: Filters, filterKeyChanged?: keyof Filters) => {
-    const hasActiveFilter = Object.values(currentFilters).some(v => (Array.isArray(v) ? v.length > 0 : v && v !== 'all'));
-    
-    setLoading(true);
-    try {
-      // Fetch new data only if there are active filters
-      const data = hasActiveFilter ? await getFleetData(currentFilters) : [];
-      setFilteredData(data);
-
-      // Always refetch filter options to get the correct dependent values
-      const options = await getFilterOptions(currentFilters);
-       setFilterOptions(prevOptions => ({
-         // Keep all states available
-        states: prevOptions.states.length > 0 ? prevOptions.states : options.states, 
-        cities: options.cities,
-        manufacturers: options.manufacturers,
-        models: options.models,
-        versions: options.versions,
-        years: options.years,
-      }));
-
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-       toast({
-            variant: 'destructive',
-            title: t('error'),
-            description: "Failed to fetch data. Please try again.",
-        });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast, t]);
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     const updated = { ...filters, ...newFilters };
@@ -184,8 +184,8 @@ const DashboardClient: FC<DashboardClientProps> = () => {
     }
     
     setFilters(updated);
-    fetchData(updated, changedKey);
-  }, [filters, fetchData]);
+    fetchDataAndOptions(updated, changedKey);
+  }, [filters, fetchDataAndOptions]);
 
   const handleExportPDF = () => {
     const input = dashboardContentRef.current;
@@ -404,3 +404,5 @@ const DashboardClient: FC<DashboardClientProps> = () => {
 };
 
 export default DashboardClient;
+
+    
