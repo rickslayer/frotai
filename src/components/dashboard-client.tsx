@@ -92,7 +92,7 @@ const DashboardClient: FC<DashboardClientProps> = () => {
       versions: [],
       years: [],
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   const [isComparing, setIsComparing] = useState(false);
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
@@ -122,11 +122,23 @@ const DashboardClient: FC<DashboardClientProps> = () => {
   }, [t, toast]);
 
 
-  const fetchData = useCallback(async (currentFilters: Filters) => {
+  const fetchData = useCallback(async (currentFilters: Filters, filterKeyChanged?: keyof Filters) => {
     // Only fetch data if at least one filter is active
     const hasActiveFilter = Object.values(currentFilters).some(v => (Array.isArray(v) ? v.length > 0 : v && v !== 'all'));
     if (!hasActiveFilter) {
       setFilteredData([]);
+       // If all filters are cleared, refetch initial options
+      if (!filterKeyChanged) {
+        setLoading(true);
+         try {
+            const options = await getFilterOptions({});
+            setFilterOptions(options);
+        } catch (error) {
+            console.error("Error fetching filter options:", error);
+        } finally {
+            setLoading(false);
+        }
+      }
       return;
     }
 
@@ -137,10 +149,23 @@ const DashboardClient: FC<DashboardClientProps> = () => {
         getFilterOptions(currentFilters)
       ]);
       setFilteredData(data);
-      setFilterOptions(prevOptions => ({
-          ...prevOptions, // keep previous states
-          ...options
-      }));
+
+      setFilterOptions(prevOptions => {
+        const newOptions: FilterOptions = {
+            ...prevOptions,
+            cities: options.cities,
+            manufacturers: options.manufacturers,
+            models: options.models,
+            versions: options.versions,
+            years: options.years,
+        };
+        // Do not update states if a sub-filter is changed
+        if (filterKeyChanged === 'state' || !filterKeyChanged) {
+             newOptions.states = options.states;
+        }
+        return newOptions;
+      });
+
     } catch (error) {
       console.error('Failed to fetch data:', error);
        toast({
@@ -154,36 +179,39 @@ const DashboardClient: FC<DashboardClientProps> = () => {
   }, [toast, t]);
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
-    const updated = { ...filters, ...newFilters };
-      // Reset subsequent filters when a parent filter changes
-      if (Object.prototype.hasOwnProperty.call(newFilters, 'state')) {
-          updated.city = '';
-          updated.manufacturer = '';
-          updated.model = '';
-          updated.version = [];
-          updated.year = '';
-      }
-      if (Object.prototype.hasOwnProperty.call(newFilters, 'city')) {
-          updated.manufacturer = '';
-          updated.model = '';
-          updated.version = [];
-          updated.year = '';
-      }
-      if (Object.prototype.hasOwnProperty.call(newFilters, 'manufacturer')) {
-          updated.model = '';
-          updated.version = [];
-          updated.year = '';
-      }
-      if (Object.prototype.hasOwnProperty.call(newFilters, 'model')) {
-          updated.version = [];
-          updated.year = '';
-      }
-      if (Object.prototype.hasOwnProperty.call(newFilters, 'version')) {
-          updated.year = '';
-      }
-    setFilters(updated);
-    fetchData(updated);
-  }, [filters, fetchData]);
+    setFilters(prevFilters => {
+        const updated = { ...prevFilters, ...newFilters };
+        const changedKey = Object.keys(newFilters)[0] as keyof Filters;
+        
+        if (changedKey === 'state') {
+            updated.city = '';
+            updated.manufacturer = '';
+            updated.model = '';
+            updated.version = [];
+            updated.year = '';
+        }
+        if (changedKey === 'city') {
+            updated.manufacturer = '';
+            updated.model = '';
+            updated.version = [];
+            updated.year = '';
+        }
+        if (changedKey === 'manufacturer') {
+            updated.model = '';
+            updated.version = [];
+            updated.year = '';
+        }
+        if (changedKey === 'model') {
+            updated.version = [];
+            updated.year = '';
+        }
+        if (changedKey === 'version') {
+            updated.year = '';
+        }
+        fetchData(updated, changedKey);
+        return updated;
+    });
+}, [fetchData]);
 
   const handleExportPDF = () => {
     const input = dashboardContentRef.current;
@@ -346,7 +374,7 @@ const DashboardClient: FC<DashboardClientProps> = () => {
             </AlertDialog>
 
 
-          {!isFiltered ? (
+          {!isFiltered && !loading ? (
              <div className="flex flex-col h-full gap-8">
                <WelcomePlaceholder />
              </div>
