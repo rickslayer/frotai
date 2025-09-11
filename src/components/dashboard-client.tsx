@@ -177,24 +177,22 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     
     // Create a temporary div to parse the HTML
     const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlText.replace(/\n/g, '<br/>'); // Standardize line breaks
+    tempDiv.innerHTML = htmlText.replace(/<br\s*\/?>/gi, '\n');
 
-    // Replace semantic HTML with text and line breaks
+    // Process semantic elements
     tempDiv.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(header => {
         header.textContent = `\n${header.textContent}\n`;
     });
-    tempDiv.querySelectorAll('p, div, br').forEach(p => {
+    tempDiv.querySelectorAll('p, div').forEach(p => {
         p.insertAdjacentText('afterend', '\n');
     });
-     tempDiv.querySelectorAll('strong, b').forEach(bold => {
-        bold.textContent = `${bold.textContent}`; // Just get the text, no extra decoration
-    });
-     tempDiv.querySelectorAll('li').forEach(li => {
+    tempDiv.querySelectorAll('li').forEach(li => {
         li.textContent = `  - ${li.textContent}\n`;
     });
+     tempDiv.querySelectorAll('strong, b').forEach(bold => {
+        bold.textContent = `${bold.textContent}`; 
+    });
 
-    // Use textContent to strip remaining tags and get the formatted text
-    // Replace multiple newlines with a single one for cleaner output
     return (tempDiv.textContent || '').replace(/(\r\n|\n|\r){2,}/g, '\n\n').trim();
 };
 
@@ -377,30 +375,36 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
             <div id="top-models-chart">
                 <TopModelsChart data={filteredData} />
             </div>
-            <div id="fleet-by-year-chart" className="lg:col-span-2">
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+            <div id="fleet-by-year-chart">
                 <FleetByYearChart data={filteredData} />
             </div>
-            <div id="fleet-age-chart" className="lg:col-span-2">
+            <div id="fleet-age-chart">
                  <FleetAgeBracketChart data={filteredData} />
             </div>
-            <div id="final-analysis-card" className="lg:col-span-2">
-                <FinalAnalysis
-                    filters={filters}
-                    disabled={!isFiltered || filteredData.length === 0}
-                    fleetAgeBrackets={fleetAgeBrackets}
-                    regionalData={regionalData}
-                    fleetByYearData={fleetByYearData}
-                    onAnalysisGenerated={setGeneralAnalysis}
-                />
-            </div>
-            <div id="part-demand-card" className="lg:col-span-2">
-                <PartDemandForecast
-                    fleetAgeBrackets={fleetAgeBrackets}
-                    filters={filters}
-                    disabled={!isFiltered || filteredData.length === 0}
-                    onDemandPredicted={setDemandAnalysis}
-                />
-            </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:gap-8">
+          <div id="final-analysis-card">
+              <FinalAnalysis
+                  filters={filters}
+                  disabled={!isFiltered || filteredData.length === 0}
+                  fleetAgeBrackets={fleetAgeBrackets}
+                  regionalData={regionalData}
+                  fleetByYearData={fleetByYearData}
+                  onAnalysisGenerated={setGeneralAnalysis}
+              />
+          </div>
+          <div id="part-demand-card">
+              <PartDemandForecast
+                  fleetAgeBrackets={fleetAgeBrackets}
+                  filters={filters}
+                  disabled={!isFiltered || filteredData.length === 0}
+                  onDemandPredicted={setDemandAnalysis}
+              />
+          </div>
         </div>
       </>
     );
