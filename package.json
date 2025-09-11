@@ -44,6 +44,7 @@
     "embla-carousel-react": "^8.6.0",
     "firebase": "^11.9.1",
     "genkit": "^1.14.1",
+    "html2canvas": "^1.4.1",
     "i18next": "^23.12.2",
     "i18next-browser-languagedetector": "^7.2.1",
     "jspdf": "^2.5.1",
