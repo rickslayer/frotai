@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     
     if (searchParams.has('state')) filters.state = searchParams.get('state')!;
     if (searchParams.has('manufacturer')) filters.manufacturer = searchParams.get('manufacturer')!;
-    if (search_params.has('model')) filters.model = searchParams.get('model')!;
+    if (searchParams.has('model')) filters.model = searchParams.get('model')!;
 
     const options = await getFilterOptions(filters);
     return NextResponse.json(options);
