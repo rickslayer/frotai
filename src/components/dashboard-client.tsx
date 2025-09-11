@@ -52,14 +52,14 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         const updated = { ...prev, ...newFilters };
         
         // Cascade filter clearing
-        if (newFilters.state !== undefined) { // If state is changed
+        if ('state' in newFilters) {
             updated.city = '';
         }
-        if (newFilters.manufacturer !== undefined) { // If manufacturer is changed
+        if ('manufacturer' in newFilters) {
             updated.model = '';
             updated.version = [];
         }
-        if (newFilters.model !== undefined) { // If model is changed
+        if ('model' in newFilters) {
              updated.version = [];
         }
 
@@ -167,7 +167,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     return Object.entries(brackets).map(([range, data]) => ({ range, label: data.label, quantity: data.total }));
   }, [filteredData, t]);
   
-  const regionalData = useMemo(() => getRegionData(filteredData), [filteredData]);
+  const regionalData = useMemo(() => getRegionData(filteredData, allData), [filteredData, allData]);
 
   const fleetByYearData = useMemo(() => {
     const yearlyFleet = filteredData.reduce((acc, item) => {
@@ -306,5 +306,3 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 };
 
 export default DashboardClient;
-
-    

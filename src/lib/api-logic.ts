@@ -2,79 +2,47 @@
 import path from 'path';
 import fs from 'fs/promises';
 import { cache } from 'react';
-import type { Vehicle, FilterOptions, Filters } from '@/types';
+import type { Vehicle, FilterOptions } from '@/types';
 
 // Memoize the data loading and parsing process.
 const loadAndParseData = cache(async (): Promise<Vehicle[]> => {
-  const jsonFilePath = path.join(process.cwd(), 'src', 'data', 'rj.json');
+  const jsonFilePath = path.join(process.cwd(), 'src', 'data', 'example.json');
   try {
     const jsonFile = await fs.readFile(jsonFilePath, 'utf8');
     const data = JSON.parse(jsonFile);
 
+    // Map the new data structure to the existing Vehicle type
     return data.map((row: any) => ({
-      id: `${row.modelo_id}-${row.ano}-${row.uf}-${row.municipio}`,
-      manufacturer: row.marca,
-      model: row.modelo,
-      version: row.versao,
-      fullName: `${row.modelo} ${row.versao}`,
-      year: parseInt(row.ano, 10) || 0,
-      quantity: parseInt(row.quantity, 10) || 0,
-      state: row.uf,
-      city: row.municipio,
+      id: row.ID,
+      manufacturer: row.Marca,
+      model: row.Modelo,
+      version: row.Versao || '',
+      fullName: `${row.Modelo} ${row.Versao || ''}`.trim(),
+      year: parseInt(row.Ano, 10) || 0,
+      quantity: parseInt(row.Quantidade, 10) || 0,
+      state: row.Estado,
+      city: row.Município,
     })).filter((v: Vehicle) => v.quantity > 0 && v.year > 0);
   } catch (error) {
-    console.error("Error reading or parsing rj.json:", error);
+    console.error("Error reading or parsing example.json:", error);
     return [];
   }
 });
 
 
-export const getFleetData = async (filters: Partial<Filters>): Promise<Vehicle[]> => {
-  const allData = await loadAndParseData();
-  if (!Object.values(filters).some(f => f && (Array.isArray(f) ? f.length > 0 : f !== 'all'))) {
-      return allData;
-  }
-  
-  return allData.filter(item => {
-    return Object.entries(filters).every(([key, value]) => {
-      if (!value || value === 'all') return true;
-      const itemValue = item[key as keyof Vehicle];
-      if (Array.isArray(value)) {
-        return value.length === 0 || value.includes(itemValue as string);
-      }
-      return String(itemValue).toLowerCase() === String(value).toLowerCase();
-    });
-  });
+export const getFleetData = async (): Promise<Vehicle[]> => {
+  return await loadAndParseData();
 };
 
-
-export const getFilterOptions = async (filters: Partial<Filters>): Promise<FilterOptions> => {
+export const getFilterOptions = async (): Promise<FilterOptions> => {
     const allData = await loadAndParseData();
 
-    // These filters are independent and always show all options
-    const states = [...new Set(allData.map(item => item.state))].sort();
     const manufacturers = [...new Set(allData.map(item => item.manufacturer))].sort();
+    const models = [...new Set(allData.map(item => item.model))].sort();
+    const versions = [...new Set(allData.map(item => item.version))].sort();
+    const states = [...new Set(allData.map(item => item.state))].sort();
+    const cities = [...new Set(allData.map(item => item.city))].sort();
     const years = [...new Set(allData.map(item => item.year))].sort((a, b) => b - a);
-
-    // These filters are dependent on the parent filters
-    let level1Filtered = allData;
-    if (filters.state && filters.state !== 'all') {
-        level1Filtered = level1Filtered.filter(item => item.state === filters.state);
-    }
-    
-    let level2Filtered = level1Filtered;
-     if (filters.manufacturer && filters.manufacturer !== 'all') {
-        level2Filtered = level2Filtered.filter(item => item.manufacturer === filters.manufacturer);
-    }
-
-    let level3Filtered = level2Filtered;
-    if (filters.model && filters.model !== 'all') {
-        level3Filtered = level3Filtered.filter(item => item.model === filters.model);
-    }
-    
-    const cities = [...new Set(level1Filtered.map(item => item.city))].sort();
-    const models = [...new Set(level2Filtered.map(item => item.model))].sort();
-    const versions = [...new Set(level3Filtered.map(item => item.version))].sort();
 
     return { states, cities, manufacturers, models, versions, years };
 };

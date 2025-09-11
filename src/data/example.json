@@ -1,0 +1,90 @@
+[
+  {
+    "ID": "rj910572",
+    "UF": "RJ",
+    "Estado": "RIO DE JANEIRO",
+    "Município": "ANGRA DOS REIS",
+    "Marca": "AUDI",
+    "Modelo": "A3 1.6",
+    "Versao": "BASE",
+    "Ano": 2000,
+    "Quantidade": 2
+  },
+  {
+    "ID": "rj862852",
+    "UF": "RJ",
+    "Estado": "RIO DE JANEIRO",
+    "Município": "ANGRA DOS REIS",
+    "Marca": "AUDI",
+    "Modelo": "A3 1.6",
+    "Versao": "BASE",
+    "Ano": 2001,
+    "Quantidade": 3
+  },
+  {
+    "ID": "rj123456",
+    "UF": "RJ",
+    "Estado": "RIO DE JANEIRO",
+    "Município": "RIO DE JANEIRO",
+    "Marca": "FIAT",
+    "Modelo": "STRADA",
+    "Versao": "FREEDOM",
+    "Ano": 2022,
+    "Quantidade": 150
+  },
+  {
+    "ID": "rj789012",
+    "UF": "RJ",
+    "Estado": "RIO DE JANEIRO",
+    "Município": "RIO DE JANEIRO",
+    "Marca": "FIAT",
+    "Modelo": "STRADA",
+    "Versao": "VOLCANO",
+    "Ano": 2023,
+    "Quantidade": 120
+  },
+  {
+    "ID": "rj456789",
+    "UF": "RJ",
+    "Estado": "RIO DE JANEIRO",
+    "Município": "NITERÓI",
+    "Marca": "CHEVROLET",
+    "Modelo": "ONIX",
+    "Versao": "LT",
+    "Ano": 2021,
+    "Quantidade": 200
+  },
+  {
+    "ID": "rj987654",
+    "UF": "RJ",
+    "Estado": "RIO DE JANEIRO",
+    "Município": "NITERÓI",
+    "Marca": "CHEVROLET",
+    "Modelo": "ONIX",
+    "Versao": "PLUS",
+    "Ano": 2021,
+    "Quantidade": 180
+  },
+  {
+    "ID": "sp111222",
+    "UF": "SP",
+    "Estado": "SAO PAULO",
+    "Município": "SAO PAULO",
+    "Marca": "VOLKSWAGEN",
+    "Modelo": "GOL",
+    "Versao": "1.0",
+    "Ano": 2019,
+    "Quantidade": 300
+  },
+  {
+    "ID": "sp333444",
+    "UF": "SP",
+    "Estado": "SAO PAULO",
+    "Município": "CAMPINAS",
+    "Marca": "VOLKSWAGEN",
+    "Modelo": "POLO",
+    "Versao": "HIGHLINE",
+    "Ano": 2020,
+    "Quantidade": 90
+  }
+]

@@ -8,12 +8,13 @@ export type RegionData = {
 };
 
 export const stateToRegionMap: Record<string, string> = {
-    AC: 'Norte', RO: 'Norte', AM: 'Norte', RR: 'Norte', PA: 'Norte', AP: 'Norte', TO: 'Norte',
-    MA: 'Nordeste', PI: 'Nordeste', CE: 'Nordeste', RN: 'Nordeste', PB: 'Nordeste', PE: 'Nordeste', AL: 'Nordeste', SE: 'Nordeste', BA: 'Nordeste',
-    MT: 'Centro-Oeste', MS: 'Centro-Oeste', GO: 'Centro-Oeste', DF: 'Centro-Oeste',
-    SP: 'Sudeste', RJ: 'Sudeste', ES: 'Sudeste', MG: 'Sudeste',
-    PR: 'Sul', SC: 'Sul', RS: 'Sul',
+    'ACRE': 'Norte', 'AMAPA': 'Norte', 'AMAZONAS': 'Norte', 'PARA': 'Norte', 'RONDONIA': 'Norte', 'RORAIMA': 'Norte', 'TOCANTINS': 'Norte',
+    'ALAGOAS': 'Nordeste', 'BAHIA': 'Nordeste', 'CEARA': 'Nordeste', 'MARANHAO': 'Nordeste', 'PARAIBA': 'Nordeste', 'PERNAMBUCO': 'Nordeste', 'PIAUI': 'Nordeste', 'RIO GRANDE DO NORTE': 'Nordeste', 'SERGIPE': 'Nordeste',
+    'GOIAS': 'Centro-Oeste', 'MATO GROSSO': 'Centro-Oeste', 'MATO GROSSO DO SUL': 'Centro-Oeste', 'DISTRITO FEDERAL': 'Centro-Oeste',
+    'ESPIRITO SANTO': 'Sudeste', 'MINAS GERAIS': 'Sudeste', 'RIO DE JANEIRO': 'Sudeste', 'SAO PAULO': 'Sudeste',
+    'PARANA': 'Sul', 'RIO GRANDE DO SUL': 'Sul', 'SANTA CATARINA': 'Sul',
 };
+
 
 const regionColors: Record<string, string> = {
   'Sudeste': 'hsl(var(--chart-1))',
@@ -26,7 +27,9 @@ const regionColors: Record<string, string> = {
 const allRegions = ['Sudeste', 'Nordeste', 'Sul', 'Norte', 'Centro-Oeste'];
 
 
-export function getRegionData(data: Vehicle[]): RegionData[] {
+export function getRegionData(data: Vehicle[], allData: Vehicle[]): RegionData[] {
+  const sourceData = data.length > 0 ? data : allData;
+
   const regionalTotals: Record<string, number> = {
     'Sudeste': 0,
     'Nordeste': 0,
@@ -35,7 +38,7 @@ export function getRegionData(data: Vehicle[]): RegionData[] {
     'Centro-Oeste': 0,
   };
 
-  data.forEach(vehicle => {
+  sourceData.forEach(vehicle => {
     const region = stateToRegionMap[vehicle.state.toUpperCase()];
     if (region) {
       regionalTotals[region] += vehicle.quantity;

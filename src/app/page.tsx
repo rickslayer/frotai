@@ -3,8 +3,8 @@ import { getFleetData, getFilterOptions } from "@/lib/api-logic";
 
 export default async function Home() {
   // Fetch initial data on the server
-  const initialData = await getFleetData({});
-  const initialFilterOptions = await getFilterOptions({});
+  const initialData = await getFleetData();
+  const initialFilterOptions = await getFilterOptions();
 
   return (
     <main>
