@@ -368,11 +368,11 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         </div>
 
         <StatCards data={filteredData} filters={filters} />
-        <div id="charts-grid" className="grid gap-4 md:gap-8 lg:grid-cols-5">
-            <div id="regional-chart" className="lg:col-span-3">
+        <div id="charts-grid" className="grid gap-4 md:gap-8">
+            <div id="regional-chart">
                 <RegionalFleetChart data={regionalData} />
             </div>
-            <div id="top-models-chart" className="lg:col-span-2">
+            <div id="top-models-chart">
                 <TopModelsChart data={filteredData} />
             </div>
             <div id="fleet-by-year-chart" className="lg:col-span-3">
