@@ -1,44 +1,36 @@
 import { cache } from 'react';
-import Papa from 'papaparse';
 import fs from 'fs/promises';
 import path from 'path';
 import type { Vehicle, FilterOptions, Filters } from '@/types';
 
 // Memoize the data loading and parsing process.
-const loadAndParseData = cache(async () => {
-  const csvFilePath = path.join(process.cwd(), 'src', 'data', 'rj.csv');
-  const csvFile = await fs.readFile(csvFilePath, 'utf8');
+const loadAndParseData = cache(async (): Promise<Vehicle[]> => {
+  const jsonFilePath = path.join(process.cwd(), 'src', 'data', 'rj.json');
+  try {
+    const jsonFile = await fs.readFile(jsonFilePath, 'utf8');
+    const data = JSON.parse(jsonFile);
 
-  return new Promise<Vehicle[]>((resolve, reject) => {
-    Papa.parse<any>(csvFile, {
-      header: true,
-      dynamicTyping: false, // All fields are strings from CSV
-      skipEmptyLines: true,
-      complete: (results) => {
-        const vehicles: Vehicle[] = results.data.map(row => {
-          const quantity = parseInt(row.quantity, 10) || 0;
-          const year = parseInt(row.ano, 10) || 0;
-          return {
-            id: `${row.modelo_id}-${row.ano}-${row.uf}-${row.municipio}`,
-            manufacturer: row.marca,
-            model: row.modelo,
-            version: row.versao,
-            fullName: `${row.modelo} ${row.versao}`,
-            year: year,
-            quantity: quantity,
-            state: row.uf,
-            city: row.municipio,
-          };
-        }).filter(v => v.quantity > 0 && v.year > 0); // Basic data validation
-        resolve(vehicles);
-      },
-      error: (error: Error) => {
-        console.error("CSV Parsing Error:", error);
-        reject(error);
-      },
-    });
-  });
+    // Assuming the JSON is an array of objects that match the expected structure
+    // or need minimal transformation.
+    return data.map((row: any) => ({
+      id: `${row.modelo_id}-${row.ano}-${row.uf}-${row.municipio}`,
+      manufacturer: row.marca,
+      model: row.modelo,
+      version: row.versao,
+      fullName: `${row.modelo} ${row.versao}`,
+      year: parseInt(row.ano, 10) || 0,
+      quantity: parseInt(row.quantity, 10) || 0,
+      state: row.uf,
+      city: row.municipio,
+    })).filter((v: Vehicle) => v.quantity > 0 && v.year > 0);
+  } catch (error) {
+    console.error("Error reading or parsing rj.json:", error);
+    // If the file doesn't exist or is invalid, return an empty array
+    // to prevent the app from crashing.
+    return [];
+  }
 });
+
 
 export const getFleetData = cache(async (filters: Partial<Filters>): Promise<Vehicle[]> => {
   try {
@@ -66,18 +58,13 @@ export const getFleetData = cache(async (filters: Partial<Filters>): Promise<Veh
 
 export const getFilterOptions = cache(async (filters: Partial<Filters>): Promise<FilterOptions> => {
   try {
-    // For local file, we get all options first, then filter
     const allData = await loadAndParseData();
     
     let filteredData = allData;
-    // Apply filters sequentially to narrow down options
     if (filters.state && filters.state !== 'all') {
         filteredData = filteredData.filter(item => item.state === filters.state);
     }
-    if (filters.city && filters.city !== 'all') {
-        filteredData = filteredData.filter(item => item.city === filters.city);
-    }
-     if (filters.manufacturer && filters.manufacturer !== 'all') {
+    if (filters.manufacturer && filters.manufacturer !== 'all') {
         filteredData = filteredData.filter(item => item.manufacturer === filters.manufacturer);
     }
     if (filters.model && filters.model !== 'all') {
@@ -87,7 +74,6 @@ export const getFilterOptions = cache(async (filters: Partial<Filters>): Promise
     const manufacturers = [...new Set(allData.map(item => item.manufacturer))].sort();
     const states = [...new Set(allData.map(item => item.state))].sort();
     
-    // Options for children are based on the currently filtered data
     const models = [...new Set(filteredData.map(item => item.model))].sort();
     const versions = [...new Set(filteredData.map(item => item.version))].sort();
     const cities = [...new Set(filteredData.map(item => item.city))].sort();
