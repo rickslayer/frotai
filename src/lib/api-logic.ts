@@ -18,7 +18,7 @@ export async function getVehicles(filters: Partial<Filters>) {
                  query[key] = value;
             } else if (key === 'model' && value) {
                  query[key] = value;
-            } else if (key === 'version' && typeof value === 'string') {
+            } else if (key === 'version' && typeof value === 'string' && value.length > 0) {
                 query[key] = { $in: value.split(',') };
             } else if (key === 'version' && Array.isArray(value) && value.length > 0) {
                  query[key] = { $in: value };
@@ -32,3 +32,5 @@ export async function getVehicles(filters: Partial<Filters>) {
     const data = await Model.find(query).lean();
     return JSON.parse(JSON.stringify(data)); // Serialize data
 }
+
+    

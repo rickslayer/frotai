@@ -98,17 +98,19 @@ const DashboardClient: FC<DashboardClientProps> = () => {
 
   const dashboardContentRef = useRef<HTMLDivElement>(null);
 
-  const fetchDataAndOptions = useCallback(async (currentFilters: Filters, filterKeyChanged?: keyof Filters) => {
+  const fetchData = useCallback(async (currentFilters: Filters) => {
     setLoading(true);
     const hasActiveFilter = Object.values(currentFilters).some(v => (Array.isArray(v) ? v.length > 0 : v && v !== 'all'));
     
     try {
       const dataPromise = hasActiveFilter ? getFleetData(currentFilters) : Promise.resolve([]);
+      // Always fetch filter options
       const optionsPromise = getFilterOptions(currentFilters);
       
       const [data, options] = await Promise.all([dataPromise, optionsPromise]);
 
       setFilteredData(data);
+      // When updating options, preserve the full list of states
       setFilterOptions(prevOptions => ({
         states: options.states.length > 0 ? options.states : prevOptions.states,
         cities: options.cities,
@@ -153,38 +155,25 @@ const DashboardClient: FC<DashboardClientProps> = () => {
 
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
-    const updated = { ...filters, ...newFilters };
+    let updated = { ...filters, ...newFilters };
     const changedKey = Object.keys(newFilters)[0] as keyof Filters;
     
+    // Cascade filter clearing
     if (changedKey === 'state') {
-        updated.city = '';
-        updated.manufacturer = '';
-        updated.model = '';
-        updated.version = [];
-        updated.year = '';
-    }
-    if (changedKey === 'city') {
-        updated.manufacturer = '';
-        updated.model = '';
-        updated.version = [];
-        updated.year = '';
-    }
-    if (changedKey === 'manufacturer') {
-        updated.model = '';
-        updated.version = [];
-        updated.year = '';
-    }
-    if (changedKey === 'model') {
-        updated.version = [];
-        updated.year = '';
-    }
-    if (changedKey === 'version') {
-        updated.year = '';
+        updated = { ...updated, city: '', manufacturer: '', model: '', version: [], year: '' };
+    } else if (changedKey === 'city') {
+        updated = { ...updated, manufacturer: '', model: '', version: [], year: '' };
+    } else if (changedKey === 'manufacturer') {
+        updated = { ...updated, model: '', version: [], year: '' };
+    } else if (changedKey === 'model') {
+        updated = { ...updated, version: [], year: '' };
+    } else if (changedKey === 'version') {
+        updated = { ...updated, year: '' };
     }
     
     setFilters(updated);
-    fetchDataAndOptions(updated, changedKey);
-  }, [filters, fetchDataAndOptions]);
+    fetchData(updated);
+  }, [filters, fetchData]);
 
   const handleExportPDF = () => {
     const input = dashboardContentRef.current;
