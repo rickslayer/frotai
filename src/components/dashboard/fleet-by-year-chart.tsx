@@ -53,9 +53,9 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
         <CardDescription>{t('fleet_by_year_description')}</CardDescription>
       </CardHeader>
       <CardContent className='flex-grow'>
-        <ChartContainer config={chartConfig} className="h-full min-h-[250px] w-full">
+        <ChartContainer config={chartConfig} className="h-full min-h-[180px] w-full">
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={180}>
               <LineChart
                 accessibilityLayer
                 data={chartData}
@@ -84,7 +84,7 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-[250px] w-full items-center justify-center text-muted-foreground">
+            <div className="flex h-[180px] w-full items-center justify-center text-muted-foreground">
               {t('no_data_for_filters')}
             </div>
           )}
