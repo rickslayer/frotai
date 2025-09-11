@@ -99,9 +99,9 @@ const DashboardClient: FC<DashboardClientProps> = () => {
   const dashboardContentRef = useRef<HTMLDivElement>(null);
 
   const fetchDataAndOptions = useCallback(async (currentFilters: Filters, filterKeyChanged?: keyof Filters) => {
+    setLoading(true);
     const hasActiveFilter = Object.values(currentFilters).some(v => (Array.isArray(v) ? v.length > 0 : v && v !== 'all'));
     
-    setLoading(true);
     try {
       const dataPromise = hasActiveFilter ? getFleetData(currentFilters) : Promise.resolve([]);
       const optionsPromise = getFilterOptions(currentFilters);
@@ -110,8 +110,7 @@ const DashboardClient: FC<DashboardClientProps> = () => {
 
       setFilteredData(data);
       setFilterOptions(prevOptions => ({
-         // Keep all states available unless they are fetched for the first time
-        states: options.states.length > 0 ? options.states : prevOptions.states, 
+        states: options.states.length > 0 ? options.states : prevOptions.states,
         cities: options.cities,
         manufacturers: options.manufacturers,
         models: options.models,
@@ -348,13 +347,13 @@ const DashboardClient: FC<DashboardClientProps> = () => {
             </AlertDialog>
 
 
-          {!isFiltered && !loading ? (
-             <div className="flex flex-col h-full gap-8">
-               <WelcomePlaceholder />
-             </div>
-          ) : loading ? (
+          {loading ? (
              <div className="flex flex-1 items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+             </div>
+          ) : !isFiltered ? (
+             <div className="flex flex-col h-full gap-8">
+               <WelcomePlaceholder />
              </div>
           ) : (
             <>
