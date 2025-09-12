@@ -1,53 +1,57 @@
-
-import path from 'path';
-import fs from 'fs/promises';
 import { cache } from 'react';
 import type { Vehicle, FilterOptions } from '@/types';
 
-// Helper function to extract manufacturer, model, and version
+// Helper function to extract manufacturer, model, and version from "Modelo"
 const extractVehicleDetails = (modelString: string) => {
+    // A simple split might not be robust enough. 
+    // This is a placeholder, a more complex logic might be needed based on real data.
     const parts = modelString.split(' ');
-    const model = parts.shift() || ''; // First word is the model
-    const version = parts.join(' '); // The rest is the version
+    const model = parts[0] || ''; 
+    const version = parts.slice(1).join(' '); 
     return { model, version };
 };
 
+// Maps the raw data from the API to the Vehicle type used in the frontend.
+const mapApiDataToVehicle = (apiData: any[]): Vehicle[] => {
+  return apiData.map((row: any) => {
+    const { model, version } = extractVehicleDetails(row.Modelo || '');
+    return {
+      id: row.ID,
+      manufacturer: row.Marca,
+      model: model,
+      version: version,
+      fullName: row.Modelo || '',
+      year: parseInt(row.Ano, 10) || 0,
+      quantity: parseInt(row.Quantidade, 10) || 0,
+      state: row.UF,
+      city: row.Município,
+    };
+  }).filter((v: Vehicle) => v.quantity > 0 && v.year > 0);
+};
 
-// Memoize the data loading and parsing process.
+// Fetches all vehicle data from the new API endpoint.
 const loadAndParseData = cache(async (): Promise<Vehicle[]> => {
-  const jsonFilePath = path.join(process.cwd(), 'src', 'data', 'rj.json');
   try {
-    const jsonFile = await fs.readFile(jsonFilePath, 'utf8');
-    const data = JSON.parse(jsonFile);
-
-    // Map the new data structure to the existing Vehicle type
-    return data.map((row: any) => {
-        const { model, version } = extractVehicleDetails(row.Modelo);
-        return {
-            id: row.ID,
-            manufacturer: row.Marca,
-            model: model,
-            version: version,
-            fullName: `${model} ${version}`.trim(),
-            year: parseInt(row.Ano, 10) || 0,
-            quantity: parseInt(row.Quantidade, 10) || 0,
-            state: row.Estado,
-            city: row.Município,
-        }
-    }).filter((v: Vehicle) => v.quantity > 0 && v.year > 0);
+    // The rewrite in next.config.js makes this call work seamlessly.
+    const res = await fetch('http://localhost:9002/api/carros', { cache: 'no-store' });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch data from API: ${res.statusText}`);
+    }
+    const data = await res.json();
+    return mapApiDataToVehicle(data);
   } catch (error) {
-    console.error("Error reading or parsing rj.json:", error);
+    console.error("Error fetching or parsing data from API:", error);
     return [];
   }
 });
-
 
 export const getFleetData = async (): Promise<Vehicle[]> => {
   return await loadAndParseData();
 };
 
+// Generates filter options based on the entire dataset.
 export const getFilterOptions = async (): Promise<FilterOptions> => {
-    const allData = await loadAndParseData();
+    const allData = await getFleetData();
 
     const manufacturers = [...new Set(allData.map(item => item.manufacturer))].sort();
     const models = [...new Set(allData.map(item => item.model))].sort();
@@ -56,6 +60,5 @@ export const getFilterOptions = async (): Promise<FilterOptions> => {
     const cities = [...new Set(allData.map(item => item.city))].sort();
     const years = [...new Set(allData.map(item => item.year))].sort((a, b) => b - a);
 
-    return { states, cities, manufacturers, models, versions, years };
+    return { regions: [], states, cities, manufacturers, models, versions, years };
 };
-
