@@ -1,17 +1,10 @@
 import DashboardClient from "@/components/dashboard-client";
-import { getFleetData, getFilterOptions } from "@/lib/api-logic";
 
 export default async function Home() {
-  // Fetch initial data on the server
-  const initialData = await getFleetData();
-  const initialFilterOptions = await getFilterOptions();
-
+  // A busca de dados agora é feita no lado do cliente para melhor interatividade com os filtros.
   return (
     <main>
-      <DashboardClient 
-        initialData={initialData} 
-        initialFilterOptions={initialFilterOptions} 
-      />
+      <DashboardClient />
     </main>
   );
 }

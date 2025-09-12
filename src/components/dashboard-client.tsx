@@ -17,25 +17,30 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import RegionalFleetChart from './dashboard/regional-fleet-chart';
-import { getRegionData, regionToStatesMap, stateToRegionMap, allRegions } from '@/lib/regions';
+import { getRegionData, regionToStatesMap, stateToRegionMap } from '@/lib/regions';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
 import jsPDF from 'jspdf';
 import { Button } from './ui/button';
-import { BookCopy } from 'lucide-react';
+import { BookCopy, Loader2 } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import html2canvas from 'html2canvas';
+import { getFleetData, getFilterOptions } from '@/lib/api-logic';
+import { useToast } from '@/hooks/use-toast';
 
-interface DashboardClientProps {
-  initialData: Vehicle[];
-  initialFilterOptions: FilterOptions;
-}
-
-const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterOptions }) => {
+const DashboardClient: FC = () => {
   const { t } = useTranslation();
-  const [allData] = useState<Vehicle[]>(initialData);
+  const { toast } = useToast();
+  
+  const [allData, setAllData] = useState<Vehicle[]>([]);
+  const [filteredData, setFilteredData] = useState<Vehicle[]>([]);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    regions: [], states: [], cities: [], manufacturers: [], models: [], versions: [], years: [],
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
   
   const [filters, setFilters] = useState<Filters>({
     region: '', state: '', city: '', manufacturer: '', model: '', version: [], year: '',
@@ -47,6 +52,59 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
 
   const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setIsLoading(true);
+      try {
+        const [fleetData, options] = await Promise.all([
+          getFleetData(), // Fetch all data initially
+          getFilterOptions()
+        ]);
+        setAllData(fleetData);
+        setFilteredData([]); // Start with no data shown
+        setFilterOptions(options);
+      } catch (error) {
+        toast({ variant: 'destructive', title: t('error'), description: 'Failed to load initial data.' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchInitialData();
+  }, [toast, t]);
+
+  useEffect(() => {
+    const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
+    if (!hasFilters) {
+        setFilteredData([]);
+        return;
+    }
+
+    const applyFilters = () => {
+      const data = allData.filter(item => {
+          return Object.entries(filters).every(([key, value]) => {
+              if (value === '' || value === 'all' || (Array.isArray(value) && value.length === 0)) {
+                  return true;
+              }
+              if (key === 'region') {
+                  const regionOfItem = stateToRegionMap[item.state.toUpperCase()];
+                  return regionOfItem === value;
+              }
+              if (key === 'year') {
+                  return item.year === Number(value);
+              }
+              const itemValue = item[key as keyof Vehicle];
+              if (Array.isArray(value)) {
+                  return value.includes(itemValue as string);
+              }
+              return String(itemValue).toLowerCase() === String(value).toLowerCase();
+          });
+      });
+      setFilteredData(data);
+    };
+    
+    applyFilters();
+  }, [filters, allData]);
 
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
@@ -91,8 +149,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         return updated;
     });
   }, []);
-
-  const filterOptions = useMemo<FilterOptions>(() => {
+  
+  const derivedFilterOptions = useMemo<FilterOptions>(() => {
     const calculateOptions = (key: keyof Vehicle, activeFilters: Partial<Filters>): (string | number)[] => {
         let temp_data = allData;
         
@@ -134,33 +192,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     };
   }, [filters, allData]);
 
-  const filteredData = useMemo(() => {
-    const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
-    if (!hasFilters) {
-        return [];
-    }
-
-    return allData.filter(item => {
-        return Object.entries(filters).every(([key, value]) => {
-            if (value === '' || value === 'all' || (Array.isArray(value) && value.length === 0)) {
-                return true;
-            }
-            if (key === 'region') {
-                const regionOfItem = stateToRegionMap[item.state.toUpperCase()];
-                return regionOfItem === value;
-            }
-            if (key === 'year') {
-                return item.year === Number(value);
-            }
-            const itemValue = item[key as keyof Vehicle];
-            if (Array.isArray(value)) {
-                return value.includes(itemValue as string);
-            }
-            return String(itemValue).toLowerCase() === String(value).toLowerCase();
-        });
-    });
-  }, [filters, allData]);
-  
   const stateFilteredData = useMemo(() => {
     if (!filters.state || filters.state === 'all') {
       return [];
@@ -202,7 +233,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
           acc[key] = (acc[key] || 0) + item.quantity;
           return acc;
       }, {} as Record<string, number>)).reduce((a, b, _, arr) => arr[a] > arr[b] ? a : b, '-'),
-      topRegion: t(getRegionData(filteredData, allData).reduce((a, b) => a.quantity > b.quantity ? a : b).name as any)
+      topRegion: t(getRegionData(filteredData).reduce((a, b) => a.quantity > b.quantity ? a : b).name as any)
     };
 
 
@@ -215,9 +246,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     const formatTextForPdf = (htmlText: string | null | undefined): string => {
       if (!htmlText) return '';
       const tempDiv = document.createElement('div');
-      // A safer regex to strip all HTML tags.
-      tempDiv.innerHTML = htmlText.replace(/<\/?[^>]+(>|$)/g, "");
-      
+      tempDiv.innerHTML = htmlText.replace(/<\/?[\s\S]*?>/g, "");
       const textContent = (tempDiv.textContent || tempDiv.innerText || "");
       return textContent.replace(/(\\r\\n|\n|\r){2,}/g, '\n\n').trim();
     };
@@ -332,7 +361,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     return Object.entries(brackets).map(([range, data]) => ({ range, label: data.label, quantity: data.total }));
   }, [filteredData, t]);
   
-  const regionalData = useMemo(() => getRegionData(filteredData, allData), [filteredData, allData]);
+  const regionalData = useMemo(() => getRegionData(filteredData), [filteredData]);
 
   const fleetByYearData = useMemo(() => {
     const yearlyFleet = filteredData.reduce((acc, item) => {
@@ -345,7 +374,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   }, [filteredData]);
 
   const handleSaveSnapshot = () => {
-    if (filters.version.length > 5 && filters.version.length !== filterOptions.versions.length) {
+    if (filters.version.length > 5 && filters.version.length !== derivedFilterOptions.versions.length) {
         setIsVersionLimitModalOpen(true);
         return;
     }
@@ -353,7 +382,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     const snapshot: AnalysisSnapshot = {
       filters: { ...filters },
       totalVehicles, fleetAgeBrackets, regionalData, fleetByYearData,
-      availableVersionsCount: filterOptions.versions.length
+      availableVersionsCount: derivedFilterOptions.versions.length
     };
     setSnapshots(prev => {
       if (!prev[0]) return [snapshot, prev[1]];
@@ -380,6 +409,14 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   }
 
   const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex h-full w-full items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+
     if (!isFiltered) {
         return <WelcomePlaceholder />;
     }
@@ -437,7 +474,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         <DashboardSidebar
           filters={filters}
           onFilterChange={handleFilterChange}
-          filterOptions={filterOptions}
+          filterOptions={derivedFilterOptions}
         />
       </Sidebar>
       <SidebarInset>

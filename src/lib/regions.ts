@@ -35,8 +35,8 @@ const regionColors: Record<string, string> = {
 export const allRegions = ['Norte', 'Nordeste', 'Centro-Oeste', 'Sudeste', 'Sul'];
 
 
-export function getRegionData(data: Vehicle[], allData: Vehicle[]): RegionData[] {
-  const sourceData = data.length > 0 ? data : allData;
+export function getRegionData(data: Vehicle[]): RegionData[] {
+  const sourceData = data;
 
   const regionalTotals: Record<string, number> = {
     'Norte': 0,
