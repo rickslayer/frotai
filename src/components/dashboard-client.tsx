@@ -93,43 +93,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
   }, []);
 
   const filterOptions = useMemo<FilterOptions>(() => {
-    let dataForOptions = allData;
-  
-    // Create a chain of filters, where each filter is applied to the data before calculating the next set of options
-    if (filters.region && filters.region !== 'all') {
-      const statesInRegion = regionToStatesMap[filters.region] || [];
-      dataForOptions = dataForOptions.filter(d => statesInRegion.includes(d.state.toUpperCase()));
-    }
-    const availableStates = [...new Set(dataForOptions.map(d => d.state))].sort();
-    
-    if (filters.state && filters.state !== 'all') {
-      dataForOptions = dataForOptions.filter(d => d.state === filters.state);
-    }
-    const availableCities = [...new Set(dataForOptions.map(d => d.city))].sort();
-
-    if (filters.city && filters.city !== 'all') {
-      dataForOptions = dataForOptions.filter(d => d.city === filters.city);
-    }
-    const availableManufacturers = [...new Set(dataForOptions.map(d => d.manufacturer))].sort();
-
-    if (filters.manufacturer && filters.manufacturer !== 'all') {
-      dataForOptions = dataForOptions.filter(d => d.manufacturer === filters.manufacturer);
-    }
-    const availableModels = [...new Set(dataForOptions.map(d => d.model))].sort();
-
-    if (filters.model && filters.model !== 'all') {
-      dataForOptions = dataForOptions.filter(d => d.model === filters.model);
-    }
-    const availableVersions = [...new Set(dataForOptions.map(d => d.version))].sort();
-    
-    if (filters.version.length > 0) {
-        dataForOptions = dataForOptions.filter(d => filters.version.includes(d.version));
-    }
-    const availableYears = [...new Set(dataForOptions.map(d => d.year))].sort((a,b) => b-a);
-  
-    // The options for each dropdown are calculated from the *fully filtered* data at that stage
-    // For example, cities are calculated based on region AND state. Years are calculated based on ALL previous filters.
-    const calculateOptions = (key: keyof Vehicle, activeFilters: Filters) => {
+    const calculateOptions = (key: keyof Vehicle, activeFilters: Partial<Filters>): (string | number)[] => {
         let temp_data = allData;
         
         if (activeFilters.region && activeFilters.region !== 'all' && key !== 'region') {
@@ -148,7 +112,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
         if (activeFilters.model && activeFilters.model !== 'all' && key !== 'model') {
              temp_data = temp_data.filter(d => d.model === activeFilters.model);
         }
-        if (activeFilters.version.length > 0 && key !== 'version') {
+        if (activeFilters.version && activeFilters.version.length > 0 && key !== 'version') {
              temp_data = temp_data.filter(d => activeFilters.version.includes(d.version));
         }
 
@@ -162,10 +126,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
     return {
         regions: [...new Set(allData.map(d => stateToRegionMap[d.state.toUpperCase()]).filter(Boolean))].sort(),
         states: calculateOptions('state', {} as Filters) as string[], // All states always available
-        cities: calculateOptions('city', { state: filters.state } as Filters) as string[],
-        manufacturers: calculateOptions('manufacturer', { state: filters.state, city: filters.city } as Filters) as string[],
-        models: calculateOptions('model', { state: filters.state, city: filters.city, manufacturer: filters.manufacturer } as Filters) as string[],
-        versions: calculateOptions('version', { state: filters.state, city: filters.city, manufacturer: filters.manufacturer, model: filters.model } as Filters) as string[],
+        cities: calculateOptions('city', { state: filters.state } as Partial<Filters>) as string[],
+        manufacturers: calculateOptions('manufacturer', { state: filters.state, city: filters.city } as Partial<Filters>) as string[],
+        models: calculateOptions('model', { state: filters.state, city: filters.city, manufacturer: filters.manufacturer } as Partial<Filters>) as string[],
+        versions: calculateOptions('version', { state: filters.state, city: filters.city, manufacturer: filters.manufacturer, model: filters.model } as Partial<Filters>) as string[],
         years: calculateOptions('year', filters) as number[],
     };
   }, [filters, allData]);
@@ -252,7 +216,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialData, initialFilterO
       if (!htmlText) return '';
       const tempDiv = document.createElement('div');
       // A safer regex to strip all HTML tags.
-      tempDiv.innerHTML = htmlText.replace(/<\/?[\s\S]*?>/g, "");
+      tempDiv.innerHTML = htmlText.replace(/<\/?[^>]+(>|$)/g, "");
       
       const textContent = (tempDiv.textContent || tempDiv.innerText || "");
       return textContent.replace(/(\\r\\n|\n|\r){2,}/g, '\n\n').trim();
