@@ -54,7 +54,10 @@ const DashboardClient: FC = () => {
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
   const isFiltered = useMemo(() => {
-    return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all' && value !== '');
+    return Object.values(filters).some(value => {
+      if (Array.isArray(value)) return value.length > 0;
+      return value && value !== '';
+    });
   }, [filters]);
 
 
@@ -70,7 +73,6 @@ const DashboardClient: FC = () => {
         const fleetData = await getFleetData(filters);
         setFilteredData(fleetData);
         if (allData.length === 0) {
-            // This logic might need adjustment if allData should be populated differently.
             const allOptionsData = await getFleetData();
             setAllData(allOptionsData);
         }
@@ -92,7 +94,7 @@ const DashboardClient: FC = () => {
         
         // Reset dependent filters on change
         if ('region' in newFilters && newFilters.region !== prev.region) {
-          updated.state = '';
+          updated.state = 'all'; // Reset to 'all' states
           updated.city = '';
         }
         if ('state' in newFilters && newFilters.state !== prev.state) {
@@ -126,8 +128,6 @@ const DashboardClient: FC = () => {
   }, []);
   
   const derivedFilterOptions = useMemo<FilterOptions>(() => {
-    const temp_data = filteredData.length > 0 ? filteredData : allData;
-
     const calculateOptions = (key: keyof Vehicle, activeFilters: Partial<Filters>): (string | number)[] => {
         let sourceData = allData;
 
@@ -151,10 +151,11 @@ const DashboardClient: FC = () => {
         }
         return (options as string[]).sort();
     };
-
+    
+    const allStates = [...new Set(allData.map(d => d.state))].sort();
     const stateOptions = filters.region && filters.region !== 'all'
         ? regionToStatesMap[filters.region] || []
-        : ['RJ', 'SP', 'MG', 'ES'];
+        : allStates;
 
     return {
         regions: ['Sudeste', 'Nordeste', 'Sul', 'Norte', 'Centro-Oeste'].sort(),
@@ -165,7 +166,7 @@ const DashboardClient: FC = () => {
         versions: calculateOptions('version', { state: filters.state, city: filters.city, manufacturer: filters.manufacturer, model: filters.model } as Partial<Filters>) as string[],
         years: calculateOptions('year', filters) as number[],
     };
-  }, [filters, allData, filteredData]);
+  }, [filters, allData]);
 
 
   const stateFilteredData = useMemo(() => {

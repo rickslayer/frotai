@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
         query.UF = { $in: statesInRegion };
       }
     }
-    // State filter overrides region filter if both are present
+    // State filter overrides region filter if both are present and state is not 'all'
     if (state && state !== 'all') {
       query.UF = state;
     }
