@@ -1,4 +1,3 @@
-
 import { cache } from 'react';
 import type { Vehicle, FilterOptions, Filters } from '@/types';
 
@@ -47,9 +46,14 @@ export const getFleetData = async (filters?: Partial<Filters>): Promise<Vehicle[
 
     const res = await fetch(`/api/carros?${query.toString()}`);
     if (!res.ok) {
+      const errorBody = await res.text();
+      console.error(`API Error Response: ${errorBody}`);
       throw new Error(`Failed to fetch data from API: ${res.statusText}`);
     }
     const data = await res.json();
+    if (data.error) {
+        throw new Error(`API returned an error: ${data.details || data.error}`);
+    }
     return mapApiDataToVehicle(data);
   } catch (error) {
     console.error("Error fetching or parsing data from API:", error);
@@ -58,17 +62,4 @@ export const getFleetData = async (filters?: Partial<Filters>): Promise<Vehicle[
     }
     throw new Error('An unknown error occurred while fetching data.');
   }
-};
-
-// Returns a default set of filter options without fetching all data.
-export const getFilterOptions = async (): Promise<FilterOptions> => {
-    return {
-        regions: [],
-        states: ['RJ', 'SP', 'MG', 'ES'],
-        cities: [],
-        manufacturers: [],
-        models: [],
-        versions: [],
-        years: []
-    };
 };

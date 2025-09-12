@@ -27,7 +27,7 @@ import { BookCopy, Loader2 } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import html2canvas from 'html2canvas';
-import { getFleetData, getFilterOptions } from '@/lib/api-logic';
+import { getFleetData } from '@/lib/api-logic';
 import { useToast } from '@/hooks/use-toast';
 
 const DashboardClient: FC = () => {
@@ -37,10 +37,10 @@ const DashboardClient: FC = () => {
   const [allData, setAllData] = useState<Vehicle[]>([]);
   const [filteredData, setFilteredData] = useState<Vehicle[]>([]);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    regions: [], states: ['RJ', 'SP', 'MG', 'ES'], cities: [], manufacturers: [], models: [], versions: [], years: [],
+    regions: [], states: [], cities: [], manufacturers: [], models: [], versions: [], years: [],
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [filters, setFilters] = useState<Filters>({
     region: '', state: '', city: '', manufacturer: '', model: '', version: [], year: '',
@@ -72,39 +72,51 @@ const DashboardClient: FC = () => {
       try {
         const fleetData = await getFleetData(filters);
         setFilteredData(fleetData);
-        if (allData.length === 0) {
-            // Fetch all data for options only on the first load if needed
-             const allOptionsData = await getFleetData({});
-            setAllData(allOptionsData);
-        }
       } catch (error) {
         console.error(error);
-        toast({ variant: 'destructive', title: t('error'), description: 'Failed to load fleet data.' });
+        if (error instanceof Error) {
+            toast({ variant: 'destructive', title: t('error'), description: error.message });
+        } else {
+            toast({ variant: 'destructive', title: t('error'), description: 'Failed to load fleet data.' });
+        }
       } finally {
         setIsLoading(false);
       }
     };
     
-    // Only fetch data if there are active filters.
     if (isFiltered) {
         fetchData();
     } else {
-        // Clear data if all filters are cleared
         setFilteredData([]);
     }
-  }, [filters, isFiltered, toast, t, allData.length]);
+  }, [filters, isFiltered, toast, t]);
 
 
   useEffect(() => {
-    // This effect runs once to fetch data for filter options.
     const fetchInitialData = async () => {
        setIsLoading(true);
        try {
-           const options = await getFilterOptions();
-           setFilterOptions(options);
-
            const allVehicleData = await getFleetData({});
            setAllData(allVehicleData);
+
+           const getUniqueSortedOptions = (key: keyof Vehicle) => {
+              const options = [...new Set(allVehicleData.map(item => item[key]))];
+              if (typeof options[0] === 'number') {
+                  return (options as number[]).sort((a, b) => b - a);
+              }
+              return (options as string[]).sort();
+           };
+
+           setFilterOptions({
+                regions: ['Sudeste', 'Nordeste', 'Sul', 'Norte', 'Centro-Oeste'].sort(),
+                states: getUniqueSortedOptions('state') as string[],
+                cities: getUniqueSortedOptions('city') as string[],
+                manufacturers: getUniqueSortedOptions('manufacturer') as string[],
+                models: getUniqueSortedOptions('model') as string[],
+                versions: getUniqueSortedOptions('version') as string[],
+                years: getUniqueSortedOptions('year') as number[],
+           });
+
 
        } catch (error) {
             console.error('Failed to fetch initial options:', error);
@@ -118,19 +130,20 @@ const DashboardClient: FC = () => {
        }
     };
     fetchInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast, t]);
 
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => {
         const updated = { ...prev, ...newFilters };
-
+        
         // Handle the "clear" value for the region filter
         if ('region' in newFilters && newFilters.region === 'clear') {
             updated.region = '';
         }
-        
-        // Reset dependent filters on change
+
+        // Reset dependent filters on change for a cascading effect
         if ('region' in newFilters && newFilters.region !== prev.region) {
           updated.state = 'all'; 
           updated.city = '';
@@ -140,29 +153,29 @@ const DashboardClient: FC = () => {
           updated.year = '';
         }
         if ('state' in newFilters && newFilters.state !== prev.state) {
-            updated.city = '';
+            updated.city = 'all';
             updated.manufacturer = '';
             updated.model = '';
             updated.version = [];
             updated.year = '';
         }
         if ('city' in newFilters && newFilters.city !== prev.city) {
-            updated.manufacturer = '';
+            updated.manufacturer = 'all';
             updated.model = '';
             updated.version = [];
             updated.year = '';
         }
         if ('manufacturer' in newFilters && newFilters.manufacturer !== prev.manufacturer) {
-            updated.model = '';
+            updated.model = 'all';
             updated.version = [];
             updated.year = '';
         }
         if ('model' in newFilters && newFilters.model !== prev.model) {
              updated.version = [];
-             updated.year = '';
+             updated.year = 'all';
         }
         if ('version' in newFilters && JSON.stringify(newFilters.version) !== JSON.stringify(prev.version)) {
-            updated.year = '';
+            updated.year = 'all';
         }
 
         return updated;
@@ -172,16 +185,19 @@ const DashboardClient: FC = () => {
   const derivedFilterOptions = useMemo<FilterOptions>(() => {
     let baseData = allData;
 
-    // Filter by Region first
     if (filters.region && filters.region !== 'all') {
         const statesInRegion = regionToStatesMap[filters.region] || [];
         baseData = baseData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
     }
     
-    // Then, generate state options from the (potentially) region-filtered data
-    const stateOptions = [...new Set(baseData.map(d => d.state))].sort();
+    let tempFilteredData = allData;
+    if (filters.region && filters.region !== 'all') {
+        const statesInRegion = regionToStatesMap[filters.region] || [];
+        tempFilteredData = tempFilteredData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
+    }
+    const stateOptions = [...new Set(tempFilteredData.map(d => d.state))].sort();
 
-    // Now, filter the baseData further based on other active filters to generate dependent options
+
     if (filters.state && filters.state !== 'all') {
         baseData = baseData.filter(d => d.state === filters.state);
     }
@@ -195,7 +211,6 @@ const DashboardClient: FC = () => {
         baseData = baseData.filter(d => d.model === filters.model);
     }
 
-    // This function creates a sorted unique list for a given key from the currently filtered baseData
     const getUniqueSortedOptions = (key: keyof Vehicle) => {
         const options = [...new Set(baseData.map(item => item[key]))];
         if (typeof options[0] === 'number') {
@@ -205,7 +220,7 @@ const DashboardClient: FC = () => {
     };
 
     return {
-        regions: ['Sudeste', 'Nordeste', 'Sul', 'Norte', 'Centro-Oeste'].sort(),
+        regions: filterOptions.regions,
         states: stateOptions,
         cities: getUniqueSortedOptions('city') as string[],
         manufacturers: getUniqueSortedOptions('manufacturer') as string[],
@@ -213,7 +228,7 @@ const DashboardClient: FC = () => {
         versions: getUniqueSortedOptions('version') as string[],
         years: getUniqueSortedOptions('year') as number[],
     };
-  }, [filters, allData]);
+  }, [filters, allData, filterOptions.regions]);
 
 
   const stateFilteredData = useMemo(() => {
@@ -431,7 +446,7 @@ const DashboardClient: FC = () => {
   }
 
   const renderContent = () => {
-    if (isLoading && !isFiltered) { // Show loading only on initial load
+    if (isLoading) {
       return (
         <div className="flex h-full w-full items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -441,14 +456,6 @@ const DashboardClient: FC = () => {
     
     if (!isFiltered) {
         return <WelcomePlaceholder />;
-    }
-
-    if (isLoading) {
-         return (
-            <div className="flex h-full w-full items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          );
     }
 
     return (
@@ -551,5 +558,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
