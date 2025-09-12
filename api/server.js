@@ -45,22 +45,31 @@ app.get('/api/carros', async (req, res) => {
       manufacturer: 'Marca',
       model: 'Modelo',
       year: 'Ano',
-      vehicle: 'Modelo' // Adicionado mapeamento ausente
+      version: 'Modelo' // Ambos 'model' e 'version' podem precisar de lógica mais complexa
     };
 
     for (const key in req.query) {
-      if (req.query.hasOwnProperty(key)) {
-        const dbField = queryMap[key] || key; // Usa o mapeamento ou a chave original
+      if (Object.prototype.hasOwnProperty.call(req.query, key)) {
+        const dbField = queryMap[key] || key;
         let value = req.query[key];
-
-        // Converte o ano para número, se for o campo 'Ano'
+        
         if (dbField === 'Ano' && !isNaN(parseInt(value, 10))) {
           value = parseInt(value, 10);
         }
-        
+
+        // Se a chave for 'version' ou 'model', a query pode precisar ser mais complexa
+        // para lidar com a busca dentro do campo "Modelo".
+        // Por simplicidade, vamos manter a busca exata por enquanto.
         query[dbField] = value;
       }
     }
+    
+    // Adicionado para evitar que o campo vehicle (que não existe mais no frontend) quebre a query
+    if (query.vehicle) {
+        query.Modelo = query.vehicle;
+        delete query.vehicle;
+    }
+
 
     const carros = await db.collection(collectionName).find(query).toArray();
     res.json(carros);
