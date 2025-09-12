@@ -124,6 +124,11 @@ const DashboardClient: FC = () => {
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => {
         const updated = { ...prev, ...newFilters };
+
+        // Handle the "clear" value for the region filter
+        if ('region' in newFilters && newFilters.region === 'clear') {
+            updated.region = '';
+        }
         
         // Reset dependent filters on change
         if ('region' in newFilters && newFilters.region !== prev.region) {

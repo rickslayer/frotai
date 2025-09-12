@@ -73,7 +73,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                    <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
                     <SelectContent>
-                       <SelectItem value="">{t('clear_region_filter')}</SelectItem>
+                       <SelectItem value="clear">{t('clear_region_filter')}</SelectItem>
                        <SelectItem value="all">{t('all_regions')}</SelectItem>
                       {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
                     </SelectContent>
