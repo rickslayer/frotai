@@ -17,7 +17,7 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import RegionalFleetChart from './dashboard/regional-fleet-chart';
-import { getRegionData, regionToStatesMap, stateToRegionMap } from '@/lib/regions';
+import { regionToStatesMap } from '@/lib/regions';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
@@ -73,7 +73,8 @@ const DashboardClient: FC = () => {
         const fleetData = await getFleetData(filters);
         setFilteredData(fleetData);
         if (allData.length === 0) {
-            const allOptionsData = await getFleetData();
+            // Fetch all data for options only on the first load if needed
+             const allOptionsData = await getFleetData({});
             setAllData(allOptionsData);
         }
       } catch (error) {
@@ -84,8 +85,40 @@ const DashboardClient: FC = () => {
       }
     };
     
-    fetchData();
+    // Only fetch data if there are active filters.
+    if (isFiltered) {
+        fetchData();
+    } else {
+        // Clear data if all filters are cleared
+        setFilteredData([]);
+    }
   }, [filters, isFiltered, toast, t, allData.length]);
+
+
+  useEffect(() => {
+    // This effect runs once to fetch data for filter options.
+    const fetchInitialData = async () => {
+       setIsLoading(true);
+       try {
+           const options = await getFilterOptions();
+           setFilterOptions(options);
+
+           const allVehicleData = await getFleetData({});
+           setAllData(allVehicleData);
+
+       } catch (error) {
+            console.error('Failed to fetch initial options:', error);
+            if (error instanceof Error) {
+                toast({ variant: 'destructive', title: t('error'), description: error.message });
+            } else {
+                 toast({ variant: 'destructive', title: t('error'), description: 'An unknown error occurred while fetching initial data.' });
+            }
+       } finally {
+            setIsLoading(false);
+       }
+    };
+    fetchInitialData();
+  }, [toast, t]);
 
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
@@ -94,8 +127,12 @@ const DashboardClient: FC = () => {
         
         // Reset dependent filters on change
         if ('region' in newFilters && newFilters.region !== prev.region) {
-          updated.state = 'all'; // Reset to 'all' states
+          updated.state = 'all'; 
           updated.city = '';
+          updated.manufacturer = '';
+          updated.model = '';
+          updated.version = [];
+          updated.year = '';
         }
         if ('state' in newFilters && newFilters.state !== prev.state) {
             updated.city = '';
@@ -128,43 +165,48 @@ const DashboardClient: FC = () => {
   }, []);
   
   const derivedFilterOptions = useMemo<FilterOptions>(() => {
-    const calculateOptions = (key: keyof Vehicle, activeFilters: Partial<Filters>): (string | number)[] => {
-        let sourceData = allData;
+    let baseData = allData;
 
-        if (activeFilters.region && activeFilters.region !== 'all') {
-            const statesInRegion = regionToStatesMap[activeFilters.region] || [];
-            sourceData = sourceData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
-        }
-        if (activeFilters.state && activeFilters.state !== 'all') {
-             sourceData = sourceData.filter(d => d.state === activeFilters.state);
-        }
-        if (activeFilters.manufacturer && activeFilters.manufacturer !== 'all') {
-             sourceData = sourceData.filter(d => d.manufacturer === activeFilters.manufacturer);
-        }
-        if (activeFilters.model && activeFilters.model !== 'all') {
-             sourceData = sourceData.filter(d => d.model === activeFilters.model);
-        }
+    // Filter by Region first
+    if (filters.region && filters.region !== 'all') {
+        const statesInRegion = regionToStatesMap[filters.region] || [];
+        baseData = baseData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
+    }
+    
+    // Then, generate state options from the (potentially) region-filtered data
+    const stateOptions = [...new Set(baseData.map(d => d.state))].sort();
 
-        const options = [...new Set(sourceData.map(d => d[key]))] as (string | number)[];
+    // Now, filter the baseData further based on other active filters to generate dependent options
+    if (filters.state && filters.state !== 'all') {
+        baseData = baseData.filter(d => d.state === filters.state);
+    }
+    if (filters.city && filters.city !== 'all') {
+        baseData = baseData.filter(d => d.city === filters.city);
+    }
+    if (filters.manufacturer && filters.manufacturer !== 'all') {
+        baseData = baseData.filter(d => d.manufacturer === filters.manufacturer);
+    }
+    if (filters.model && filters.model !== 'all') {
+        baseData = baseData.filter(d => d.model === filters.model);
+    }
+
+    // This function creates a sorted unique list for a given key from the currently filtered baseData
+    const getUniqueSortedOptions = (key: keyof Vehicle) => {
+        const options = [...new Set(baseData.map(item => item[key]))];
         if (typeof options[0] === 'number') {
             return (options as number[]).sort((a, b) => b - a);
         }
         return (options as string[]).sort();
     };
-    
-    const allStates = [...new Set(allData.map(d => d.state))].sort();
-    const stateOptions = filters.region && filters.region !== 'all'
-        ? regionToStatesMap[filters.region] || []
-        : allStates;
 
     return {
         regions: ['Sudeste', 'Nordeste', 'Sul', 'Norte', 'Centro-Oeste'].sort(),
         states: stateOptions,
-        cities: calculateOptions('city', { state: filters.state } as Partial<Filters>) as string[],
-        manufacturers: calculateOptions('manufacturer', { state: filters.state, city: filters.city } as Partial<Filters>) as string[],
-        models: calculateOptions('model', { state: filters.state, city: filters.city, manufacturer: filters.manufacturer } as Partial<Filters>) as string[],
-        versions: calculateOptions('version', { state: filters.state, city: filters.city, manufacturer: filters.manufacturer, model: filters.model } as Partial<Filters>) as string[],
-        years: calculateOptions('year', filters) as number[],
+        cities: getUniqueSortedOptions('city') as string[],
+        manufacturers: getUniqueSortedOptions('manufacturer') as string[],
+        models: getUniqueSortedOptions('model') as string[],
+        versions: getUniqueSortedOptions('version') as string[],
+        years: getUniqueSortedOptions('year') as number[],
     };
   }, [filters, allData]);
 
@@ -210,14 +252,12 @@ const DashboardClient: FC = () => {
           acc[key] = (acc[key] || 0) + item.quantity;
           return acc;
       }, {} as Record<string, number>)).reduce((a, b, _, arr) => arr[a] > arr[b] ? a : b, '-'),
-      topRegion: t(getRegionData(filteredData).reduce((a, b) => a.quantity > b.quantity ? a : b).name as any)
     };
 
 
     addSection(t('total_vehicles'), stats.totalVehicles);
     addSection(t('main_city'), stats.topCity);
     addSection(t('main_model'), stats.topModel);
-    addSection(t('main_region'), stats.topRegion);
     y += 5;
 
     const formatTextForPdf = (htmlText: string | null | undefined): string => {
@@ -340,8 +380,6 @@ const DashboardClient: FC = () => {
     return Object.entries(brackets).map(([range, data]) => ({ range, label: data.label, quantity: data.total }));
   }, [filteredData, t]);
   
-  const regionalData = useMemo(() => getRegionData(filteredData), [filteredData]);
-
   const fleetByYearData = useMemo(() => {
     const yearlyFleet = filteredData.reduce((acc, item) => {
       acc[item.year] = (acc[item.year] || 0) + item.quantity;
@@ -360,7 +398,7 @@ const DashboardClient: FC = () => {
     const totalVehicles = filteredData.reduce((sum, item) => sum + item.quantity, 0);
     const snapshot: AnalysisSnapshot = {
       filters: { ...filters },
-      totalVehicles, fleetAgeBrackets, regionalData, fleetByYearData,
+      totalVehicles, fleetAgeBrackets, regionalData: [], fleetByYearData, // regionalData is now calculated inside its component
       availableVersionsCount: derivedFilterOptions.versions.length
     };
     setSnapshots(prev => {
@@ -388,16 +426,24 @@ const DashboardClient: FC = () => {
   }
 
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading && !isFiltered) { // Show loading only on initial load
       return (
         <div className="flex h-full w-full items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       );
     }
-
+    
     if (!isFiltered) {
         return <WelcomePlaceholder />;
+    }
+
+    if (isLoading) {
+         return (
+            <div className="flex h-full w-full items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          );
     }
 
     return (
@@ -406,7 +452,7 @@ const DashboardClient: FC = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
             <div id="regional-chart">
-                <RegionalFleetChart data={regionalData} />
+                <RegionalFleetChart data={filteredData} />
             </div>
             <div id="top-models-chart">
                 <TopModelsChart data={filteredData} />
@@ -426,7 +472,7 @@ const DashboardClient: FC = () => {
                   filters={filters}
                   disabled={!isFiltered || filteredData.length === 0}
                   fleetAgeBrackets={fleetAgeBrackets}
-                  regionalData={regionalData}
+                  regionalData={[]} // Not needed anymore here
                   fleetByYearData={fleetByYearData}
                   onAnalysisGenerated={setGeneralAnalysis}
               />

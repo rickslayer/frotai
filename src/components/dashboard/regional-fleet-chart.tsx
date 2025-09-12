@@ -3,7 +3,8 @@
 
 import * as React from 'react';
 import { Pie, PieChart, ResponsiveContainer, Cell } from 'recharts';
-import type { RegionData } from '@/lib/regions';
+import type { Vehicle } from '@/types';
+import { allRegions, regionColors, stateToRegionMap } from '@/lib/regions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart';
@@ -11,24 +12,43 @@ import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 
 interface RegionalFleetChartProps {
-  data: RegionData[];
+  data: Vehicle[];
 }
 
 const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
   const { t } = useTranslation();
+
+  const chartData = React.useMemo(() => {
+    const regionalTotals: Record<string, number> = {
+      'Norte': 0, 'Nordeste': 0, 'Centro-Oeste': 0, 'Sudeste': 0, 'Sul': 0,
+    };
+
+    data.forEach(vehicle => {
+      const region = stateToRegionMap[vehicle.state.toUpperCase()];
+      if (region && regionalTotals.hasOwnProperty(region)) {
+        regionalTotals[region] += vehicle.quantity;
+      }
+    });
+
+    return allRegions.map(region => ({
+      name: region,
+      quantity: regionalTotals[region],
+      fill: regionColors[region] || 'hsl(var(--muted))'
+    }));
+  }, [data]);
   
-  const totalVehicles = React.useMemo(() => data.reduce((acc, curr) => acc + curr.quantity, 0), [data]);
+  const totalVehicles = React.useMemo(() => chartData.reduce((acc, curr) => acc + curr.quantity, 0), [chartData]);
 
   const chartConfig = React.useMemo(() => {
     const config: any = {};
-    data.forEach(item => {
+    chartData.forEach(item => {
         config[item.name] = {
             label: t(item.name as any),
             color: item.fill,
         };
     });
     return config;
-  }, [data, t]);
+  }, [chartData, t]);
   
 
   return (
@@ -51,7 +71,7 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
                       content={<ChartTooltipContent hideLabel nameKey="name" />}
                     />
                   <Pie
-                    data={data}
+                    data={chartData}
                     dataKey="quantity"
                     nameKey="name"
                     cx="50%"
@@ -61,7 +81,7 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
                     paddingAngle={2}
                     labelLine={false}
                   >
-                    {data.map((entry) => (
+                    {chartData.map((entry) => (
                       <Cell key={`cell-${entry.name}`} fill={entry.quantity > 0 ? entry.fill : 'hsl(var(--muted))'} />
                     ))}
                   </Pie>
@@ -70,7 +90,7 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
             </ChartContainer>
             <div className="w-full md:w-1/2 flex flex-col gap-2 text-sm">
                <div className="font-semibold mb-2">{t('total_by_region')}</div>
-              {data.map((entry) => (
+              {chartData.map((entry) => (
                 <div key={entry.name} className={cn("flex items-center justify-between transition-opacity", entry.quantity === 0 && "opacity-50")}>
                   <div className="flex items-center gap-2">
                     <div
