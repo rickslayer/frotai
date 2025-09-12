@@ -29,6 +29,12 @@ async function connectToMongo() {
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint
+app.get('/api/alive', (req, res) => {
+    console.log("Health check endpoint /api/alive was hit");
+    res.status(200).json({ status: 'alive' });
+});
+
 // API Endpoint: GET /api/carros
 app.get('/api/carros', async (req, res) => {
   if (!db) {
@@ -72,8 +78,9 @@ app.get('/api/carros', async (req, res) => {
       }
     }
 
-
-    const carros = await db.collection(collectionName).find(query).limit(50000).toArray();
+    console.log("Executing query on MongoDB:", JSON.stringify(query));
+    const carros = await db.collection(collectionName).find(query).limit(10).toArray();
+    console.log(`Query returned ${carros.length} documents.`);
     res.json(carros);
   } catch (err) {
     console.error('Error fetching data from MongoDB', err);

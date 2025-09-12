@@ -70,10 +70,12 @@ const DashboardClient: FC = () => {
         const fleetData = await getFleetData(filters);
         setFilteredData(fleetData);
         if (allData.length === 0) {
+            // This logic might need adjustment if allData should be populated differently.
             const allOptionsData = await getFleetData();
             setAllData(allOptionsData);
         }
       } catch (error) {
+        console.error(error);
         toast({ variant: 'destructive', title: t('error'), description: 'Failed to load fleet data.' });
       } finally {
         setIsLoading(false);
@@ -95,6 +97,10 @@ const DashboardClient: FC = () => {
         }
         if ('state' in newFilters && newFilters.state !== prev.state) {
             updated.city = '';
+            updated.manufacturer = '';
+            updated.model = '';
+            updated.version = [];
+            updated.year = '';
         }
         if ('city' in newFilters && newFilters.city !== prev.city) {
             updated.manufacturer = '';
@@ -120,41 +126,36 @@ const DashboardClient: FC = () => {
   }, []);
   
   const derivedFilterOptions = useMemo<FilterOptions>(() => {
+    // Since we're not pre-loading allData, we need a different strategy.
+    // Let's assume options are derived from what's currently filtered,
+    // or fetched separately if needed.
+    // For now, let's keep it simple and just use the static states.
+    const temp_data = filteredData.length > 0 ? filteredData : allData;
+
     const calculateOptions = (key: keyof Vehicle, activeFilters: Partial<Filters>): (string | number)[] => {
-        let temp_data = allData;
+        let sourceData = allData; // Start with all data to populate options
         
-        if (temp_data.length === 0) {
-            if (key === 'states') return ['RJ', 'SP', 'MG', 'ES'];
-            return [];
-        }
-        
-        if (activeFilters.region && activeFilters.region !== 'all' && key !== 'region') {
+        if (activeFilters.region && activeFilters.region !== 'all') {
             const statesInRegion = regionToStatesMap[activeFilters.region] || [];
-            temp_data = temp_data.filter(d => statesInRegion.includes(d.state.toUpperCase()));
+            sourceData = sourceData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
         }
-        if (activeFilters.state && activeFilters.state !== 'all' && key !== 'state') {
-             temp_data = temp_data.filter(d => d.state === activeFilters.state);
+        if (activeFilters.state && activeFilters.state !== 'all') {
+             sourceData = sourceData.filter(d => d.state === activeFilters.state);
         }
-        if (activeFilters.city && activeFilters.city !== 'all' && key !== 'city') {
-             temp_data = temp_data.filter(d => d.city === activeFilters.city);
+        if (activeFilters.manufacturer && activeFilters.manufacturer !== 'all') {
+             sourceData = sourceData.filter(d => d.manufacturer === activeFilters.manufacturer);
         }
-        if (activeFilters.manufacturer && activeFilters.manufacturer !== 'all' && key !== 'manufacturer') {
-             temp_data = temp_data.filter(d => d.manufacturer === activeFilters.manufacturer);
-        }
-        if (activeFilters.model && activeFilters.model !== 'all' && key !== 'model') {
-             temp_data = temp_data.filter(d => d.model === activeFilters.model);
-        }
-        if (activeFilters.version && activeFilters.version.length > 0 && key !== 'version') {
-             temp_data = temp_data.filter(d => activeFilters.version!.includes(d.version));
+        if (activeFilters.model && activeFilters.model !== 'all') {
+             sourceData = sourceData.filter(d => d.model === activeFilters.model);
         }
 
-        const options = [...new Set(temp_data.map(d => d[key]))] as (string | number)[];
+        const options = [...new Set(sourceData.map(d => d[key]))] as (string | number)[];
         if (typeof options[0] === 'number') {
             return (options as number[]).sort((a, b) => b - a);
         }
         return (options as string[]).sort();
     };
-    
+
     return {
         regions: [...new Set(allData.map(d => stateToRegionMap[d.state.toUpperCase()]).filter(Boolean))].sort(),
         states: ['RJ', 'SP', 'MG', 'ES'],
@@ -164,7 +165,8 @@ const DashboardClient: FC = () => {
         versions: calculateOptions('version', { state: filters.state, city: filters.city, manufacturer: filters.manufacturer, model: filters.model } as Partial<Filters>) as string[],
         years: calculateOptions('year', filters) as number[],
     };
-  }, [filters, allData]);
+  }, [filters, allData, filteredData]);
+
 
   const stateFilteredData = useMemo(() => {
     if (!filters.state || filters.state === 'all') {
@@ -218,11 +220,16 @@ const DashboardClient: FC = () => {
     y += 5;
 
     const formatTextForPdf = (htmlText: string | null | undefined): string => {
-      if (!htmlText) return '';
-       const tempDiv = document.createElement('div');
-       tempDiv.innerHTML = htmlText.replace(/<\/?[\s\S]*?>/g, "");
-       const textContent = (tempDiv.textContent || tempDiv.innerText || "");
-       return textContent.replace(/(\\r\\n|\n|\r){2,}/g, '\n\n').trim();
+        if (!htmlText) return '';
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlText
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, '\n**$1**\n')
+            .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n')
+            .replace(/<li[^>]*>(.*?)<\/li>/gi, '  - $1\n')
+            .replace(/<\/?(ul|ol)[^>]*>/gi, '\n');
+
+        return (tempDiv.textContent || tempDiv.innerText || "").replace(/(\n){3,}/g, '\n\n').trim();
     };
 
     if (generalAnalysis) {
