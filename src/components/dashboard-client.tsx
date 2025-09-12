@@ -37,10 +37,10 @@ const DashboardClient: FC = () => {
   const [allData, setAllData] = useState<Vehicle[]>([]);
   const [filteredData, setFilteredData] = useState<Vehicle[]>([]);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    regions: [], states: [], cities: [], manufacturers: [], models: [], versions: [], years: [],
+    regions: [], states: ['RJ', 'SP', 'MG', 'ES'], cities: [], manufacturers: [], models: [], versions: [], years: [],
   });
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [filters, setFilters] = useState<Filters>({
     region: '', state: '', city: '', manufacturer: '', model: '', version: [], year: '',
@@ -52,59 +52,36 @@ const DashboardClient: FC = () => {
 
   const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
+  
+  const isFiltered = useMemo(() => {
+    return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
+  }, [filters]);
+
 
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchData = async () => {
+      if (!isFiltered) {
+        setFilteredData([]);
+        return;
+      }
+
       setIsLoading(true);
       try {
-        const [fleetData, options] = await Promise.all([
-          getFleetData(), // Fetch all data initially
-          getFilterOptions()
-        ]);
-        setAllData(fleetData);
-        setFilteredData([]); // Start with no data shown
-        setFilterOptions(options);
+        const fleetData = await getFleetData(filters);
+        setFilteredData(fleetData);
+        if (allData.length === 0) { // Populate allData once for dynamic options
+            const allOptionsData = await getFleetData();
+            setAllData(allOptionsData);
+        }
       } catch (error) {
-        toast({ variant: 'destructive', title: t('error'), description: 'Failed to load initial data.' });
+        toast({ variant: 'destructive', title: t('error'), description: 'Failed to load fleet data.' });
       } finally {
         setIsLoading(false);
       }
     };
-    fetchInitialData();
-  }, [toast, t]);
-
-  useEffect(() => {
-    const hasFilters = Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
-    if (!hasFilters) {
-        setFilteredData([]);
-        return;
-    }
-
-    const applyFilters = () => {
-      const data = allData.filter(item => {
-          return Object.entries(filters).every(([key, value]) => {
-              if (value === '' || value === 'all' || (Array.isArray(value) && value.length === 0)) {
-                  return true;
-              }
-              if (key === 'region') {
-                  const regionOfItem = stateToRegionMap[item.state.toUpperCase()];
-                  return regionOfItem === value;
-              }
-              if (key === 'year') {
-                  return item.year === Number(value);
-              }
-              const itemValue = item[key as keyof Vehicle];
-              if (Array.isArray(value)) {
-                  return value.includes(itemValue as string);
-              }
-              return String(itemValue).toLowerCase() === String(value).toLowerCase();
-          });
-      });
-      setFilteredData(data);
-    };
     
-    applyFilters();
-  }, [filters, allData]);
+    fetchData();
+  }, [filters, isFiltered, toast, t, allData.length]);
 
 
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
@@ -154,6 +131,11 @@ const DashboardClient: FC = () => {
     const calculateOptions = (key: keyof Vehicle, activeFilters: Partial<Filters>): (string | number)[] => {
         let temp_data = allData;
         
+        if (temp_data.length === 0) {
+            if (key === 'states') return ['RJ', 'SP', 'MG', 'ES'];
+            return [];
+        }
+        
         if (activeFilters.region && activeFilters.region !== 'all' && key !== 'region') {
             const statesInRegion = regionToStatesMap[activeFilters.region] || [];
             temp_data = temp_data.filter(d => statesInRegion.includes(d.state.toUpperCase()));
@@ -171,7 +153,7 @@ const DashboardClient: FC = () => {
              temp_data = temp_data.filter(d => d.model === activeFilters.model);
         }
         if (activeFilters.version && activeFilters.version.length > 0 && key !== 'version') {
-             temp_data = temp_data.filter(d => activeFilters.version.includes(d.version));
+             temp_data = temp_data.filter(d => activeFilters.version!.includes(d.version));
         }
 
         const options = [...new Set(temp_data.map(d => d[key]))] as (string | number)[];
@@ -183,7 +165,7 @@ const DashboardClient: FC = () => {
     
     return {
         regions: [...new Set(allData.map(d => stateToRegionMap[d.state.toUpperCase()]).filter(Boolean))].sort(),
-        states: calculateOptions('state', {} as Filters) as string[], // All states always available
+        states: ['RJ', 'SP', 'MG', 'ES'],
         cities: calculateOptions('city', { state: filters.state } as Partial<Filters>) as string[],
         manufacturers: calculateOptions('manufacturer', { state: filters.state, city: filters.city } as Partial<Filters>) as string[],
         models: calculateOptions('model', { state: filters.state, city: filters.city, manufacturer: filters.manufacturer } as Partial<Filters>) as string[],
@@ -245,10 +227,10 @@ const DashboardClient: FC = () => {
 
     const formatTextForPdf = (htmlText: string | null | undefined): string => {
       if (!htmlText) return '';
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = htmlText.replace(/<\/?[\s\S]*?>/g, "");
-      const textContent = (tempDiv.textContent || tempDiv.innerText || "");
-      return textContent.replace(/(\\r\\n|\n|\r){2,}/g, '\n\n').trim();
+       const tempDiv = document.createElement('div');
+       tempDiv.innerHTML = htmlText.replace(/<\/?[\s\S]*?>/g, "");
+       const textContent = (tempDiv.textContent || tempDiv.innerText || "");
+       return textContent.replace(/(\\r\\n|\n|\r){2,}/g, '\n\n').trim();
     };
 
     if (generalAnalysis) {
@@ -339,9 +321,6 @@ const DashboardClient: FC = () => {
     doc.save(`frota-ai-report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
-  const isFiltered = useMemo(() => {
-    return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
-  }, [filters]);
   
   const fleetAgeBrackets = useMemo((): FleetAgeBracket[] => {
     const currentYear = new Date().getFullYear();

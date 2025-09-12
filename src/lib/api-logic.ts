@@ -57,25 +57,15 @@ export const getFleetData = async (filters?: Partial<Filters>): Promise<Vehicle[
   }
 };
 
-// Fetches all unique filter options once.
-export const getFilterOptions = cache(async (): Promise<FilterOptions> => {
-    try {
-        const res = await fetch(`/api/carros`);
-        if (!res.ok) {
-            throw new Error(`Failed to fetch initial options: ${res.statusText}`);
-        }
-        const allData = mapApiDataToVehicle(await res.json());
-
-        const manufacturers = [...new Set(allData.map(item => item.manufacturer))].sort();
-        const models = [...new Set(allData.map(item => item.model))].sort();
-        const versions = [...new Set(allData.map(item => item.version))].sort();
-        const states = [...new Set(allData.map(item => item.state))].sort();
-        const cities = [...new Set(allData.map(item => item.city))].sort();
-        const years = [...new Set(allData.map(item => item.year))].sort((a, b) => b - a);
-
-        return { regions: [], states, cities, manufacturers, models, versions, years };
-    } catch (error) {
-        console.error("Error fetching filter options:", error);
-        throw new Error(`Failed to fetch initial options: ${error instanceof Error ? error.message : String(error)}`);
-    }
-});
+// Returns a default set of filter options without fetching all data.
+export const getFilterOptions = async (): Promise<FilterOptions> => {
+    return {
+        regions: [],
+        states: ['RJ', 'SP', 'MG', 'ES'],
+        cities: [],
+        manufacturers: [],
+        models: [],
+        versions: [],
+        years: []
+    };
+};
