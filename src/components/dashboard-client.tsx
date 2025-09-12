@@ -54,7 +54,7 @@ const DashboardClient: FC = () => {
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
   const isFiltered = useMemo(() => {
-    return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all');
+    return Object.values(filters).some(value => Array.isArray(value) ? value.length > 0 : value && value !== 'all' && value !== '');
   }, [filters]);
 
 
@@ -69,7 +69,7 @@ const DashboardClient: FC = () => {
       try {
         const fleetData = await getFleetData(filters);
         setFilteredData(fleetData);
-        if (allData.length === 0) { // Populate allData once for dynamic options
+        if (allData.length === 0) {
             const allOptionsData = await getFleetData();
             setAllData(allOptionsData);
         }
@@ -92,17 +92,9 @@ const DashboardClient: FC = () => {
         if ('region' in newFilters && newFilters.region !== prev.region) {
           updated.state = '';
           updated.city = '';
-          updated.manufacturer = '';
-          updated.model = '';
-          updated.version = [];
-          updated.year = '';
         }
         if ('state' in newFilters && newFilters.state !== prev.state) {
             updated.city = '';
-            updated.manufacturer = '';
-            updated.model = '';
-            updated.version = [];
-            updated.year = '';
         }
         if ('city' in newFilters && newFilters.city !== prev.city) {
             updated.manufacturer = '';

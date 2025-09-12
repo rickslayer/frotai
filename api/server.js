@@ -29,7 +29,7 @@ async function connectToMongo() {
 app.use(cors());
 app.use(express.json());
 
-// API Endpoint: GET /carros
+// API Endpoint: GET /api/carros
 app.get('/api/carros', async (req, res) => {
   if (!db) {
     return res.status(503).json({ error: 'Database not connected' });
@@ -37,41 +37,43 @@ app.get('/api/carros', async (req, res) => {
 
   try {
     const query = {};
-    
-    // Mapeamento de parâmetros de consulta para campos do MongoDB
-    const queryMap = {
-      state: 'UF',
-      city: 'Município',
-      manufacturer: 'Marca',
-      model: 'Modelo',
-      year: 'Ano',
-      version: 'Modelo' // Ambos 'model' e 'version' podem precisar de lógica mais complexa
-    };
+    const { state, city, manufacturer, model, version, year } = req.query;
 
-    for (const key in req.query) {
-      if (Object.prototype.hasOwnProperty.call(req.query, key)) {
-        const dbField = queryMap[key] || key;
-        let value = req.query[key];
-        
-        if (dbField === 'Ano' && !isNaN(parseInt(value, 10))) {
-          value = parseInt(value, 10);
-        }
+    if (state && state !== 'all') {
+      query.UF = state;
+    }
+    if (city && city !== 'all') {
+      query['Município'] = city;
+    }
+    if (manufacturer && manufacturer !== 'all') {
+      query.Marca = manufacturer;
+    }
+    if (year && year !== 'all') {
+      query.Ano = parseInt(year, 10);
+    }
 
-        // Se a chave for 'version' ou 'model', a query pode precisar ser mais complexa
-        // para lidar com a busca dentro do campo "Modelo".
-        // Por simplicidade, vamos manter a busca exata por enquanto.
-        query[dbField] = value;
+    // Complex handling for model and version, as they both filter the 'Modelo' field
+    if (model && model !== 'all') {
+      const modelRegex = new RegExp(`^${model}`, 'i');
+      
+      const versions = Array.isArray(version) ? version : (version ? [version] : []);
+      
+      if (versions.length > 0) {
+        // If versions are specified, find documents where 'Modelo' starts with the model
+        // AND contains one of the version strings.
+        const versionRegexes = versions.map(v => new RegExp(v.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'));
+        query.$and = [
+          { 'Modelo': modelRegex },
+          { 'Modelo': { $in: versionRegexes } }
+        ];
+      } else {
+        // If no versions, just match the model start
+        query['Modelo'] = modelRegex;
       }
     }
-    
-    // Adicionado para evitar que o campo vehicle (que não existe mais no frontend) quebre a query
-    if (query.vehicle) {
-        query.Modelo = query.vehicle;
-        delete query.vehicle;
-    }
 
 
-    const carros = await db.collection(collectionName).find(query).toArray();
+    const carros = await db.collection(collectionName).find(query).limit(50000).toArray();
     res.json(carros);
   } catch (err) {
     console.error('Error fetching data from MongoDB', err);
