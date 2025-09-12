@@ -32,8 +32,8 @@ const mapApiDataToVehicle = (apiData: any[]): Vehicle[] => {
 // Fetches all vehicle data from the new API endpoint.
 const loadAndParseData = cache(async (): Promise<Vehicle[]> => {
   try {
-    // Using a relative path which will be handled by the rewrite in next.config.js
-    const res = await fetch('/api/carros', { cache: 'no-store' });
+    // The fetch on the server-side needs an absolute URL.
+    const res = await fetch('http://localhost:3001/api/carros', { cache: 'no-store' });
     if (!res.ok) {
       throw new Error(`Failed to fetch data from API: ${res.statusText}`);
     }
