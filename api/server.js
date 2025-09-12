@@ -1,3 +1,4 @@
+
 const express = require('express');
 const { MongoClient } = require('mongodb');
 const cors = require('cors');
@@ -44,7 +45,7 @@ app.get('/api/carros', async (req, res) => {
       manufacturer: 'Marca',
       model: 'Modelo',
       year: 'Ano',
-      // Adicione outros mapeamentos se necessário
+      vehicle: 'Modelo' // Adicionado mapeamento ausente
     };
 
     for (const key in req.query) {
