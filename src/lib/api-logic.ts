@@ -53,7 +53,6 @@ export const getFleetData = async (filters?: Partial<Filters>): Promise<Vehicle[
     return mapApiDataToVehicle(data);
   } catch (error) {
     console.error("Error fetching or parsing data from API:", error);
-    // Return an empty array on error to prevent crashes
     if (error instanceof Error) {
         throw new Error(`Failed to fetch data from API: ${error.message}`);
     }
