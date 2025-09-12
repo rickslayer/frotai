@@ -79,7 +79,7 @@ app.get('/api/carros', async (req, res) => {
     }
 
     console.log("Executing query on MongoDB:", JSON.stringify(query));
-    const carros = await db.collection(collectionName).find(query).limit(10).toArray();
+    const carros = await db.collection(collectionName).find(query).toArray();
     console.log(`Query returned ${carros.length} documents.`);
     res.json(carros);
   } catch (err) {
