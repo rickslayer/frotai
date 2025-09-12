@@ -126,15 +126,11 @@ const DashboardClient: FC = () => {
   }, []);
   
   const derivedFilterOptions = useMemo<FilterOptions>(() => {
-    // Since we're not pre-loading allData, we need a different strategy.
-    // Let's assume options are derived from what's currently filtered,
-    // or fetched separately if needed.
-    // For now, let's keep it simple and just use the static states.
     const temp_data = filteredData.length > 0 ? filteredData : allData;
 
     const calculateOptions = (key: keyof Vehicle, activeFilters: Partial<Filters>): (string | number)[] => {
-        let sourceData = allData; // Start with all data to populate options
-        
+        let sourceData = allData;
+
         if (activeFilters.region && activeFilters.region !== 'all') {
             const statesInRegion = regionToStatesMap[activeFilters.region] || [];
             sourceData = sourceData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
@@ -156,9 +152,13 @@ const DashboardClient: FC = () => {
         return (options as string[]).sort();
     };
 
+    const stateOptions = filters.region && filters.region !== 'all'
+        ? regionToStatesMap[filters.region] || []
+        : ['RJ', 'SP', 'MG', 'ES'];
+
     return {
-        regions: [...new Set(allData.map(d => stateToRegionMap[d.state.toUpperCase()]).filter(Boolean))].sort(),
-        states: ['RJ', 'SP', 'MG', 'ES'],
+        regions: ['Sudeste', 'Nordeste', 'Sul', 'Norte', 'Centro-Oeste'].sort(),
+        states: stateOptions,
         cities: calculateOptions('city', { state: filters.state } as Partial<Filters>) as string[],
         manufacturers: calculateOptions('manufacturer', { state: filters.state, city: filters.city } as Partial<Filters>) as string[],
         models: calculateOptions('model', { state: filters.state, city: filters.city, manufacturer: filters.manufacturer } as Partial<Filters>) as string[],
