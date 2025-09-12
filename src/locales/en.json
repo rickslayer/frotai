@@ -29,6 +29,7 @@
   "select_year": "Select Year",
   "all_years": "All Years",
   "clear_all_filters": "Clear All Filters",
+  "clear_region_filter": "Clear Region Filter",
   "total_vehicles": "Total Vehicles",
   "total_vehicles_description": "CIRCULATING FLEET",
   "main_city": "Location",

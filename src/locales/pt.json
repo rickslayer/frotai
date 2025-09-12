@@ -29,6 +29,7 @@
   "select_year": "Selecione o Ano",
   "all_years": "Todos os Anos",
   "clear_all_filters": "Limpar Todos os Filtros",
+  "clear_region_filter": "Limpar filtro de região",
   "total_vehicles": "Total de Veículos",
   "total_vehicles_description": "FROTA CIRCULANTE",
   "main_city": "Localidade",
