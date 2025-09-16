@@ -1,31 +1,21 @@
 import { cache } from 'react';
 import type { Vehicle, FilterOptions, Filters } from '@/types';
 
-// Helper function to extract manufacturer, model, and version from "Modelo"
-const extractVehicleDetails = (modelString: string) => {
-    const parts = (modelString || '').split(' ');
-    const model = parts[0] || ''; 
-    const version = parts.slice(1).join(' '); 
-    return { model, version };
-};
-
 // Maps the raw data from the API to the Vehicle type used in the frontend.
 const mapApiDataToVehicle = (apiData: any[]): Vehicle[] => {
   if (!Array.isArray(apiData)) return [];
-  return apiData.map((row: any) => {
-    const { model, version } = extractVehicleDetails(row.Modelo || '');
-    return {
-      id: row.ID,
-      manufacturer: row.Marca,
-      model: model,
-      version: version,
-      fullName: row.Modelo || '',
-      year: parseInt(row.Ano, 10) || 0,
-      quantity: parseInt(row.Quantidade, 10) || 0,
-      state: row.UF,
-      city: row.Município,
-    };
-  }).filter((v: Vehicle) => v.quantity > 0 && v.year > 0);
+  // Since the database fields now match the Vehicle type, the mapping is direct.
+  return apiData.map((row: any) => ({
+    id: row.id || row._id.toString(), // Use 'id' field, fallback to '_id'
+    manufacturer: row.manufacturer,
+    model: row.model,
+    version: row.version,
+    fullName: row.fullName,
+    year: parseInt(row.year, 10) || 0,
+    quantity: parseInt(row.quantity, 10) || 0,
+    state: row.state,
+    city: row.city,
+  })).filter((v: Vehicle) => v.quantity > 0 && v.year > 0);
 };
 
 // Fetches vehicle data from the API based on the provided filters.

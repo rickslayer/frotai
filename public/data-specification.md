@@ -1,106 +1,113 @@
-# Especificação da Estrutura de Dados e Lógica dos Componentes - Frota.AI
+# Especificação da Estrutura de Dados e Lógica do Dashboard - Frota.AI
 
-Este documento descreve a estrutura de dados ideal para os arquivos JSON a serem consumidos pelo dashboard Frota.AI e detalha a lógica de funcionamento de cada componente de filtro e visualização de dados. O objetivo é garantir performance, clareza e manutenibilidade.
+Este documento detalha a estrutura de dados JSON ideal para o banco de dados e como cada componente do dashboard (filtros e cards) deve interagir com esses dados. O objetivo é garantir performance, clareza e manutenibilidade.
 
----
+## 1. Estrutura de Dados JSON Sugerida (`carros` collection)
 
-## Seção 1: Estrutura Ideal do Arquivo JSON (`carros.json`)
-
-Para otimizar as consultas e a manipulação de dados no frontend, cada registro de veículo no arquivo JSON deve seguir a estrutura abaixo. Esta estrutura é "plana", utiliza nomes de campo padronizados em inglês e separa o modelo da versão para filtragem mais precisa.
-
-### Estrutura de um Registro de Veículo
+Para otimizar as consultas e a clareza, sugiro a seguinte estrutura para cada documento no seu banco de dados MongoDB. Os nomes dos campos estão padronizados em inglês para consistência com o código.
 
 ```json
 {
-  "id": "12345",
-  "manufacturer": "FIAT",
-  "model": "STRADA",
-"version": "ENDURANCE 1.4",
-  "fullName": "STRADA ENDURANCE 1.4",
-  "year": 2021,
-  "quantity": 15,
-  "state": "SP",
-  "city": "São Paulo"
+  "id": "rjykr9uyvz",
+  "manufacturer": "YAMAHA",
+  "model": "YZF",
+  "version": "R3 WGP 60TH",
+  "fullName": "YAMAHA/YZF R3 WGP 60TH",
+  "year": 2022,
+  "quantity": 1,
+  "region": "SUDESTE",
+  "state": "RJ",
+  "city": "VOLTA REDONDA"
 }
 ```
 
-### Descrição de Cada Campo
+### Justificativa das Mudanças:
 
-| Campo          | Tipo     | Descrição                                                                                                  | Exemplo                  |
-| :--------------- | :------- | :--------------------------------------------------------------------------------------------------------- | :----------------------- |
-| `id`           | `string` | Identificador único para o registro (pode ser gerado a partir da combinação de outros campos, se necessário). | `"12345"`                |
-| `manufacturer` | `string` | Nome da montadora do veículo, em maiúsculas.                                                               | `"FIAT"`                 |
-| `model`        | `string` | Nome base do modelo do veículo, em maiúsculas.                                                             | `"STRADA"`               |
-| `version`      | `string` | Detalhes da versão do veículo, em maiúsculas. Se não houver versão, o campo pode ser uma string vazia `""`.  | `"ENDURANCE 1.4"`        |
-| `fullName`     | `string` | O nome completo do veículo (`model` + `version`), usado para exibição e em buscas gerais.                    | `"STRADA ENDURANCE 1.4"` |
-| `year`         | `number` | Ano de fabricação do veículo.                                                                                | `2021`                   |
-| `quantity`     | `number` | Quantidade de veículos para essa combinação específica de atributos.                                         | `15`                     |
-| `state`        | `string` | Sigla da Unidade Federativa (UF), em maiúsculas.                                                             | `"SP"`                   |
-| `city`         | `string` | Nome do município.                                                                                           | `"São Paulo"`            |
+- **`manufacturer` (string):** Substitui "Marca".
+- **`model` (string):** Contém apenas o nome base do modelo (ex: "STRADA", "ONIX"). Facilita a busca principal.
+- **`version` (string):** Contém os detalhes da versão (ex: "FREEDOM 1.3", "1.0 MPFI JOY"). Permite a filtragem múltipla de versões dentro de um modelo.
+- **`fullName` (string):** Mantém o nome completo do modelo para exibição (ex: "FIAT/STRADA FREEDOM 1.3").
+- **`year` (number):** Substitui "Ano".
+- **`quantity` (number):** Substitui "Quantidade".
+- **`region` (string):** Campo adicionado para permitir a filtragem direta por região (ex: "SUDESTE").
+- **`state` (string):** Substitui "UF" (ex: "SP", "RJ").
+- **`city` (string):** Substitui "Município".
 
 ---
 
-## Seção 2: Lógica Funcional dos Filtros
+## 2. Lógica de Interação: Filtros
 
-Os filtros na barra lateral são o principal meio de interação do usuário. A lógica deles funciona em cascata para refinar progressivamente os dados exibidos. A fonte de dados para as opções de cada filtro é derivada da massa de dados completa (`allData`).
+A seguir, a descrição funcional de cada filtro e como ele deve se comportar.
 
-1.  **Filtro de Região (`region`)**
-    *   **Ação:** Filtra a lista de estados (`states`) disponíveis para exibir apenas aqueles pertencentes à região selecionada.
-    *   **Lógica:** Ao selecionar uma região (ex: "Sudeste"), o filtro de Estado passa a listar apenas 'SP', 'RJ', 'MG', 'ES'. A API recebe `region=Sudeste` e busca no banco todos os documentos cujo campo `state` pertença à lista de estados daquela região. A opção "Todas as Regiões" (`value="all"`) não aplica filtro geográfico no nível da API.
+### a. Filtro de Região (`region`)
+- **Ação do Usuário:** Seleciona uma região (ex: "Nordeste") ou "Todas as Regiões".
+- **Lógica da API:**
+  - Se uma região específica for selecionada, a consulta ao banco deve ser `db.carros.find({ region: "NORDESTE" })`.
+  - Se "Todas as Regiões" for selecionado, este filtro é ignorado na consulta.
+- **Lógica do Frontend:** Ao selecionar uma região, a lista de opções do filtro de **Estado** deve ser atualizada para mostrar apenas os estados daquela região.
 
-2.  **Filtro de Estado (`state`)**
-    *   **Ação:** Filtra a lista de cidades (`cities`) e refina os dados da aplicação.
-    *   **Lógica:** Ao selecionar um estado (ex: "SP"), o filtro de Cidade passa a listar apenas as cidades daquele estado. A API recebe `state=SP` e busca no banco todos os documentos com `state: "SP"`.
+### b. Filtro de Estado (`state`)
+- **Ação do Usuário:** Seleciona um estado (ex: "BA") ou "Todos os Estados".
+- **Lógica da API:**
+  - A consulta deve ser `db.carros.find({ state: "BA" })`.
+  - Se "Todos os Estados" for selecionado (dentro de uma região), o filtro de estado é ignorado.
+- **Lógica do Frontend:** Ao selecionar um estado, a lista de opções do filtro de **Cidade** deve ser atualizada para mostrar apenas as cidades daquele estado.
 
-3.  **Filtro de Cidade (`city`)**
-    *   **Ação:** Refina os dados para mostrar apenas os de uma cidade específica.
-    *   **Lógica:** A API recebe `city=São Paulo` e busca no banco todos os documentos com `city: "São Paulo"`.
+### c. Filtro de Cidade (`city`)
+- **Ação do Usuário:** Seleciona uma cidade (ex: "Salvador").
+- **Lógica da API:**
+  - A consulta deve ser `dbcarros.find({ city: "Salvador" })`.
+- **Lógica do Frontend:** Nenhuma ação em cascata após este filtro.
 
-4.  **Filtro de Montadora (`manufacturer`)**
-    *   **Ação:** Filtra a lista de modelos (`models`) disponíveis.
-    *   **Lógica:** Ao selecionar uma montadora (ex: "FIAT"), o filtro de Modelo passa a listar apenas modelos daquela montadora. A API recebe `manufacturer=FIAT` e busca no banco por `manufacturer: "FIAT"`.
+### d. Filtro de Montadora (`manufacturer`)
+- **Ação do Usuário:** Seleciona uma montadora (ex: "FIAT").
+- **Lógica da API:**
+  - A consulta deve ser `db.carros.find({ manufacturer: "FIAT" })`.
+- **Lógica do Frontend:** Ao selecionar uma montadora, a lista de opções do filtro de **Modelo** deve ser atualizada.
 
-5.  **Filtro de Modelo (`model`)**
-    *   **Ação:** Filtra a lista de versões (`versions`) disponíveis.
-    *   **Lógica:** Ao selecionar um modelo (ex: "STRADA"), o filtro de Versão passa a listar apenas as versões daquele modelo. A API recebe `model=STRADA` e busca por `model: "STRADA"`.
+### e. Filtro de Modelo (`model`)
+- **Ação do Usuário:** Seleciona um modelo (ex: "STRADA").
+- **Lógica da API:**
+  - A consulta deve ser `db.carros.find({ model: "STRADA" })`.
+- **Lógica do Frontend:** Ao selecionar um modelo, a lista de opções do filtro de **Versão** deve ser atualizada.
 
-6.  **Filtro de Versão (`version`)**
-    *   **Ação:** Permite a seleção múltipla de versões de um modelo.
-    *   **Lógica:** A API recebe um array de versões (ex: `version=ENDURANCE 1.4&version=VOLCANO 1.3`) e busca no banco documentos cujo campo `version` esteja na lista fornecida.
+### f. Filtro de Versão (`version`)
+- **Ação do Usuário:** Seleciona uma ou mais versões (ex: ["ENDURANCE 1.4", "FREEDOM 1.3"]).
+- **Lógica da API:**
+  - A consulta deve usar o operador `$in`: `db.carros.find({ version: { $in: ["ENDURANCE 1.4", "FREEDOM 1.3"] } })`.
+- **Lógica do Frontend:** Permite seleção múltipla.
 
-7.  **Filtro de Ano (`year`)**
-    *   **Ação:** Filtra os veículos por um ano de fabricação específico.
-    *   **Lógica:** A API recebe `year=2021` e busca por `year: 2021`.
+### g. Filtro de Ano (`year`)
+- **Ação do Usuário:** Seleciona um ano de fabricação.
+- **Lógica da API:**
+  - A consulta deve ser `db.carros.find({ year: 2020 })`.
+- **Lógica do Frontend:** Nenhuma ação em cascata.
 
 ---
 
-## Seção 3: Lógica Funcional dos Cards de Informação
+## 3. Lógica de Interação: Cards de Visualização
 
-Os cards no painel principal reagem aos dados filtrados (`filteredData`) para exibir métricas e visualizações.
+Os cards recebem a lista de veículos já filtrada pela API e realizam agregações no frontend.
 
-1.  **Stat Cards (Cards de Estatísticas)**
-    *   **Total de Veículos:** Soma o campo `quantity` de todos os registros em `filteredData`.
-    *   **Principal Montadora no Estado:** Se um estado está selecionado, agrega os dados por `manufacturer` dentro daquele estado e exibe o que tiver a maior soma de `quantity`.
-    *   **Principal Cidade:** Agrega os dados em `filteredData` por `city` e exibe a cidade com a maior soma de `quantity`.
-    *   **Principal Modelo:** Agrega os dados em `filteredData` por `fullName` e exibe o modelo com a maior soma de `quantity`.
-    *   **Principal Região:** Agrega os dados em `filteredData` por região (mapeando `state` para região) и exibe a região com a maior soma de `quantity`.
+### a. Cards de Estatísticas (`StatCards`)
+- **Total de Veículos:** Soma do campo `quantity` de todos os documentos recebidos.
+- **Principal Localidade:** Agrega a `quantity` por `city` e identifica a cidade com a maior soma.
+- **Principal Modelo:** Agrega a `quantity` por `fullName` e identifica o modelo com a maior soma.
+- **Principal Região:** Agrega a `quantity` por `region` e identifica a região com a maior soma.
+- **Principal Montadora no Estado:** Requer uma busca secundária no estado filtrado (se houver um selecionado), agregando a `quantity` por `manufacturer` para encontrar a principal.
 
-2.  **Análise de Frota Regional (`RegionalFleetChart`)**
-    *   **Função:** Exibir a distribuição percentual e absoluta da frota (`quantity`) entre as 5 grandes regiões do Brasil.
-    *   **Lógica:** O componente recebe `filteredData`. Ele itera sobre os dados, usando um mapa (`stateToRegionMap`) para associar o `state` de cada registro à sua respectiva região. Ele então soma as `quantity` para cada uma das 5 regiões e exibe os resultados em um gráfico de pizza.
+### b. Gráfico de Top Modelos (`TopModelsChart`)
+- **Lógica:** Agrega a `quantity` por `fullName` a partir dos dados recebidos, ordena o resultado em ordem decrescente e exibe os 5 ou 10 primeiros.
 
-3.  **Top 10 Modelos (`TopModelsChart`)**
-    *   **Função:** Mostrar os 5 ou 10 modelos de veículos mais numerosos na seleção atual.
-    *   **Lógica:** O componente recebe `filteredData`, agrega os veículos pelo campo `fullName` (somando as `quantity`), ordena o resultado em ordem decrescente e exibe os 5 ou 10 primeiros em um gráfico de barras horizontais.
+### c. Gráfico de Frota por Idade (`FleetAgeBracketChart`)
+- **Lógica:** Para cada veículo recebido, calcula a idade (`ano atual - vehicle.year`). Agrupa as quantidades nas faixas etárias definidas (0-3, 4-7, 8-12, 13+ anos).
 
-4.  **Frota por Ano de Fabricação (`FleetByYearChart`)**
-    *   **Função:** Exibir a evolução da frota ao longo dos anos.
-    *   **Lógica:** Agrega os dados de `filteredData` por `year`, somando as `quantity` para cada ano. Exibe o resultado em um gráfico de linhas, com o eixo X representando o ano e o eixo Y a quantidade.
+### d. Gráfico de Análise Regional (`RegionalFleetChart`)
+- **Lógica:** Agrega a `quantity` por `region` a partir dos dados recebidos e exibe a distribuição percentual em um gráfico de pizza/rosca.
 
-5.  **Frota por Faixa Etária (`FleetAgeBracketChart`)**
-    *   **Função:** Classificar a frota em categorias de idade (Novos, Seminovos, Usados, Antigos).
-    *   **Lógica:** Calcula a idade de cada veículo (`ano atual - year`). Agrupa as `quantity` nas faixas predefinidas (0-3 anos, 4-7 anos, etc.) e exibe a distribuição em um gráfico de barras.
+### e. Gráfico de Frota por Ano (`FleetByYearChart`)
+- **Lógica:** Agrega a `quantity` por `year`, ordena por ano e exibe em um gráfico de linha para mostrar a evolução.
 
-6.  **Análise Final e Previsão de Demanda (Componentes de IA)**
-    *   **Função:** Enviar os dados agregados (distribuição por idade, por região, etc.) para os fluxos de IA da Genkit.
-    *   **Lógica:** Os componentes (`FinalAnalysis`, `PartDemandForecast`) coletam os dados já processados pelos outros componentes (como `fleetAgeBrackets`) e os enviam como contexto para os prompts da IA, que então retornam as análises textuais.
+---
+
+Esta especificação garante que o backend e o frontend "falem a mesma língua", resultando em uma aplicação mais rápida, confiável e fácil de manter.

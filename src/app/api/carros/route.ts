@@ -1,7 +1,6 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
-import { regionToStatesMap } from '@/lib/regions';
 
 // MongoDB Connection String - it's recommended to move this to environment variables
 const mongoUri = 'mongodb+srv://frotai:X7Ra8kREnBX6z6SC@frotai.bylfte3.mongodb.net/';
@@ -43,48 +42,34 @@ export async function GET(request: NextRequest) {
     const versions = searchParams.getAll('version');
 
     if (region && region !== 'all') {
-      const statesInRegion = regionToStatesMap[region];
-      if (statesInRegion) {
-        query.UF = { $in: statesInRegion };
-      }
-    }
-    // State filter overrides region filter if both are present and state is not 'all'
-    if (state && state !== 'all') {
-      query.UF = state;
-    }
-    if (city && city !== 'all') {
-      query['Município'] = city;
-    }
-    if (manufacturer && manufacturer !== 'all') {
-      query.Marca = manufacturer;
-    }
-    if (year && year !== 'all') {
-      query.Ano = parseInt(year, 10);
+      query.region = region.toUpperCase();
     }
     
-    // Complex handling for model and version
+    if (state && state !== 'all') {
+      query.state = state;
+    }
+    if (city && city !== 'all') {
+      query.city = city;
+    }
+    if (manufacturer && manufacturer !== 'all') {
+      query.manufacturer = manufacturer;
+    }
+    if (year && year !== 'all') {
+      query.year = parseInt(year, 10);
+    }
+    
     if (model && model !== 'all') {
-        const modelRegex = new RegExp(`^${model}`, 'i');
-        
-        if (versions.length > 0) {
-            // If specific versions are selected, find documents where 'Modelo' starts with the model
-            // AND contains one of the version strings.
-             const versionRegexes = versions.map(v => new RegExp(v.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i'));
-             query.$and = [
-                { 'Modelo': modelRegex },
-                { $or: versionRegexes.map(r => ({'Modelo': r})) }
-             ];
-        } else {
-            // If no versions are selected, just match the model start
-            query['Modelo'] = modelRegex;
-        }
+      query.model = model;
+      
+      if (versions.length > 0) {
+        // If specific versions are selected, they must be in the 'version' field
+         query.version = { $in: versions };
+      }
     }
 
     console.log("Executing query on MongoDB:", JSON.stringify(query));
     
-    // Using a larger limit as the options are derived from this.
-    // A more scalable solution would be to have dedicated aggregation endpoints for filter options.
-    const limit = Object.keys(query).length > 0 ? 10000 : 10000;
+    const limit = 10000;
     const carros = await db.collection(collectionName).find(query).limit(limit).toArray();
     
     console.log(`Query returned ${carros.length} documents.`);
