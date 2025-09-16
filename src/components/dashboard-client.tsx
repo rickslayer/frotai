@@ -71,13 +71,13 @@ const DashboardClient: FC = () => {
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
   const isFiltered = useMemo(() => {
-    return Object.values(debouncedFilters).some(value => {
+    return Object.values(filters).some(value => {
         if (Array.isArray(value)) {
             return value.length > 0;
         }
         return value && value !== '';
     });
-  }, [debouncedFilters]);
+  }, [filters]);
   
 
   const isStateDisabled = useMemo(() => false, []);
@@ -188,7 +188,7 @@ const DashboardClient: FC = () => {
                     updated.region = regionForState;
                 }
             } else {
-                 // If state is cleared, clear the region
+                 // If state is cleared, clear the region as well
                 updated.region = '';
             }
         }
@@ -206,6 +206,7 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
+    setDashboardData(emptyDashboardData);
   }, []);
   
   
@@ -515,7 +516,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
 
     
