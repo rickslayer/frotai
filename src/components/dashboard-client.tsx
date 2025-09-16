@@ -160,31 +160,31 @@ const DashboardClient: FC = () => {
   const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     setFilters(prev => {
         const updated = { ...prev, ...newFilters };
-        
-        const resetFilter = (filterKey: keyof Filters) => {
-            if (Array.isArray(updated[filterKey])) {
-                (updated as any)[filterKey] = [];
-            } else {
-                (updated as any)[filterKey] = 'all';
-            }
-        };
 
+        // Handle cascading filter resets
         if ('region' in newFilters) {
-            resetFilter('state'); resetFilter('city');
+            updated.state = '';
+            updated.city = '';
         }
         if ('state' in newFilters) {
-            resetFilter('city');
+            updated.city = '';
         }
         if ('manufacturer' in newFilters) {
-            resetFilter('model'); resetFilter('version');
+            updated.model = '';
+            updated.version = [];
         }
         if ('model' in newFilters) {
-            resetFilter('version');
+            updated.version = [];
+        }
+
+        // Handle the "clear" value from the region select
+        if (newFilters.region === 'clear') {
+            updated.region = '';
         }
 
         return updated;
     });
-  }, []);
+}, []);
   
   const derivedFilterOptions = useMemo<FilterOptions>(() => {
     let stateOptions = filterOptions.states;
@@ -501,3 +501,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
