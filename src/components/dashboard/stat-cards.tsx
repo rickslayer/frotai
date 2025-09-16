@@ -13,15 +13,19 @@ const WheelIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
-    fill="currentColor"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     {...props}
   >
-    <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z" />
-    <path d="M12 10.5a1.5 1.5 0 1 0 1.5 1.5 1.5 1.5 0 0 0-1.5-1.5z" />
-    <path d="m7.22 7.22 9.56 9.56-1.41 1.41-9.56-9.56z" />
-    <path d="m16.78 7.22-9.56 9.56 1.41 1.41 9.56-9.56z" />
-    <path d="M4 11h16v2H4z" />
-</svg>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 2v20" />
+    <path d="M2 12h20" />
+    <path d="m5.64 5.64 12.72 12.72" />
+    <path d="m18.36 5.64-12.72 12.72" />
+  </svg>
 );
 
 
