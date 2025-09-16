@@ -75,14 +75,13 @@ const DashboardClient: FC = () => {
         if (Array.isArray(value)) {
             return value.length > 0;
         }
-        // A filter is considered active if it has a value, including 'all' for manufacturer/year etc.
         return value && value !== '';
     });
   }, [debouncedFilters]);
   
 
-  const isStateDisabled = useMemo(() => false, []); // State is never disabled now
-  const isCityDisabled = useMemo(() => !filters.state || filters.state === 'all', [filters.state]);
+  const isStateDisabled = useMemo(() => false, []);
+  const isCityDisabled = useMemo(() => !filters.state, [filters.state]);
   const isModelDisabled = useMemo(() => !filters.manufacturer || filters.manufacturer === 'all', [filters.manufacturer]);
   const isVersionDisabled = useMemo(() => !filters.model || filters.model === 'all' || isModelDisabled, [filters.model, isModelDisabled]);
 
@@ -183,13 +182,13 @@ const DashboardClient: FC = () => {
         }
         if (key === 'state') {
             updated.city = '';
-            if (value && value !== 'all') {
+            if (value) {
                 const regionForState = stateToRegionMap[value];
                 if (regionForState && updated.region !== regionForState) {
                     updated.region = regionForState;
                 }
             } else {
-                 // If "All States" is selected, clear the region
+                 // If state is cleared, clear the region
                 updated.region = '';
             }
         }
@@ -516,5 +515,7 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
 
     

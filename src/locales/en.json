@@ -9,9 +9,7 @@
   "filters": "Filters",
   "location": "Location",
   "select_region": "Select Region",
-  "all_regions": "All Regions",
   "select_state": "Select State",
-  "all_states": "All States",
   "select_city": "Select City",
   "all_cities": "All Cities",
   "vehicle": "Vehicle",
@@ -124,3 +122,5 @@
   "comparison_warning": "If the comparison text seems incomplete, please generate it again. If the error persists, contact our support.",
   "ok_close": "OK, close"
 }
+
+    

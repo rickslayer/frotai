@@ -81,7 +81,6 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                   >
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
-                       <SelectItem value="all">{t('all_states')}</SelectItem>
                       {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -164,3 +163,5 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
 };
 
 export default DashboardSidebar;
+
+    
