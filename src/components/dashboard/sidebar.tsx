@@ -20,10 +20,22 @@ interface DashboardSidebarProps {
   onFilterChange: (key: keyof Filters, value: any) => void;
   onClearFilters: () => void;
   filterOptions: FilterOptions;
+  isStateDisabled: boolean;
   isCityDisabled: boolean;
+  isModelDisabled: boolean;
+  isVersionDisabled: boolean;
 }
 
-const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, onClearFilters, filterOptions, isCityDisabled }) => {
+const DashboardSidebar: FC<DashboardSidebarProps> = ({ 
+    filters, 
+    onFilterChange, 
+    onClearFilters, 
+    filterOptions, 
+    isStateDisabled, 
+    isCityDisabled,
+    isModelDisabled,
+    isVersionDisabled
+}) => {
   const { t } = useTranslation();
   
   const handleFilterValueChange = (key: keyof Filters, value: string | string[] | number) => {
@@ -63,7 +75,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                       {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value)}>
+                  <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value)} disabled={isStateDisabled}>
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
                        <SelectItem value="all">{t('all_states')}</SelectItem>
@@ -100,14 +112,14 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                     placeholder={t('select_model')}
                     searchPlaceholder={t('search_model_placeholder')}
                     noResultsText={t('no_model_found')}
-                    disabled={!filters.manufacturer && !filters.city && !filters.state}
+                    disabled={isModelDisabled}
                   />
                    <MultiSelectDropdown
                       options={(filterOptions.versions || []).map(v => ({ value: v, label: v || t('base_model_version')}))}
                       selectedValues={filters.version}
                       onChange={(selected) => handleFilterValueChange('version', selected)}
                       placeholder={t('select_version_multi')}
-                      disabled={!filters.model || filters.model === 'all'}
+                      disabled={isVersionDisabled}
                    />
                 </AccordionContent>
               </AccordionItem>
@@ -145,5 +157,3 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
 };
 
 export default DashboardSidebar;
-
-    

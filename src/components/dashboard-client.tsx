@@ -73,7 +73,7 @@ const DashboardClient: FC = () => {
   
   const isFiltered = useMemo(() => {
     // An active filter exists if any value is not an empty string or an empty array.
-    return Object.values(debouncedFilters).some(value => {
+    return Object.entries(debouncedFilters).some(([key, value]) => {
       if (Array.isArray(value)) {
         return value.length > 0;
       }
@@ -81,8 +81,10 @@ const DashboardClient: FC = () => {
     });
   }, [debouncedFilters]);
 
-  const isCityDisabled = useMemo(() => filters.region === 'all' || !filters.state, [filters.region, filters.state]);
-
+  const isStateDisabled = useMemo(() => filters.region === 'all', [filters.region]);
+  const isCityDisabled = useMemo(() => filters.region === 'all' || !filters.state || filters.state === 'all', [filters.region, filters.state]);
+  const isModelDisabled = useMemo(() => !filters.manufacturer || filters.manufacturer === 'all', [filters.manufacturer]);
+  const isVersionDisabled = useMemo(() => !filters.model || filters.model === 'all', [filters.model]);
 
   // Effect for fetching main dashboard data when debounced filters change
   useEffect(() => {
@@ -168,16 +170,12 @@ const DashboardClient: FC = () => {
   }, [toast, t]);
 
 
- const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
+  const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
-        // Create a mutable copy of the previous state
         const updated = { ...prev };
-
-        // Set the new value for the changed filter
         updated[key] = value;
 
         // --- Cascading Logic ---
-
         if (key === 'region') {
             updated.state = '';
             updated.city = '';
@@ -187,16 +185,15 @@ const DashboardClient: FC = () => {
         }
         if (key === 'state') {
             updated.city = '';
-            // Auto-fill region if a specific state is selected
             if (value && value !== 'all') {
                 const regionForState = stateToRegionMap[value];
-                if (regionForState) {
+                if (regionForState && updated.region !== regionForState) {
                     updated.region = regionForState;
                 }
             }
         }
-        if (key === 'city') {
-             if (value && value !== 'all' && (prev.region === 'all' || !prev.state)) {
+         if (key === 'city') {
+             if (value && value !== 'all' && (!prev.state || prev.state === 'all')) {
                 setIsCityAlertOpen(true);
                 updated.city = ''; // Prevent city selection and reset it
              }
@@ -473,7 +470,10 @@ const DashboardClient: FC = () => {
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           filterOptions={filterOptions}
+          isStateDisabled={isStateDisabled}
           isCityDisabled={isCityDisabled}
+          isModelDisabled={isModelDisabled}
+          isVersionDisabled={isVersionDisabled}
         />
       </Sidebar>
       <SidebarInset>
@@ -535,5 +535,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
