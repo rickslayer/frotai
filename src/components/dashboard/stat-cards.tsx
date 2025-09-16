@@ -5,9 +5,30 @@ import type { FC } from 'react';
 import { useMemo, useState, useEffect } from 'react';
 import type { Filters, DashboardData } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LifeBuoy, MapPin, Users2, Map, Factory } from 'lucide-react';
+import { MapPin, Users2, Map, Factory } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { stateToRegionMap } from '@/lib/regions';
+
+const WheelIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="4" />
+    <line x1="12" y1="2" x2="12" y2="6" />
+    <line x1="12" y1="18" x2="12" y2="22" />
+    <line x1="6" y1="12" x2="2" y2="12" />
+    <line x1="22" y1="12" x2="18" y2="12" />
+  </svg>
+);
+
 
 interface StatCardsProps {
   data: DashboardData;
@@ -64,7 +85,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{t('main_model')}</CardTitle>
-          <LifeBuoy className="h-4 w-4 text-muted-foreground" />
+          <WheelIcon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold truncate">{data.topModel.name}</div>
