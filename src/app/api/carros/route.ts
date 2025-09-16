@@ -49,13 +49,13 @@ export async function GET(request: NextRequest) {
     const filters: Partial<Filters> = {};
     searchParams.forEach((value, key) => {
         if (key === 'year') {
-            (filters as any)[key] = value === '' ? '' : parseInt(value, 10);
+            if (value) (filters as any)[key] = parseInt(value, 10);
         } else if (key === 'version') {
              if (!filters.version) filters.version = [];
              filters.version.push(value);
         }
         else {
-            (filters as any)[key] = value;
+            if (value) (filters as any)[key] = value;
         }
     });
     
@@ -71,15 +71,17 @@ export async function GET(request: NextRequest) {
     console.log(`Cache MISS for key: ${cacheKey}. Running aggregation.`);
 
     const query: any = {};
-    if (filters.region) query.region = filters.region.toUpperCase();
-    if (filters.state) query.state = filters.state;
-    if (filters.city) query.city = filters.city;
-    if (filters.manufacturer) query.manufacturer = filters.manufacturer;
-    if (filters.model) query.model = filters.model;
-    if (filters.year) query.year = filters.year;
-    if (filters.version && Array.isArray(filters.version) && filters.version.length > 0) {
-        query.version = { $in: filters.version };
+    for (const key in filters) {
+        const filterKey = key as keyof Filters;
+        if (filters[filterKey]) {
+            if (filterKey === 'version' && Array.isArray(filters.version) && filters.version!.length > 0) {
+                 query.version = { $in: filters.version };
+            } else if (filterKey !== 'version') {
+                query[key] = filters[filterKey];
+            }
+        }
     }
+
 
     const currentYear = new Date().getFullYear();
 

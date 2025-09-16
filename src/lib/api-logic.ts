@@ -9,10 +9,12 @@ export const getFleetData = async (filters: Partial<Filters>): Promise<Dashboard
     const query = new URLSearchParams();
     
     Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== '') {
+      if (value) {
          if (Array.isArray(value)) {
-           value.forEach(v => query.append(key, v));
-         } else {
+            if (value.length > 0) {
+                value.forEach(v => query.append(key, v));
+            }
+         } else if (value !== '') {
            query.append(key, String(value));
          }
       }
@@ -24,6 +26,11 @@ export const getFleetData = async (filters: Partial<Filters>): Promise<Dashboard
 
     if (!res.ok) {
       const errorBody = await res.text();
+      const isHtml = /<html/i.test(errorBody);
+      if (isHtml) {
+          console.error(`API returned an HTML error page, not JSON. Status: ${res.status}`);
+          throw new Error(`Failed to fetch dashboard data: Server returned an error page (Status: ${res.statusText})`);
+      }
       console.error(`API Error Response: ${errorBody}`);
       throw new Error(`Failed to fetch dashboard data: ${res.statusText}`);
     }
