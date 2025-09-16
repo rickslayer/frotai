@@ -24,7 +24,6 @@ interface DashboardSidebarProps {
   isCityDisabled: boolean;
   isModelDisabled: boolean;
   isVersionDisabled: boolean;
-  onDisabledFilterClick: () => void;
 }
 
 const DashboardSidebar: FC<DashboardSidebarProps> = ({ 
@@ -36,7 +35,6 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
     isCityDisabled,
     isModelDisabled,
     isVersionDisabled,
-    onDisabledFilterClick,
 }) => {
   const { t } = useTranslation();
   
@@ -70,7 +68,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                   <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value)}>
+                   <Select value={filters.region || ''} onValueChange={(value) => handleFilterValueChange('region', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
                     <SelectContent>
                        <SelectItem value="all">{t('all_regions')}</SelectItem>
@@ -78,10 +76,9 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                     </SelectContent>
                   </Select>
                   <Select 
-                    value={filters.state} 
+                    value={filters.state || ''}
                     onValueChange={(value) => handleFilterValueChange('state', value)} 
                     disabled={isStateDisabled}
-                    onDisabledClick={onDisabledFilterClick}
                   >
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
@@ -90,10 +87,9 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                     </SelectContent>
                   </Select>
                   <Select 
-                    value={filters.city} 
+                    value={filters.city || ''}
                     onValueChange={(value) => handleFilterValueChange('city', value)} 
                     disabled={isCityDisabled}
-                    onDisabledClick={onDisabledFilterClick}
                     >
                     <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                     <SelectContent>
@@ -110,7 +106,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
+                  <Select value={filters.manufacturer || ''} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
                     <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
@@ -119,7 +115,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                   </Select>
                   <Combobox 
                     items={(filterOptions.models || []).map(m => ({ value: m, label: m }))}
-                    value={filters.model}
+                    value={filters.model || ''}
                     onChange={(value) => handleFilterValueChange('model', value)}
                     placeholder={t('select_model')}
                     searchPlaceholder={t('search_model_placeholder')}
@@ -142,7 +138,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4">
-                   <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
+                   <Select value={String(filters.year || '')} onValueChange={(value) => handleFilterValueChange('year', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_years')}</SelectItem>

@@ -66,21 +66,16 @@ const DashboardClient: FC = () => {
   const [isComparing, setIsComparing] = useState(false);
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
   const [isVersionLimitModalOpen, setIsVersionLimitModalOpen] = useState(false);
-  const [isCityAlertOpen, setIsCityAlertOpen] = useState(false);
-
+  
   const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
   const isFiltered = useMemo(() => {
-    // An active filter exists if any value is not an empty string or an empty array.
-    return Object.entries(debouncedFilters).some(([key, value]) => {
-      if (key === 'region' && value === 'all') {
-        return true;
-      }
-      if (Array.isArray(value)) {
-        return value.length > 0;
-      }
-      return value && value !== 'all' && value !== '';
+    return Object.values(debouncedFilters).some(value => {
+        if (Array.isArray(value)) {
+            return value.length > 0;
+        }
+        return value && value !== ''; // Will be true for 'all' or any other string
     });
   }, [debouncedFilters]);
   
@@ -188,7 +183,7 @@ const DashboardClient: FC = () => {
             updated.state = '';
             updated.city = '';
         }
-        if (key === 'state' && value) {
+        if (key === 'state' && value && value !== 'all') {
             updated.city = '';
             // Auto-select region if state is chosen directly
             const regionForState = stateToRegionMap[value];
@@ -231,7 +226,7 @@ const DashboardClient: FC = () => {
       doc.setFontSize(12);
       doc.text(title, 14, y);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
+      docsetFontSize(11);
       doc.text(value, 60, y);
       y += 8;
     };
@@ -392,12 +387,6 @@ const DashboardClient: FC = () => {
       setIsComparing(false);
   }
 
-  const handleDisabledFilterClick = () => {
-    if (filters.region === 'all') {
-      setIsCityAlertOpen(true);
-    }
-  }
-
   const renderContent = () => {
     if (isLoading && !isFiltered) {
       return (
@@ -478,7 +467,6 @@ const DashboardClient: FC = () => {
           isCityDisabled={isCityDisabled}
           isModelDisabled={isModelDisabled}
           isVersionDisabled={isVersionDisabled}
-          onDisabledFilterClick={handleDisabledFilterClick}
         />
       </Sidebar>
       <SidebarInset>
@@ -517,21 +505,7 @@ const DashboardClient: FC = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-            <AlertDialog open={isCityAlertOpen} onOpenChange={setIsCityAlertOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>{t('attention_title')}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        {t('city_selection_warning')}
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogAction onClick={() => setIsCityAlertOpen(false)}>
-                        {t('ok_close')}
-                    </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            
             {renderContent()}
         </main>
       </SidebarInset>
