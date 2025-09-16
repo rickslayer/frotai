@@ -3,8 +3,8 @@
 
 import * as React from 'react';
 import { Pie, PieChart, ResponsiveContainer, Cell } from 'recharts';
-import type { Vehicle } from '@/types';
-import { allRegions, regionColors, stateToRegionMap } from '@/lib/regions';
+import type { RegionData } from '@/types';
+import { allRegions, regionColors } from '@/lib/regions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../ui/chart';
@@ -12,29 +12,21 @@ import { Badge } from '../ui/badge';
 import { cn } from '@/lib/utils';
 
 interface RegionalFleetChartProps {
-  data: Vehicle[];
+  data: RegionData[];
 }
 
 const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
   const { t } = useTranslation();
 
   const chartData = React.useMemo(() => {
-    const regionalTotals: Record<string, number> = {
-      'Norte': 0, 'Nordeste': 0, 'Centro-Oeste': 0, 'Sudeste': 0, 'Sul': 0,
-    };
-
-    data.forEach(vehicle => {
-      const region = vehicle.region;
-      if (region && regionalTotals.hasOwnProperty(region)) {
-        regionalTotals[region] += vehicle.quantity;
-      }
+    return allRegions.map(regionName => {
+      const regionData = data.find(d => d.name === regionName);
+      return {
+        name: regionName,
+        quantity: regionData?.quantity || 0,
+        fill: regionColors[regionName] || 'hsl(var(--muted))'
+      };
     });
-
-    return allRegions.map(region => ({
-      name: region,
-      quantity: regionalTotals[region],
-      fill: regionColors[region] || 'hsl(var(--muted))'
-    }));
   }, [data]);
   
   const totalVehicles = React.useMemo(() => chartData.reduce((acc, curr) => acc + curr.quantity, 0), [chartData]);
@@ -122,5 +114,3 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
 };
 
 export default RegionalFleetChart;
-
-    

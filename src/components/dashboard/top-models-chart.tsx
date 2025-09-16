@@ -17,12 +17,12 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import type { Vehicle } from '@/types';
+import type { TopModel } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 
 interface TopModelsChartProps {
-  data: Vehicle[];
+  data: TopModel[];
 }
 
 const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
@@ -37,16 +37,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
   } satisfies ChartConfig;
 
   const chartData = useMemo(() => {
-    const modelSales = data.reduce((acc, item) => {
-      const key = item.fullName;
-      acc[key] = (acc[key] || 0) + item.quantity;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return Object.entries(modelSales)
-      .map(([model, quantity]) => ({ model, quantity }))
-      .sort((a, b) => b.quantity - a.quantity)
-      .slice(0, Number(topN));
+    return data.slice(0, Number(topN));
   }, [data, topN]);
 
   return (
@@ -114,5 +105,3 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
 };
 
 export default TopModelsChart;
-
-    

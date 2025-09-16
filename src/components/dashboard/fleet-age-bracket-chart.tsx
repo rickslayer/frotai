@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC, SVGProps } from 'react';
@@ -17,11 +18,11 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import type { Vehicle } from '@/types';
+import type { FleetAgeBracket } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 interface FleetAgeBracketChartProps {
-  data: Vehicle[];
+  data: Omit<FleetAgeBracket, 'label'>[];
 }
 
 interface CustomLabelProps extends LabelProps {
@@ -45,7 +46,6 @@ const CustomLabel: FC<CustomLabelProps> = (props) => {
   const paddingX = 12;
   const iconSize = 16;
   
-  // Renderiza o conteúdo apenas se houver espaço suficiente na barra
   if (width < 80) {
     return null;
   }
@@ -69,47 +69,49 @@ const CustomLabel: FC<CustomLabelProps> = (props) => {
 const FleetAgeBracketChart: FC<FleetAgeBracketChartProps> = ({ data }) => {
   const { t } = useTranslation();
 
+  const bracketLabels: Record<string, string> = {
+      '0-3': t('age_bracket_new'),
+      '4-7': t('age_bracket_semi_new'),
+      '8-12': t('age_bracket_used'),
+      '13+': t('age_bracket_old'),
+  };
+
   const chartConfig = {
     quantity: {
       label: t('quantity'),
       color: 'hsl(var(--chart-2))',
     },
-    new: { label: t('age_bracket_new'), color: 'hsl(var(--chart-1))', icon: Sparkles },
-    semiNew: { label: t('age_bracket_semi_new'), color: 'hsl(var(--chart-2))', icon: Car },
-    used: { label: t('age_bracket_used'), color: 'hsl(var(--chart-3))', icon: Wrench },
-    old: { label: t('age_bracket_old'), color: 'hsl(var(--chart-4))', icon: History },
+    [t('age_bracket_new')]: { label: t('age_bracket_new'), color: 'hsl(var(--chart-1))', icon: Sparkles },
+    [t('age_bracket_semi_new')]: { label: t('age_bracket_semi_new'), color: 'hsl(var(--chart-2))', icon: Car },
+    [t('age_bracket_used')]: { label: t('age_bracket_used'), color: 'hsl(var(--chart-3))', icon: Wrench },
+    [t('age_bracket_old')]: { label: t('age_bracket_old'), color: 'hsl(var(--chart-4))', icon: History },
   } satisfies ChartConfig & { [key: string]: { icon: React.ComponentType<SVGProps<SVGSVGElement>> }};
 
   const chartData = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const ageBrackets = {
-      new: { total: 0, label: chartConfig.new.label, icon: chartConfig.new.icon },
-      semiNew: { total: 0, label: chartConfig.semiNew.label, icon: chartConfig.semiNew.icon },
-      used: { total: 0, label: chartConfig.used.label, icon: chartConfig.used.icon },
-      old: { total: 0, label: chartConfig.old.label, icon: chartConfig.old.icon },
+    const iconMap: Record<string, React.ComponentType<SVGProps<SVGSVGElement>>> = {
+        '0-3': Sparkles,
+        '4-7': Car,
+        '8-12': Wrench,
+        '13+': History,
     };
+    const colorMap: Record<string, string> = {
+        [t('age_bracket_new')]: 'var(--color-age_bracket_new)',
+        [t('age_bracket_semi_new')]: 'var(--color-age_bracket_semi_new)',
+        [t('age_bracket_used')]: 'var(--color-age_bracket_used)',
+        [t('age_bracket_old')]: 'var(--color-age_bracket_old)',
+    };
+    
+    return data.map(item => {
+        const label = bracketLabels[item.range] || item.range;
+        return {
+            bracket: label,
+            quantity: item.quantity,
+            fill: colorMap[label],
+            icon: iconMap[item.range]
+        }
+    }).filter(d => d.quantity > 0);
 
-    data.forEach(item => {
-      const age = currentYear - item.year;
-      if (age >= 0 && age <= 3) {
-        ageBrackets.new.total += item.quantity;
-      } else if (age >= 4 && age <= 7) {
-        ageBrackets.semiNew.total += item.quantity;
-      } else if (age >= 8 && age <= 12) {
-        ageBrackets.used.total += item.quantity;
-      } else if (age >= 13) {
-        ageBrackets.old.total += item.quantity;
-      }
-    });
-
-    return [
-      { bracket: ageBrackets.new.label, quantity: ageBrackets.new.total, fill: 'var(--color-new)', icon: ageBrackets.new.icon },
-      { bracket: ageBrackets.semiNew.label, quantity: ageBrackets.semiNew.total, fill: 'var(--color-semiNew)', icon: ageBrackets.semiNew.icon },
-      { bracket: ageBrackets.used.label, quantity: ageBrackets.used.total, fill: 'var(--color-used)', icon: ageBrackets.used.icon },
-      { bracket: ageBrackets.old.label, quantity: ageBrackets.old.total, fill: 'var(--color-old)', icon: ageBrackets.old.icon },
-    ].filter(d => d.quantity > 0);
-
-  }, [data, t, chartConfig]);
+  }, [data, t, bracketLabels]);
 
   return (
     <Card>

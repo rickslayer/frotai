@@ -17,11 +17,11 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import type { Vehicle } from '@/types';
+import type { FleetByYear } from '@/types';
 import { useTranslation } from 'react-i18next';
 
 interface FleetByYearChartProps {
-  data: Vehicle[];
+  data: FleetByYear[];
 }
 
 const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
@@ -35,14 +35,7 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
   } satisfies ChartConfig;
 
   const chartData = useMemo(() => {
-    const yearlyFleet = data.reduce((acc, item) => {
-      acc[item.year] = (acc[item.year] || 0) + item.quantity;
-      return acc;
-    }, {} as Record<number, number>);
-
-    return Object.entries(yearlyFleet)
-      .map(([year, quantity]) => ({ year: parseInt(year), quantity }))
-      .sort((a, b) => a.year - b.year);
+    return data.sort((a, b) => a.year - b.year);
   }, [data]);
 
 
@@ -95,5 +88,3 @@ const FleetByYearChart: FC<FleetByYearChartProps> = ({ data }) => {
 };
 
 export default FleetByYearChart;
-
-    

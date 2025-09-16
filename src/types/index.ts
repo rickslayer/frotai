@@ -4,9 +4,9 @@ import { z } from 'zod';
 export type Vehicle = {
   id: string;
   manufacturer: string;
-  model: string; // Base model name, e.g., "Argo"
-  version: string; // Version details, e.g., "DRIVE 1.0"
-  fullName: string; // Combined model and version, e.g., "Argo DRIVE 1.0"
+  model: string; 
+  version: string; 
+  fullName: string;
   year: number;
   quantity: number;
   region: string;
@@ -97,4 +97,30 @@ export type AnalysisSnapshot = {
   availableVersionsCount?: number;
 };
 
-    
+
+// Main data structure returned by the aggregated API
+export type TopEntity = {
+  name: string;
+  quantity: number;
+};
+
+export type TopModel = {
+  model: string;
+  quantity: number;
+};
+
+export type FleetByYear = {
+  year: number;
+  quantity: number;
+};
+
+export type DashboardData = {
+  totalVehicles: number;
+  topCity: TopEntity;
+  topModel: TopEntity;
+  topStateManufacturer: TopEntity | null;
+  regionalData: RegionData[];
+  topModelsChart: TopModel[];
+  fleetByYearChart: FleetByYear[];
+  fleetAgeBrackets: Omit<FleetAgeBracket, 'label'>[];
+};
