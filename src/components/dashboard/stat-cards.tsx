@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useMemo, useState, useEffect } from 'react';
 import type { Filters, DashboardData } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Users2, Map, Factory, Star } from 'lucide-react';
+import { MapPin, Users2, Map, Factory } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { stateToRegionMap } from '@/lib/regions';
 
@@ -14,18 +14,41 @@ interface StatCardsProps {
   filters: Filters;
 }
 
+const WheelIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="4" />
+    <line x1="12" y1="2" x2="12" y2="22" />
+    <line x1="2" y1="12" x2="22" y2="12" />
+    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+    <line x1="4.93" y1="19.07" x2="19.07" y2="4.93" />
+  </svg>
+);
+
+
 const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
   const { t } = useTranslation();
 
   const { topRegion } = useMemo(() => {
-    let topRegionName = t('no_data_available');
-    if (data.regionalData.length > 0) {
+    let topRegionName = '-';
+    if (data.regionalData && data.regionalData.length > 0) {
       const sortedRegions = [...data.regionalData].sort((a, b) => b.quantity - a.quantity);
       if (sortedRegions[0].quantity > 0) {
-        topRegionName = sortedRegions[0].name;
+        topRegionName = t(sortedRegions[0].name as any);
       }
     }
-    return { topRegion: t(topRegionName as any) };
+    return { topRegion: topRegionName };
   }, [data.regionalData, t]);
 
 
@@ -43,12 +66,12 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('main_state_manufacturer')}</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('main_manufacturer')}</CardTitle>
           <Factory className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold truncate">{data.topStateManufacturer?.name || (filters.state && filters.state !== 'all' ? t('no_data_available') : t('select_a_state'))}</div>
-          <p className="text-xs text-muted-foreground uppercase">{t('main_state_manufacturer_description')}</p>
+          <div className="text-2xl font-bold truncate">{data.topManufacturer?.name || '-'}</div>
+          <p className="text-xs text-muted-foreground uppercase">{t('main_manufacturer_description')}</p>
         </CardContent>
       </Card>
       <Card>
@@ -64,7 +87,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{t('main_model')}</CardTitle>
-          <Star className="h-4 w-4 text-muted-foreground" />
+          <WheelIcon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold truncate">{data.topModel.name}</div>

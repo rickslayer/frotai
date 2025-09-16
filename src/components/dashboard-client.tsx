@@ -36,7 +36,7 @@ const emptyDashboardData: DashboardData = {
   totalVehicles: 0,
   topCity: { name: '-', quantity: 0 },
   topModel: { name: '-', quantity: 0 },
-  topStateManufacturer: null,
+  topManufacturer: null,
   regionalData: [],
   topModelsChart: [],
   fleetByYearChart: [],
@@ -66,6 +66,7 @@ const DashboardClient: FC = () => {
   const [isComparing, setIsComparing] = useState(false);
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
   const [isVersionLimitModalOpen, setIsVersionLimitModalOpen] = useState(false);
+  const [isCityWarningModalOpen, setIsCityWarningModalOpen] = useState(false);
   
   const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
@@ -75,7 +76,7 @@ const DashboardClient: FC = () => {
         if (Array.isArray(value)) {
             return value.length > 0;
         }
-        return value && value !== ''; // Will be true for 'all' or any other string
+        return value && value !== '';
     });
   }, [debouncedFilters]);
   
@@ -85,6 +86,11 @@ const DashboardClient: FC = () => {
   const isModelDisabled = useMemo(() => !filters.manufacturer || filters.manufacturer === 'all', [filters.manufacturer]);
   const isVersionDisabled = useMemo(() => !filters.model || filters.model === 'all' || isModelDisabled, [filters.model, isModelDisabled]);
 
+  const handleDisabledFilterClick = () => {
+    if (filters.region === 'all') {
+      setIsCityWarningModalOpen(true);
+    }
+  }
 
   // Effect for fetching main dashboard data when debounced filters change
   useEffect(() => {
@@ -174,21 +180,20 @@ const DashboardClient: FC = () => {
     setFilters(prev => {
         const updated = { ...prev };
         
-        // Handle "all" selection from dropdowns
-        const finalValue = value === 'all' ? 'all' : value;
-        updated[key] = finalValue;
+        updated[key] = value;
 
         // --- Cascading Logic ---
         if (key === 'region') {
             updated.state = '';
             updated.city = '';
         }
-        if (key === 'state' && value && value !== 'all') {
+        if (key === 'state') {
             updated.city = '';
-            // Auto-select region if state is chosen directly
-            const regionForState = stateToRegionMap[value];
-            if (regionForState && updated.region !== regionForState) {
-                updated.region = regionForState;
+            if (value && value !== 'all') {
+                const regionForState = stateToRegionMap[value];
+                if (regionForState && updated.region !== regionForState) {
+                    updated.region = regionForState;
+                }
             }
         }
         if (key === 'manufacturer') {
@@ -226,7 +231,7 @@ const DashboardClient: FC = () => {
       doc.setFontSize(12);
       doc.text(title, 14, y);
       doc.setFont('helvetica', 'normal');
-      docsetFontSize(11);
+      doc.setFontSize(11);
       doc.text(value, 60, y);
       y += 8;
     };
@@ -467,6 +472,7 @@ const DashboardClient: FC = () => {
           isCityDisabled={isCityDisabled}
           isModelDisabled={isModelDisabled}
           isVersionDisabled={isVersionDisabled}
+          onDisabledFilterClick={handleDisabledFilterClick}
         />
       </Sidebar>
       <SidebarInset>
@@ -506,6 +512,22 @@ const DashboardClient: FC = () => {
                 </AlertDialogContent>
             </AlertDialog>
             
+             <AlertDialog open={isCityWarningModalOpen} onOpenChange={setIsCityWarningModalOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>{t('attention_title')}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {t('city_selection_warning')}
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogAction onClick={() => setIsCityWarningModalOpen(false)}>
+                        {t('ok_close')}
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
             {renderContent()}
         </main>
       </SidebarInset>

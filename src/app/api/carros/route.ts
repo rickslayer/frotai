@@ -52,22 +52,14 @@ export async function GET(request: NextRequest) {
 
     const filters: Partial<Filters> = {};
     searchParams.forEach((value, key) => {
-        const existing = filters[key as keyof Filters];
-        if (existing) {
-            if(Array.isArray(existing)) {
-                (existing as string[]).push(value);
-            } else {
-                (filters as any)[key] = [existing, value];
-            }
-        } else {
-            if (key === 'year') {
-                (filters as any)[key] = value === 'all' ? 'all' : parseInt(value, 10);
-            } else if (key === 'version') {
-                 (filters as any)[key] = [value];
-            }
-            else {
-                (filters as any)[key] = value;
-            }
+        if (key === 'year') {
+            (filters as any)[key] = value === 'all' ? 'all' : parseInt(value, 10);
+        } else if (key === 'version') {
+             if (!filters.version) filters.version = [];
+             filters.version.push(value);
+        }
+        else {
+            (filters as any)[key] = value;
         }
     });
     
@@ -122,16 +114,13 @@ export async function GET(request: NextRequest) {
             { $limit: 1 },
             { $project: { name: '$_id', quantity: '$total' } }
           ],
-           // Top manufacturer in state (only if state is filtered)
-          ...(filters.state && filters.state !== 'all' ? {
-              topStateManufacturer: [
-                  { $match: { state: filters.state } },
-                  { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } },
-                  { $sort: { total: -1 } },
-                  { $limit: 1 },
-                  { $project: { name: '$_id', quantity: '$total' } }
-              ]
-          } : {}),
+           // Top manufacturer (overall)
+          topManufacturer: [
+              { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } },
+              { $sort: { total: -1 } },
+              { $limit: 1 },
+              { $project: { name: '$_id', quantity: '$total' } }
+          ],
           // Regional data
           regionalData: [
             { $group: { _id: '$region', total: { $sum: '$quantity' } } },
@@ -198,7 +187,7 @@ export async function GET(request: NextRequest) {
         totalVehicles: aggregatedData.totalVehicles[0]?.total || 0,
         topCity: aggregatedData.topCity[0] || { name: '-', quantity: 0 },
         topModel: aggregatedData.topModel[0] || { name: '-', quantity: 0 },
-        topStateManufacturer: aggregatedData.topStateManufacturer?.[0] || null,
+        topManufacturer: aggregatedData.topManufacturer?.[0] || null,
         regionalData: allRegions.map(region => {
             const found = aggregatedData.regionalData.find((r: any) => r.name === region);
             return { name: region, quantity: found?.quantity || 0 };
@@ -225,5 +214,3 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }
 }
-
-    

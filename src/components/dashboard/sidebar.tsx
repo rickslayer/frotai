@@ -24,6 +24,7 @@ interface DashboardSidebarProps {
   isCityDisabled: boolean;
   isModelDisabled: boolean;
   isVersionDisabled: boolean;
+  onDisabledFilterClick: () => void;
 }
 
 const DashboardSidebar: FC<DashboardSidebarProps> = ({ 
@@ -35,6 +36,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
     isCityDisabled,
     isModelDisabled,
     isVersionDisabled,
+    onDisabledFilterClick,
 }) => {
   const { t } = useTranslation();
   
@@ -79,6 +81,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                     value={filters.state || ''}
                     onValueChange={(value) => handleFilterValueChange('state', value)} 
                     disabled={isStateDisabled}
+                    onDisabledClick={onDisabledFilterClick}
                   >
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
@@ -90,6 +93,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                     value={filters.city || ''}
                     onValueChange={(value) => handleFilterValueChange('city', value)} 
                     disabled={isCityDisabled}
+                    onDisabledClick={onDisabledFilterClick}
                     >
                     <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                     <SelectContent>
