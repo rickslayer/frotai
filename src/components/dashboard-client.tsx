@@ -177,37 +177,33 @@ const DashboardClient: FC = () => {
 
         // --- Cascading Logic ---
         if (key === 'region') {
-            // If the selected state is not in the new region, clear state and city
             if (updated.state && regionToStatesMap[value]?.includes(updated.state) === false) {
                 updated.state = '';
                 updated.city = '';
             }
         }
         if (key === 'state') {
-            updated.city = ''; // Always clear city when state changes
+            updated.city = ''; 
             if (value) {
-                // If a state is selected, automatically set the region
                 const regionForState = stateToRegionMap[value];
-                if (regionForState && updated.region !== regionForState) {
+                if (regionForState) {
                     updated.region = regionForState;
                 }
             } else {
-                 // If state is cleared, clear the region as well
                 updated.region = '';
             }
         }
          if (key === 'city') {
             if (value) {
-                // This part is tricky as the API doesn't directly give us city -> state
-                // We assume the `filterOptions.states` is already narrowed down by a state filter
-                // If a user picks a city, we ensure the state is not blank if possible
-                if (!updated.state && filterOptions.states.length === 1) {
-                    const state = filterOptions.states[0];
-                    updated.state = state;
-                    const regionForState = stateToRegionMap[state];
-                    if (regionForState && updated.region !== regionForState) {
-                        updated.region = regionForState;
-                    }
+                if (!updated.state && filterOptions.states.length > 0) {
+                     const state = filterOptions.states[0];
+                     if (state) {
+                        updated.state = state;
+                        const regionForState = stateToRegionMap[state];
+                        if (regionForState) {
+                            updated.region = regionForState;
+                        }
+                     }
                 }
             }
         }
