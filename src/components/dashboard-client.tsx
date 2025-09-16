@@ -181,6 +181,10 @@ const DashboardClient: FC = () => {
                 updated.state = '';
                 updated.city = '';
             }
+             if (value === '') {
+                updated.state = '';
+                updated.city = '';
+            }
         }
         if (key === 'state') {
             updated.city = ''; 
@@ -220,11 +224,9 @@ const DashboardClient: FC = () => {
 }, [filterOptions.states]);
 
   const handleClearFilters = useCallback(() => {
-    if(isFiltered) {
-        setFilters(initialFilters);
-        setDashboardData(emptyDashboardData);
-    }
-  }, [isFiltered]);
+    setFilters(initialFilters);
+    setDashboardData(emptyDashboardData);
+  }, []);
   
   
   const handleExportPDF = async () => {
