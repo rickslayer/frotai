@@ -66,7 +66,6 @@ const DashboardClient: FC = () => {
   const [isComparing, setIsComparing] = useState(false);
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
   const [isVersionLimitModalOpen, setIsVersionLimitModalOpen] = useState(false);
-  const [isCityWarningModalOpen, setIsCityWarningModalOpen] = useState(false);
   
   const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
@@ -81,16 +80,10 @@ const DashboardClient: FC = () => {
   }, [debouncedFilters]);
   
 
-  const isStateDisabled = useMemo(() => filters.region === 'all' || !filters.region, [filters.region]);
-  const isCityDisabled = useMemo(() => filters.region === 'all' || !filters.state || filters.state === 'all', [filters.region, filters.state]);
+  const isStateDisabled = useMemo(() => !filters.region, [filters.region]);
+  const isCityDisabled = useMemo(() => !filters.state || filters.state === 'all', [filters.state]);
   const isModelDisabled = useMemo(() => !filters.manufacturer || filters.manufacturer === 'all', [filters.manufacturer]);
   const isVersionDisabled = useMemo(() => !filters.model || filters.model === 'all' || isModelDisabled, [filters.model, isModelDisabled]);
-
-  const handleDisabledFilterClick = () => {
-    if (filters.region === 'all') {
-      setIsCityWarningModalOpen(true);
-    }
-  }
 
   // Effect for fetching main dashboard data when debounced filters change
   useEffect(() => {
@@ -472,7 +465,6 @@ const DashboardClient: FC = () => {
           isCityDisabled={isCityDisabled}
           isModelDisabled={isModelDisabled}
           isVersionDisabled={isVersionDisabled}
-          onDisabledFilterClick={handleDisabledFilterClick}
         />
       </Sidebar>
       <SidebarInset>
@@ -512,22 +504,6 @@ const DashboardClient: FC = () => {
                 </AlertDialogContent>
             </AlertDialog>
             
-             <AlertDialog open={isCityWarningModalOpen} onOpenChange={setIsCityWarningModalOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>{t('attention_title')}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        {t('city_selection_warning')}
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogAction onClick={() => setIsCityWarningModalOpen(false)}>
-                        {t('ok_close')}
-                    </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-
             {renderContent()}
         </main>
       </SidebarInset>
