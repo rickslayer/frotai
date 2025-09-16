@@ -20,7 +20,9 @@ export const getFleetData = async (filters: Partial<Filters>): Promise<Dashboard
 
     // Make sure the URL is correct for your environment
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/carros';
-    const res = await fetch(`${apiUrl}?${query.toString()}`);
+    // Use a unique query string for each request to bypass client-side caching if needed
+    const res = await fetch(`${apiUrl}?${query.toString()}&_=${new Date().getTime()}`);
+
 
     if (!res.ok) {
       const errorBody = await res.text();
@@ -45,13 +47,21 @@ export const getFleetData = async (filters: Partial<Filters>): Promise<Dashboard
 
 
 // Fetches the initial distinct options for the filters.
-export const getInitialFilterOptions = cache(async (filters?: { manufacturer?: string, model?: string }): Promise<FilterOptions> => {
+export const getInitialFilterOptions = cache(async (filters?: Partial<Filters>): Promise<FilterOptions> => {
   try {
     const query = new URLSearchParams();
-    if (filters?.manufacturer && filters.manufacturer !== 'all') query.set('manufacturer', filters.manufacturer);
-    if (filters?.model && filters.model !== 'all') query.set('model', filters.model);
+    if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value && value !== '' && value !== 'all') {
+                if (Array.isArray(value)) {
+                    value.forEach(v => query.append(key, v));
+                } else {
+                    query.append(key, String(value));
+                }
+            }
+        });
+    }
 
-    // This endpoint needs to be created. It will be responsible for fetching distinct filter values.
     const apiUrl = process.env.NEXT_PUBLIC_FILTER_API_URL || '/api/filters';
     const res = await fetch(`${apiUrl}?${query.toString()}`);
     
@@ -69,7 +79,6 @@ export const getInitialFilterOptions = cache(async (filters?: { manufacturer?: s
 
   } catch (error) {
     console.error("Error fetching filter options:", error);
-    // Return empty options on error to prevent crashing the UI
     return {
       regions: [], states: [], cities: [], manufacturers: [], models: [], versions: [], years: [],
     };

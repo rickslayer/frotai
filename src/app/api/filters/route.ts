@@ -2,6 +2,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
 import type { FilterOptions } from '@/types';
+import { allRegions, regionToStatesMap } from '@/lib/regions';
+
 
 // MongoDB Connection String
 const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://frotai:X7Ra8kREnBX6z6SC@frotai.bylfte3.mongodb.net/';
@@ -40,40 +42,55 @@ export async function GET(request: NextRequest) {
     const collection = db.collection(collectionName);
     const { searchParams } = request.nextUrl;
 
+    const region = searchParams.get('region');
+    const state = searchParams.get('state');
+    const city = searchParams.get('city');
     const manufacturer = searchParams.get('manufacturer');
     const model = searchParams.get('model');
     
+    // Base match query from URL params
+    const baseMatch: any = {};
+    if (region && region !== 'all') baseMatch.region = region;
+    if (state && state !== 'all') baseMatch.state = state;
+    if (city && city !== 'all') baseMatch.city = city;
+    if (manufacturer && manufacturer !== 'all') baseMatch.manufacturer = manufacturer;
+    if (model && model !== 'all') baseMatch.model = model;
+    
     // For cascading filters: if a manufacturer is selected, only show its models.
-    const modelMatch = manufacturer && manufacturer !== 'all' ? { manufacturer } : {};
+    const modelMatch = { ...baseMatch };
+    if (manufacturer && manufacturer !== 'all') modelMatch.manufacturer = manufacturer;
     
     // If a model is selected, only show its versions.
-    const versionMatch = model && model !== 'all' ? { model } : (manufacturer && manufacturer !== 'all' ? { manufacturer } : {});
+    const versionMatch = { ...baseMatch };
+    if (model && model !== 'all') versionMatch.model = model;
 
-    // Parallelize distinct queries
+
     const [
-      manufacturers,
-      models,
-      versions,
-      states,
-      cities,
-      years
+      dbRegions,
+      dbStates,
+      dbCities,
+      dbManufacturers,
+      dbModels,
+      dbVersions,
+      dbYears,
     ] = await Promise.all([
-      getDistinctValues(collection, 'manufacturer'),
+      getDistinctValues(collection, 'region', baseMatch),
+      getDistinctValues(collection, 'state', baseMatch),
+      getDistinctValues(collection, 'city', baseMatch),
+      getDistinctValues(collection, 'manufacturer', baseMatch),
       getDistinctValues(collection, 'model', modelMatch),
       getDistinctValues(collection, 'version', versionMatch),
-      getDistinctValues(collection, 'state'),
-      getDistinctValues(collection, 'city'), // Note: might be slow, consider limiting by state if one is passed
-      getDistinctValues(collection, 'year')
+      getDistinctValues(collection, 'year', baseMatch),
     ]);
 
     const filterOptions: FilterOptions = {
-      regions: [], // This is static, so not fetched here
-      manufacturers,
-      models,
-      versions,
-      states,
-      cities,
-      years: (years as number[]).sort((a, b) => b - a),
+      regions: dbRegions.length > 0 ? dbRegions : allRegions,
+      states: dbStates,
+      cities: dbCities,
+      manufacturers: dbManufacturers,
+      models: dbModels,
+      versions: dbVersions,
+      years: (dbYears as number[]).sort((a, b) => b - a),
     };
 
     return NextResponse.json(filterOptions);
@@ -83,3 +100,4 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }
 }
+

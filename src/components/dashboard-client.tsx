@@ -2,7 +2,7 @@
 'use client';
 
 import type { FC } from 'react';
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useTransition } from 'react';
 import type { Vehicle, FilterOptions, Filters, FleetAgeBracket, ChartData, RegionData, AnalysisSnapshot, PredictPartsDemandOutput, DashboardData } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
@@ -17,7 +17,7 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import RegionalFleetChart from './dashboard/regional-fleet-chart';
-import { regionToStatesMap, allRegions } from '@/lib/regions';
+import { regionToStatesMap, allRegions, stateToRegionMap } from '@/lib/regions';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
@@ -29,6 +29,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescript
 import html2canvas from 'html2canvas';
 import { getFleetData, getInitialFilterOptions } from '@/lib/api-logic';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
+
 
 const emptyDashboardData: DashboardData = {
   totalVehicles: 0,
@@ -41,48 +43,56 @@ const emptyDashboardData: DashboardData = {
   fleetAgeBrackets: [],
 };
 
+const initialFilters: Filters = {
+    region: '', state: '', city: '', manufacturer: '', model: '', version: [], year: '',
+};
 
 const DashboardClient: FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
   
   const [dashboardData, setDashboardData] = useState<DashboardData>(emptyDashboardData);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    regions: allRegions, states: [], cities: [], manufacturers: [], models: [], versions: [], years: [],
+    regions: [], states: [], cities: [], manufacturers: [], models: [], versions: [], years: [],
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start true for initial load
   
-  const [filters, setFilters] = useState<Filters>({
-    region: '', state: '', city: '', manufacturer: '', model: '', version: [], year: '',
-  });
+  const [filters, setFilters] = useState<Filters>(initialFilters);
+  const debouncedFilters = useDebounce(filters, 300);
+
 
   const [isComparing, setIsComparing] = useState(false);
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
   const [isVersionLimitModalOpen, setIsVersionLimitModalOpen] = useState(false);
+  const [isCityAlertOpen, setIsCityAlertOpen] = useState(false);
 
   const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
   const isFiltered = useMemo(() => {
-    return Object.values(filters).some(value => {
+    return Object.values(debouncedFilters).some(value => {
       if (Array.isArray(value)) return value.length > 0;
       return value && value !== '' && value !== 'all';
     });
-  }, [filters]);
+  }, [debouncedFilters]);
+
+  const isCityDisabled = useMemo(() => filters.region === 'all' || !filters.state, [filters.region, filters.state]);
 
 
-  // Effect for fetching main dashboard data when filters change
+  // Effect for fetching main dashboard data when debounced filters change
   useEffect(() => {
     const fetchData = async () => {
       if (!isFiltered) {
         setDashboardData(emptyDashboardData);
+        setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
       try {
-        const data = await getFleetData(filters);
+        const data = await getFleetData(debouncedFilters);
         setDashboardData(data);
       } catch (error) {
         console.error(error);
@@ -94,113 +104,117 @@ const DashboardClient: FC = () => {
       }
     };
     
-    if (isFiltered) {
+    startTransition(() => {
         fetchData();
-    } else {
-        setDashboardData(emptyDashboardData);
-        setIsLoading(false);
-    }
-  }, [filters, isFiltered, toast, t]);
+    });
+
+  }, [debouncedFilters, isFiltered, toast, t]);
 
 
-  // Effect for fetching initial options for filters on component mount
+  // Effect for fetching filter options when filters change
   useEffect(() => {
-    const fetchInitialData = async () => {
-       setIsLoading(true);
-       try {
-           const options = await getInitialFilterOptions();
-           setFilterOptions({
-                regions: allRegions,
-                states: options.states,
-                cities: options.cities,
-                manufacturers: options.manufacturers,
-                models: [], // Models are dependent on manufacturer
-                versions: [], // Versions are dependent on model
-                years: options.years,
-           });
-       } catch (error) {
-            console.error('Failed to fetch initial options:', error);
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while fetching initial data.';
-            toast({ variant: 'destructive', title: t('error'), description: errorMessage });
-       } finally {
-            setIsLoading(false);
-       }
-    };
-    fetchInitialData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast, t]);
-  
-  
-   // Effect for updating dependent filter options
-  useEffect(() => {
-    const updateDependentOptions = async () => {
-        // We only need to fetch new options if a cascading filter is selected
-        if (!filters.manufacturer && !filters.model) {
-            return;
-        }
-
-        const options = await getInitialFilterOptions({
+    const fetchFilterOptions = async () => {
+       const options = await getInitialFilterOptions({
+            region: filters.region,
+            state: filters.state,
+            city: filters.city,
             manufacturer: filters.manufacturer,
             model: filters.model
         });
 
         setFilterOptions(prev => ({
             ...prev,
-            models: filters.manufacturer && filters.manufacturer !== 'all' ? options.models : prev.models,
-            versions: filters.model && filters.model !== 'all' ? options.versions : prev.versions,
+            regions: options.regions.length > 0 ? options.regions : allRegions,
+            states: options.states,
+            cities: options.cities,
+            manufacturers: options.manufacturers,
+            models: options.models,
+            versions: options.versions,
+            years: options.years.length > 0 ? options.years : prev.years, // Avoid clearing years if API returns empty
         }));
     };
     
-    if (filters.manufacturer || filters.model) {
-        updateDependentOptions();
-    }
-  }, [filters.manufacturer, filters.model]);
+    fetchFilterOptions();
+  }, [filters.region, filters.state, filters.city, filters.manufacturer, filters.model]);
+
+  // Effect for initial load
+  useEffect(() => {
+    const loadInitialOptions = async () => {
+        setIsLoading(true);
+        try {
+            const options = await getInitialFilterOptions();
+            setFilterOptions({
+                regions: options.regions.length > 0 ? options.regions : allRegions,
+                states: options.states,
+                cities: options.cities,
+                manufacturers: options.manufacturers,
+                models: options.models,
+                versions: options.versions,
+                years: options.years,
+            });
+        } catch (error) {
+            console.error('Failed to fetch initial options:', error);
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while fetching initial data.';
+            toast({ variant: 'destructive', title: t('error'), description: errorMessage });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    loadInitialOptions();
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast, t]);
 
 
-  const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
+  const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
-        const updated = { ...prev, ...newFilters };
+        const updated = { ...prev, [key]: value };
 
-        // Handle cascading filter resets
-        if ('region' in newFilters) {
+        // Handle cascading filter resets and logic
+        if (key === 'region') {
             updated.state = '';
             updated.city = '';
+            if (value === 'all' && prev.city) {
+                setIsCityAlertOpen(true);
+            }
         }
-        if ('state' in newFilters) {
+        if (key === 'state') {
             updated.city = '';
+            // Auto-fill region if state is selected
+            if (value && value !== 'all') {
+                const region = stateToRegionMap[value];
+                if (region) updated.region = region;
+            }
         }
-        if ('manufacturer' in newFilters) {
+        if (key === 'city') {
+             if (value && value !== 'all' && prev.region === 'all') {
+                setIsCityAlertOpen(true);
+                updated.city = ''; // Prevent city selection
+             }
+        }
+        if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
         }
-        if ('model' in newFilters) {
+        if (key === 'model') {
             updated.version = [];
         }
-
-        // Handle the "clear" value from the region select
-        if (newFilters.region === 'clear') {
-            updated.region = '';
+        
+        // Normalize "clear" values to empty strings
+        for (const filterKey in updated) {
+            if ((updated as any)[filterKey] === 'all' || (updated as any)[filterKey] === null) {
+                 (updated as any)[filterKey] = '';
+            }
         }
 
         return updated;
     });
 }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setFilters(initialFilters);
+  }, []);
   
-  const derivedFilterOptions = useMemo<FilterOptions>(() => {
-    let stateOptions = filterOptions.states;
-
-    if (filters.region && filters.region !== 'all') {
-        const statesInRegion = regionToStatesMap[filters.region] || [];
-        stateOptions = filterOptions.states.filter(s => statesInRegion.includes(s.toUpperCase()));
-    }
-    
-    return {
-        ...filterOptions,
-        states: stateOptions,
-    };
-  }, [filters.region, filterOptions]);
-
-
+  
   const handleExportPDF = async () => {
     const doc = new jsPDF('p', 'mm', 'a4');
     let y = 20;
@@ -337,14 +351,14 @@ const DashboardClient: FC = () => {
       '8-12': t('age_bracket_used'),
       '13+': t('age_bracket_old'),
     };
-    return dashboardData.fleetAgeBrackets.map(bracket => ({
+    return (dashboardData.fleetAgeBrackets || []).map(bracket => ({
       ...bracket,
       label: bracketLabels[bracket.range] || bracket.range
     }));
   }, [dashboardData.fleetAgeBrackets, t]);
   
   const handleSaveSnapshot = () => {
-    if (filters.version.length > 5 && filters.version.length !== derivedFilterOptions.versions.length) {
+    if (filters.version.length > 5 && filters.version.length !== filterOptions.versions.length) {
         setIsVersionLimitModalOpen(true);
         return;
     }
@@ -354,7 +368,7 @@ const DashboardClient: FC = () => {
       fleetAgeBrackets: fleetAgeBracketsWithLabels, 
       regionalData: dashboardData.regionalData,
       fleetByYearData: dashboardData.fleetByYearChart.map(d => ({ name: String(d.year), quantity: d.quantity })),
-      availableVersionsCount: derivedFilterOptions.versions.length
+      availableVersionsCount: filterOptions.versions.length
     };
     setSnapshots(prev => {
       if (!prev[0]) return [snapshot, prev[1]];
@@ -381,7 +395,7 @@ const DashboardClient: FC = () => {
   }
 
   const renderContent = () => {
-    if (isLoading && !isFiltered) { // Show loader only on initial load
+    if (isLoading && !isFiltered) {
       return (
         <div className="flex h-full w-full items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -393,7 +407,7 @@ const DashboardClient: FC = () => {
         return <WelcomePlaceholder />;
     }
 
-    if (isLoading) {
+    if (isLoading || isPending) {
        return (
         <div className="flex h-full w-full items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -454,7 +468,9 @@ const DashboardClient: FC = () => {
         <DashboardSidebar
           filters={filters}
           onFilterChange={handleFilterChange}
-          filterOptions={derivedFilterOptions}
+          onClearFilters={handleClearFilters}
+          filterOptions={filterOptions}
+          isCityDisabled={isCityDisabled}
         />
       </Sidebar>
       <SidebarInset>
@@ -493,6 +509,21 @@ const DashboardClient: FC = () => {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            <AlertDialog open={isCityAlertOpen} onOpenChange={setIsCityAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>{t('attention_title')}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {t('city_selection_warning')}
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogAction onClick={() => setIsCityAlertOpen(false)}>
+                        {t('ok_close')}
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             {renderContent()}
         </main>
       </SidebarInset>
@@ -501,5 +532,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    

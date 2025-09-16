@@ -122,5 +122,6 @@
   "version_limit_error": "For a better analysis, please compare a maximum of {{limit}} versions at a time, or select all versions.",
   "attention_title": "Attention",
   "comparison_warning": "If the comparison text seems incomplete, please generate it again. If the error persists, contact our support.",
-  "ok_close": "OK, close"
+  "ok_close": "OK, close",
+  "city_selection_warning": "To select cities, you need to choose a specific region or clear the 'All Regions' filter."
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FC } from 'react';
@@ -17,31 +16,17 @@ import { MultiSelectDropdown } from '../ui/multi-select-dropdown';
 
 interface DashboardSidebarProps {
   filters: Filters;
-  onFilterChange: (newFilters: Partial<Filters>) => void;
+  onFilterChange: (key: keyof Filters, value: any) => void;
+  onClearFilters: () => void;
   filterOptions: FilterOptions;
+  isCityDisabled: boolean;
 }
 
-const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, filterOptions }) => {
+const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, onClearFilters, filterOptions, isCityDisabled }) => {
   const { t } = useTranslation();
   
   const handleFilterValueChange = (key: keyof Filters, value: string | string[] | number) => {
-    if (key === 'year') {
-      onFilterChange({ year: value === 'all' ? 'all' : Number(value) });
-    } else {
-      onFilterChange({ [key]: value });
-    }
-  };
-
-  const clearFilters = () => {
-    onFilterChange({
-      region: '',
-      state: '',
-      city: '',
-      manufacturer: '',
-      model: '',
-      version: [],
-      year: '',
-    });
+    onFilterChange(key, value);
   };
 
   const hasActiveFilters = Object.values(filters).some(f => (Array.isArray(f) ? f.length > 0 : f && f !== ''));
@@ -70,22 +55,21 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                   <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value)}>
+                   <Select value={filters.region || ''} onValueChange={(value) => handleFilterValueChange('region', value === 'all' ? '' : value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
                     <SelectContent>
-                       <SelectItem value="clear">{t('clear_region_filter')}</SelectItem>
                        <SelectItem value="all">{t('all_regions')}</SelectItem>
                       {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value)}>
+                  <Select value={filters.state || ''} onValueChange={(value) => handleFilterValueChange('state', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
                        <SelectItem value="all">{t('all_states')}</SelectItem>
                       {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value)} disabled={!filters.state || filters.state === 'all'}>
+                  <Select value={filters.city || ''} onValueChange={(value) => handleFilterValueChange('city', value)} disabled={isCityDisabled}>
                     <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_cities')}</SelectItem>
@@ -101,7 +85,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
+                  <Select value={filters.manufacturer || ''} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
                     <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
@@ -115,7 +99,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                     placeholder={t('select_model')}
                     searchPlaceholder={t('search_model_placeholder')}
                     noResultsText={t('no_model_found')}
-                    disabled={!filters.manufacturer || filters.manufacturer === 'all'}
+                    disabled={!filters.manufacturer && !filters.city && !filters.state}
                   />
                    <MultiSelectDropdown
                       options={(filterOptions.versions || []).map(v => ({ value: v, label: v || t('base_model_version')}))}
@@ -133,7 +117,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4">
-                   <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
+                   <Select value={String(filters.year || '')} onValueChange={(value) => handleFilterValueChange('year', value === 'all' ? '' : Number(value))}>
                     <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_years')}</SelectItem>
@@ -149,7 +133,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
       <SidebarFooter>
         <Separator />
          <div className="mt-auto p-4">
-          <Button variant="ghost" className="w-full justify-center" onClick={clearFilters} disabled={!hasActiveFilters}>
+          <Button variant="ghost" className="w-full justify-center" onClick={onClearFilters} disabled={!hasActiveFilters}>
              <FilterX className="mr-2 h-4 w-4" />
             <span>{t('clear_all_filters')}</span>
           </Button>
