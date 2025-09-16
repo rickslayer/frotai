@@ -24,7 +24,7 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
     };
 
     data.forEach(vehicle => {
-      const region = stateToRegionMap[vehicle.state.toUpperCase()];
+      const region = vehicle.region;
       if (region && regionalTotals.hasOwnProperty(region)) {
         regionalTotals[region] += vehicle.quantity;
       }
@@ -122,3 +122,5 @@ const RegionalFleetChart: React.FC<RegionalFleetChartProps> = ({ data }) => {
 };
 
 export default RegionalFleetChart;
+
+    

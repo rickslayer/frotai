@@ -17,7 +17,7 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import RegionalFleetChart from './dashboard/regional-fleet-chart';
-import { regionToStatesMap } from '@/lib/regions';
+import { regionToStatesMap, allRegions } from '@/lib/regions';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
@@ -37,7 +37,7 @@ const DashboardClient: FC = () => {
   const [allData, setAllData] = useState<Vehicle[]>([]);
   const [filteredData, setFilteredData] = useState<Vehicle[]>([]);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    regions: [], states: [], cities: [], manufacturers: [], models: [], versions: [], years: [],
+    regions: allRegions, states: [], cities: [], manufacturers: [], models: [], versions: [], years: [],
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -88,6 +88,7 @@ const DashboardClient: FC = () => {
         fetchData();
     } else {
         setFilteredData([]);
+        setIsLoading(false);
     }
   }, [filters, isFiltered, toast, t]);
 
@@ -108,7 +109,7 @@ const DashboardClient: FC = () => {
            };
 
            setFilterOptions({
-                regions: [...new Set(allVehicleData.map(item => item.region).filter(Boolean) as string[])].sort(),
+                regions: allRegions,
                 states: getUniqueSortedOptions('state') as string[],
                 cities: getUniqueSortedOptions('city') as string[],
                 manufacturers: getUniqueSortedOptions('manufacturer') as string[],
@@ -146,29 +147,29 @@ const DashboardClient: FC = () => {
         // Reset dependent filters on change for a cascading effect
         if ('region' in newFilters && newFilters.region !== prev.region) {
           updated.state = 'all'; 
-          updated.city = '';
-          updated.manufacturer = '';
-          updated.model = '';
+          updated.city = 'all';
+          updated.manufacturer = 'all';
+          updated.model = 'all';
           updated.version = [];
-          updated.year = '';
+          updated.year = 'all';
         }
         if ('state' in newFilters && newFilters.state !== prev.state) {
             updated.city = 'all';
-            updated.manufacturer = '';
-            updated.model = '';
+            updated.manufacturer = 'all';
+            updated.model = 'all';
             updated.version = [];
-            updated.year = '';
+            updated.year = 'all';
         }
         if ('city' in newFilters && newFilters.city !== prev.city) {
             updated.manufacturer = 'all';
-            updated.model = '';
+            updated.model = 'all';
             updated.version = [];
-            updated.year = '';
+            updated.year = 'all';
         }
         if ('manufacturer' in newFilters && newFilters.manufacturer !== prev.manufacturer) {
             updated.model = 'all';
             updated.version = [];
-            updated.year = '';
+            updated.year = 'all';
         }
         if ('model' in newFilters && newFilters.model !== prev.model) {
              updated.version = [];
@@ -184,20 +185,14 @@ const DashboardClient: FC = () => {
   
   const derivedFilterOptions = useMemo<FilterOptions>(() => {
     let baseData = allData;
+    let stateOptions = [...new Set(allData.map(d => d.state).filter(Boolean))].sort();
 
     if (filters.region && filters.region !== 'all') {
         const statesInRegion = regionToStatesMap[filters.region] || [];
         baseData = baseData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
+        stateOptions = [...new Set(baseData.map(d => d.state).filter(Boolean))].sort();
     }
     
-    let tempFilteredData = allData;
-    if (filters.region && filters.region !== 'all') {
-        const statesInRegion = regionToStatesMap[filters.region] || [];
-        tempFilteredData = tempFilteredData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
-    }
-    const stateOptions = [...new Set(tempFilteredData.map(d => d.state).filter(Boolean))].sort();
-
-
     if (filters.state && filters.state !== 'all') {
         baseData = baseData.filter(d => d.state === filters.state);
     }
@@ -410,6 +405,25 @@ const DashboardClient: FC = () => {
       .sort((a, b) => Number(a.name) - Number(b.name));
   }, [filteredData]);
 
+  const regionalData = useMemo((): RegionData[] => {
+    if (!filteredData) return [];
+     const regionalTotals: Record<string, number> = {
+      'Norte': 0, 'Nordeste': 0, 'Centro-Oeste': 0, 'Sudeste': 0, 'Sul': 0,
+    };
+
+    filteredData.forEach(vehicle => {
+      const region = vehicle.region;
+      if (region && regionalTotals.hasOwnProperty(region)) {
+        regionalTotals[region] += vehicle.quantity;
+      }
+    });
+
+    return allRegions.map(region => ({
+      name: region,
+      quantity: regionalTotals[region] || 0
+    }));
+  }, [filteredData]);
+
   const handleSaveSnapshot = () => {
     if (filters.version.length > 5 && filters.version.length !== derivedFilterOptions.versions.length) {
         setIsVersionLimitModalOpen(true);
@@ -418,7 +432,10 @@ const DashboardClient: FC = () => {
     const totalVehicles = filteredData.reduce((sum, item) => sum + item.quantity, 0);
     const snapshot: AnalysisSnapshot = {
       filters: { ...filters },
-      totalVehicles, fleetAgeBrackets, regionalData: [], fleetByYearData, // regionalData is now calculated inside its component
+      totalVehicles, 
+      fleetAgeBrackets, 
+      regionalData,
+      fleetByYearData,
       availableVersionsCount: derivedFilterOptions.versions.length
     };
     setSnapshots(prev => {
@@ -484,7 +501,7 @@ const DashboardClient: FC = () => {
                   filters={filters}
                   disabled={!isFiltered || filteredData.length === 0}
                   fleetAgeBrackets={fleetAgeBrackets}
-                  regionalData={[]} // Not needed anymore here
+                  regionalData={regionalData}
                   fleetByYearData={fleetByYearData}
                   onAnalysisGenerated={setGeneralAnalysis}
               />
@@ -558,3 +575,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    

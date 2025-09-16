@@ -9,6 +9,7 @@ export type Vehicle = {
   fullName: string; // Combined model and version, e.g., "Argo DRIVE 1.0"
   year: number;
   quantity: number;
+  region: string;
   state: string;
   city: string;
 };
@@ -53,7 +54,6 @@ export type FleetAgeBracket = z.infer<typeof FleetAgeBracketSchema>;
 export const RegionDataSchema = z.object({
     name: z.string().describe('The name of the region.'),
     quantity: z.number().describe('The total number of vehicles in this region.'),
-    fill: z.string().describe('The color code for the chart.'),
 });
 export type RegionData = z.infer<typeof RegionDataSchema>;
 
@@ -96,3 +96,5 @@ export type AnalysisSnapshot = {
   fleetByYearData: ChartData[];
   availableVersionsCount?: number;
 };
+
+    
