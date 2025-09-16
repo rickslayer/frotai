@@ -118,7 +118,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                     disabled={!filters.manufacturer || filters.manufacturer === 'all'}
                   />
                    <MultiSelectDropdown
-                      options={(filterOptions.versions || []).map(v => ({ value: v || 'base', label: v || t('base_model_version')}))}
+                      options={(filterOptions.versions || []).map(v => ({ value: v, label: v || t('base_model_version')}))}
                       selectedValues={filters.version}
                       onChange={(selected) => handleFilterValueChange('version', selected)}
                       placeholder={t('select_version_multi')}

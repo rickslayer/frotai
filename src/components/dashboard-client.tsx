@@ -100,7 +100,7 @@ const DashboardClient: FC = () => {
            setAllData(allVehicleData);
 
            const getUniqueSortedOptions = (key: keyof Vehicle) => {
-              const options = [...new Set(allVehicleData.map(item => item[key]))];
+              const options = [...new Set(allVehicleData.map(item => item[key]).filter(Boolean))];
               if (typeof options[0] === 'number') {
                   return (options as number[]).sort((a, b) => b - a);
               }
@@ -108,7 +108,7 @@ const DashboardClient: FC = () => {
            };
 
            setFilterOptions({
-                regions: ['Sudeste', 'Nordeste', 'Sul', 'Norte', 'Centro-Oeste'].sort(),
+                regions: [...new Set(allVehicleData.map(item => item.region).filter(Boolean) as string[])].sort(),
                 states: getUniqueSortedOptions('state') as string[],
                 cities: getUniqueSortedOptions('city') as string[],
                 manufacturers: getUniqueSortedOptions('manufacturer') as string[],
@@ -195,7 +195,7 @@ const DashboardClient: FC = () => {
         const statesInRegion = regionToStatesMap[filters.region] || [];
         tempFilteredData = tempFilteredData.filter(d => statesInRegion.includes(d.state.toUpperCase()));
     }
-    const stateOptions = [...new Set(tempFilteredData.map(d => d.state))].sort();
+    const stateOptions = [...new Set(tempFilteredData.map(d => d.state).filter(Boolean))].sort();
 
 
     if (filters.state && filters.state !== 'all') {
@@ -212,7 +212,7 @@ const DashboardClient: FC = () => {
     }
 
     const getUniqueSortedOptions = (key: keyof Vehicle) => {
-        const options = [...new Set(baseData.map(item => item[key]))];
+        const options = [...new Set(baseData.map(item => item[key]).filter(Boolean))];
         if (typeof options[0] === 'number') {
             return (options as number[]).sort((a, b) => b - a);
         }
