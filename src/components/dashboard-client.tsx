@@ -72,16 +72,12 @@ const DashboardClient: FC = () => {
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
   const isFiltered = useMemo(() => {
-    // Check if any filter has a meaningful value.
-    return Object.entries(debouncedFilters).some(([key, value]) => {
+    // An active filter exists if any value is not an empty string or an empty array.
+    return Object.values(debouncedFilters).some(value => {
       if (Array.isArray(value)) {
         return value.length > 0;
       }
-      // For 'region', 'all' is a valid filter. For others, 'all' might mean 'not set'.
-      if (key === 'region') {
-        return value && value !== '';
-      }
-      return value && value !== '' && value !== 'all';
+      return value !== '';
     });
   }, [debouncedFilters]);
 
@@ -172,11 +168,16 @@ const DashboardClient: FC = () => {
   }, [toast, t]);
 
 
-  const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
+ const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
-        const updated = { ...prev, [key]: value === 'all' ? '' : value };
+        // Create a mutable copy of the previous state
+        const updated = { ...prev };
 
-        // Handle cascading filter resets and logic
+        // Set the new value for the changed filter
+        updated[key] = value;
+
+        // --- Cascading Logic ---
+
         if (key === 'region') {
             updated.state = '';
             updated.city = '';
@@ -186,16 +187,18 @@ const DashboardClient: FC = () => {
         }
         if (key === 'state') {
             updated.city = '';
-            // Auto-fill region if state is selected
+            // Auto-fill region if a specific state is selected
             if (value && value !== 'all') {
-                const region = stateToRegionMap[value];
-                if (region) updated.region = region;
+                const regionForState = stateToRegionMap[value];
+                if (regionForState) {
+                    updated.region = regionForState;
+                }
             }
         }
         if (key === 'city') {
              if (value && value !== 'all' && (prev.region === 'all' || !prev.state)) {
                 setIsCityAlertOpen(true);
-                updated.city = ''; // Prevent city selection
+                updated.city = ''; // Prevent city selection and reset it
              }
         }
         if (key === 'manufacturer') {
@@ -206,17 +209,6 @@ const DashboardClient: FC = () => {
             updated.version = [];
         }
         
-        // Normalize "clear" values to empty strings or arrays
-        for (const filterKey in updated) {
-            if ((updated as any)[filterKey] === 'all' || (updated as any)[filterKey] === null) {
-                 if (filterKey === 'version') {
-                    (updated as any)[filterKey] = [];
-                 } else {
-                    (updated as any)[filterKey] = '';
-                 }
-            }
-        }
-
         return updated;
     });
 }, []);
@@ -543,3 +535,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    

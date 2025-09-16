@@ -37,7 +37,7 @@ const generateCacheKey = (filters: Partial<Filters>): string => {
     Object.keys(filters).sort().forEach(key => {
         const filterKey = key as keyof Filters;
         const value = filters[filterKey];
-        if (value && (Array.isArray(value) ? value.length > 0 : value !== 'all')) {
+        if (value && (Array.isArray(value) ? value.length > 0 : value !== '' && value !== 'all')) {
             sortedFilters[filterKey] = Array.isArray(value) ? [...value].sort() : value;
         }
     });
@@ -225,3 +225,5 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }
 }
+
+    

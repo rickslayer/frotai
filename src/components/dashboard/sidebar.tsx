@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -55,21 +56,21 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                   <Select value={filters.region || 'all'} onValueChange={(value) => handleFilterValueChange('region', value)}>
+                   <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
                     <SelectContent>
                        <SelectItem value="all">{t('all_regions')}</SelectItem>
                       {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={filters.state || 'all'} onValueChange={(value) => handleFilterValueChange('state', value)}>
+                  <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
                        <SelectItem value="all">{t('all_states')}</SelectItem>
                       {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={filters.city || 'all'} onValueChange={(value) => handleFilterValueChange('city', value)} disabled={isCityDisabled}>
+                  <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value)} disabled={isCityDisabled}>
                     <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_cities')}</SelectItem>
@@ -85,7 +86,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4 pt-4">
-                  <Select value={filters.manufacturer || 'all'} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
+                  <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
                     <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
@@ -117,7 +118,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-4">
-                   <Select value={String(filters.year || 'all')} onValueChange={(value) => handleFilterValueChange('year', value)}>
+                   <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_years')}</SelectItem>
@@ -144,3 +145,5 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({ filters, onFilterChange, 
 };
 
 export default DashboardSidebar;
+
+    
