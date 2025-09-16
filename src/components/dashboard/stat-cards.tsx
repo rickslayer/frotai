@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useMemo, useState, useEffect } from 'react';
 import type { Filters, DashboardData } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Car, MapPin, Users2, Map, Factory } from 'lucide-react';
+import { LifeBuoy, MapPin, Users2, Map, Factory } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { stateToRegionMap } from '@/lib/regions';
 
@@ -64,7 +64,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{t('main_model')}</CardTitle>
-          <Car className="h-4 w-4 text-muted-foreground" />
+          <LifeBuoy className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold truncate">{data.topModel.name}</div>
