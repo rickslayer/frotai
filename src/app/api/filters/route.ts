@@ -2,17 +2,14 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
 import type { FilterOptions } from '@/types';
-import { allRegions, regionToStatesMap } from '@/lib/regions';
+import { allRegions } from '@/lib/regions';
 
-
-// MongoDB Connection String
 const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://frotai:X7Ra8kREnBX6z6SC@frotai.bylfte3.mongodb.net/';
 const dbName = 'frotai';
 const collectionName = 'carros';
 
 let client: MongoClient | null = null;
 
-// Function to connect to MongoDB, reusing the client connection
 async function connectToMongo() {
   if (client && client.topology && client.topology.isConnected()) {
     return client.db(dbName);
@@ -24,17 +21,15 @@ async function connectToMongo() {
     return client.db(dbName);
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
-    client = null; // Reset client on connection failure
+    client = null; 
     throw new Error('Failed to connect to the database.');
   }
 }
 
-// Helper function to get distinct, sorted, non-empty values for a field
 const getDistinctValues = async (collection: import('mongodb').Collection, field: string, match: any = {}) => {
   const values = await collection.distinct(field, { ...match, [field]: { $ne: null, $ne: "" } });
   return values.sort();
 };
-
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,53 +39,37 @@ export async function GET(request: NextRequest) {
 
     const region = searchParams.get('region');
     const state = searchParams.get('state');
-    const city = searchParams.get('city');
     const manufacturer = searchParams.get('manufacturer');
     const model = searchParams.get('model');
     
-    // Base match query from URL params
-    const baseMatch: any = {};
-    if (region && region !== 'all') baseMatch.region = region;
-    if (state && state !== 'all') baseMatch.state = state;
-    if (city && city !== 'all') baseMatch.city = city;
-    if (manufacturer && manufacturer !== 'all') baseMatch.manufacturer = manufacturer;
-    if (model && model !== 'all') baseMatch.model = model;
+    const match: any = {};
+    if (region) match.region = region;
+    if (state) match.state = state;
+    if (manufacturer) match.manufacturer = manufacturer;
+    if (model) match.model = model;
     
-    // For cascading filters: if a manufacturer is selected, only show its models.
-    const modelMatch = { ...baseMatch };
-    if (manufacturer && manufacturer !== 'all') modelMatch.manufacturer = manufacturer;
-    
-    // If a model is selected, only show its versions.
-    const versionMatch = { ...baseMatch };
-    if (model && model !== 'all') versionMatch.model = model;
-
-
     const [
-      dbRegions,
-      dbStates,
-      dbCities,
-      dbManufacturers,
-      dbModels,
-      dbVersions,
-      dbYears,
+      manufacturers,
+      models,
+      versions,
+      years,
+      cities
     ] = await Promise.all([
-      getDistinctValues(collection, 'region', baseMatch),
-      getDistinctValues(collection, 'state', baseMatch),
-      getDistinctValues(collection, 'city', baseMatch),
-      getDistinctValues(collection, 'manufacturer', baseMatch),
-      getDistinctValues(collection, 'model', modelMatch),
-      getDistinctValues(collection, 'version', versionMatch),
-      getDistinctValues(collection, 'year', baseMatch),
+      !manufacturer && !model ? getDistinctValues(collection, 'manufacturer', match) : [],
+      manufacturer && !model ? getDistinctValues(collection, 'model', match) : [],
+      model ? getDistinctValues(collection, 'version', match) : [],
+      getDistinctValues(collection, 'year', {}),
+      state ? getDistinctValues(collection, 'city', { state }) : []
     ]);
 
     const filterOptions: FilterOptions = {
-      regions: dbRegions.length > 0 ? dbRegions : allRegions,
-      states: dbStates,
-      cities: dbCities,
-      manufacturers: dbManufacturers,
-      models: dbModels,
-      versions: dbVersions,
-      years: (dbYears as number[]).sort((a, b) => b - a),
+      regions: allRegions,
+      states: [], // States are now static in the client
+      cities,
+      manufacturers,
+      models,
+      versions,
+      years: (years as number[]).sort((a, b) => b - a),
     };
 
     return NextResponse.json(filterOptions);

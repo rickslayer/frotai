@@ -1,7 +1,9 @@
+
 "use client"
 
 import * as React from "react"
 import { Check, ChevronsUpDown } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -39,6 +41,7 @@ export function Combobox({
     disabled = false
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
+  const { t } = useTranslation();
 
   const selectedItem = items.find((item) => item.value.toLowerCase() === value.toLowerCase())
 
@@ -63,20 +66,20 @@ export function Combobox({
             <CommandEmpty>{noResultsText}</CommandEmpty>
             <CommandGroup>
               <CommandItem
-                  key="all-models"
-                  value="all"
+                  key="all-items"
+                  value=""
                   onSelect={() => {
-                    onChange("all")
+                    onChange("")
                     setOpen(false)
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === "all" ? "opacity-100" : "opacity-0"
+                      value === "" ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  Todos os Modelos
+                  {t('all_models')}
               </CommandItem>
               {items.map((item) => (
                 <CommandItem

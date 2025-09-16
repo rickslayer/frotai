@@ -9,7 +9,9 @@
   "filters": "Filters",
   "location": "Location",
   "select_region": "Select Region",
+  "all_regions": "All Regions",
   "select_state": "Select State",
+  "all_states": "All States",
   "select_city": "Select City",
   "all_cities": "All Cities",
   "vehicle": "Vehicle",
@@ -76,7 +78,7 @@
   "part_demand_error": "Could not predict parts demand. Please try again.",
   "demand_level": "Demand: {level}",
   "part_demand_disabled_title": "Select filters to start",
-  "part_demand_disabled_description": "Apply at least one filter to enable demand prediction.",
+  "part_demand_disabled_description": "Apply manufacturer and model filters to enable demand prediction.",
   "no_opportunities_found_title": "No specific opportunities found",
   "no_opportunities_found_description": "Frota.AI could not identify specific high-demand parts for this category and filter combination. Try a broader category or different filters.",
   "welcome_title": "Welcome to Frota.AI",
@@ -122,5 +124,3 @@
   "comparison_warning": "If the comparison text seems incomplete, please generate it again. If the error persists, contact our support.",
   "ok_close": "OK, close"
 }
-
-    

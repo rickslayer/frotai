@@ -31,7 +31,7 @@ export type Filters = {
   manufacturer: string;
   model: string;
   version: string[];
-  year: number | 'all' | '';
+  year: number | '';
 };
 
 // Schema for data points used in charts

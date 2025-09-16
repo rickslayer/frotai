@@ -1,6 +1,6 @@
 
 import { cache } from 'react';
-import type { Vehicle, FilterOptions, Filters, DashboardData } from '@/types';
+import type { FilterOptions, Filters, DashboardData } from '@/types';
 
 
 // Fetches aggregated dashboard data from the API based on the provided filters.
@@ -9,7 +9,7 @@ export const getFleetData = async (filters: Partial<Filters>): Promise<Dashboard
     const query = new URLSearchParams();
     
     Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== '' && value !== 'all') {
+      if (value && value !== '') {
          if (Array.isArray(value)) {
            value.forEach(v => query.append(key, v));
          } else {
@@ -18,9 +18,7 @@ export const getFleetData = async (filters: Partial<Filters>): Promise<Dashboard
       }
     });
 
-    // Make sure the URL is correct for your environment
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/carros';
-    // Use a unique query string for each request to bypass client-side caching if needed
     const res = await fetch(`${apiUrl}?${query.toString()}&_=${new Date().getTime()}`);
 
 
@@ -52,7 +50,7 @@ export const getInitialFilterOptions = cache(async (filters?: Partial<Filters>):
     const query = new URLSearchParams();
     if (filters) {
         Object.entries(filters).forEach(([key, value]) => {
-            if (value && value !== '' && value !== 'all') {
+            if (value && value !== '') {
                 if (Array.isArray(value)) {
                     value.forEach(v => query.append(key, v));
                 } else {
