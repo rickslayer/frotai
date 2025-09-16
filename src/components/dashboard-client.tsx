@@ -74,17 +74,22 @@ const DashboardClient: FC = () => {
   const isFiltered = useMemo(() => {
     // An active filter exists if any value is not an empty string or an empty array.
     return Object.entries(debouncedFilters).some(([key, value]) => {
+      if (key === 'region' && value === 'all') {
+        return true;
+      }
       if (Array.isArray(value)) {
         return value.length > 0;
       }
-      return value !== '';
+      return value && value !== 'all' && value !== '';
     });
   }, [debouncedFilters]);
+  
 
-  const isStateDisabled = useMemo(() => filters.region === 'all', [filters.region]);
+  const isStateDisabled = useMemo(() => filters.region === 'all' || !filters.region, [filters.region]);
   const isCityDisabled = useMemo(() => filters.region === 'all' || !filters.state || filters.state === 'all', [filters.region, filters.state]);
   const isModelDisabled = useMemo(() => !filters.manufacturer || filters.manufacturer === 'all', [filters.manufacturer]);
-  const isVersionDisabled = useMemo(() => !filters.model || filters.model === 'all', [filters.model]);
+  const isVersionDisabled = useMemo(() => !filters.model || filters.model === 'all' || isModelDisabled, [filters.model, isModelDisabled]);
+
 
   // Effect for fetching main dashboard data when debounced filters change
   useEffect(() => {
@@ -173,30 +178,23 @@ const DashboardClient: FC = () => {
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
         const updated = { ...prev };
-        updated[key] = value;
+        
+        // Handle "all" selection from dropdowns
+        const finalValue = value === 'all' ? 'all' : value;
+        updated[key] = finalValue;
 
         // --- Cascading Logic ---
         if (key === 'region') {
             updated.state = '';
             updated.city = '';
-            if (value === 'all') {
-                setIsCityAlertOpen(true);
-            }
         }
-        if (key === 'state') {
+        if (key === 'state' && value) {
             updated.city = '';
-            if (value && value !== 'all') {
-                const regionForState = stateToRegionMap[value];
-                if (regionForState && updated.region !== regionForState) {
-                    updated.region = regionForState;
-                }
+            // Auto-select region if state is chosen directly
+            const regionForState = stateToRegionMap[value];
+            if (regionForState && updated.region !== regionForState) {
+                updated.region = regionForState;
             }
-        }
-         if (key === 'city') {
-             if (value && value !== 'all' && (!prev.state || prev.state === 'all')) {
-                setIsCityAlertOpen(true);
-                updated.city = ''; // Prevent city selection and reset it
-             }
         }
         if (key === 'manufacturer') {
             updated.model = '';
@@ -394,6 +392,12 @@ const DashboardClient: FC = () => {
       setIsComparing(false);
   }
 
+  const handleDisabledFilterClick = () => {
+    if (filters.region === 'all') {
+      setIsCityAlertOpen(true);
+    }
+  }
+
   const renderContent = () => {
     if (isLoading && !isFiltered) {
       return (
@@ -452,7 +456,7 @@ const DashboardClient: FC = () => {
               <PartDemandForecast
                   fleetAgeBrackets={fleetAgeBracketsWithLabels}
                   filters={filters}
-                  disabled={!isFiltered || dashboardData.totalVehicles === 0}
+                  disabled={!isFiltered || dashboardData.totalVehicles === 0 || !filters.manufacturer || filters.manufacturer === 'all' || !filters.model || filters.model === 'all'}
                   onDemandPredicted={setDemandAnalysis}
               />
           </div>
@@ -474,6 +478,7 @@ const DashboardClient: FC = () => {
           isCityDisabled={isCityDisabled}
           isModelDisabled={isModelDisabled}
           isVersionDisabled={isVersionDisabled}
+          onDisabledFilterClick={handleDisabledFilterClick}
         />
       </Sidebar>
       <SidebarInset>

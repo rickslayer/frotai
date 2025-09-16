@@ -24,6 +24,7 @@ interface DashboardSidebarProps {
   isCityDisabled: boolean;
   isModelDisabled: boolean;
   isVersionDisabled: boolean;
+  onDisabledFilterClick: () => void;
 }
 
 const DashboardSidebar: FC<DashboardSidebarProps> = ({ 
@@ -34,7 +35,8 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
     isStateDisabled, 
     isCityDisabled,
     isModelDisabled,
-    isVersionDisabled
+    isVersionDisabled,
+    onDisabledFilterClick,
 }) => {
   const { t } = useTranslation();
   
@@ -75,14 +77,24 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                       {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value)} disabled={isStateDisabled}>
+                  <Select 
+                    value={filters.state} 
+                    onValueChange={(value) => handleFilterValueChange('state', value)} 
+                    disabled={isStateDisabled}
+                    onDisabledClick={onDisabledFilterClick}
+                  >
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
                        <SelectItem value="all">{t('all_states')}</SelectItem>
                       {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value)} disabled={isCityDisabled}>
+                  <Select 
+                    value={filters.city} 
+                    onValueChange={(value) => handleFilterValueChange('city', value)} 
+                    disabled={isCityDisabled}
+                    onDisabledClick={onDisabledFilterClick}
+                    >
                     <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t('all_cities')}</SelectItem>

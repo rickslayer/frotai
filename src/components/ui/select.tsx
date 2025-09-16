@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -12,10 +13,15 @@ const SelectGroup = SelectPrimitive.Group
 
 const SelectValue = SelectPrimitive.Value
 
+interface SelectTriggerProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> {
+  onDisabledClick?: () => void;
+}
+
+
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+  SelectTriggerProps
+>(({ className, children, onDisabledClick, ...props }, ref) => (
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
@@ -23,6 +29,15 @@ const SelectTrigger = React.forwardRef<
       className
     )}
     {...props}
+    onClick={(e) => {
+      if (props.disabled && onDisabledClick) {
+        e.preventDefault();
+        onDisabledClick();
+      }
+      if (!props.disabled && props.onClick) {
+         props.onClick(e);
+      }
+    }}
   >
     {children}
     <SelectPrimitive.Icon asChild>
