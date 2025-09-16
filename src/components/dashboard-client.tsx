@@ -72,8 +72,15 @@ const DashboardClient: FC = () => {
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
   const isFiltered = useMemo(() => {
-    return Object.values(debouncedFilters).some(value => {
-      if (Array.isArray(value)) return value.length > 0;
+    // Check if any filter has a meaningful value.
+    return Object.entries(debouncedFilters).some(([key, value]) => {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      // For 'region', 'all' is a valid filter. For others, 'all' might mean 'not set'.
+      if (key === 'region') {
+        return value && value !== '';
+      }
       return value && value !== '' && value !== 'all';
     });
   }, [debouncedFilters]);
@@ -167,13 +174,13 @@ const DashboardClient: FC = () => {
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
-        const updated = { ...prev, [key]: value };
+        const updated = { ...prev, [key]: value === 'all' ? '' : value };
 
         // Handle cascading filter resets and logic
         if (key === 'region') {
             updated.state = '';
             updated.city = '';
-            if (value === 'all' && prev.city) {
+            if (value === 'all') {
                 setIsCityAlertOpen(true);
             }
         }
@@ -186,7 +193,7 @@ const DashboardClient: FC = () => {
             }
         }
         if (key === 'city') {
-             if (value && value !== 'all' && prev.region === 'all') {
+             if (value && value !== 'all' && (prev.region === 'all' || !prev.state)) {
                 setIsCityAlertOpen(true);
                 updated.city = ''; // Prevent city selection
              }
@@ -199,10 +206,14 @@ const DashboardClient: FC = () => {
             updated.version = [];
         }
         
-        // Normalize "clear" values to empty strings
+        // Normalize "clear" values to empty strings or arrays
         for (const filterKey in updated) {
             if ((updated as any)[filterKey] === 'all' || (updated as any)[filterKey] === null) {
-                 (updated as any)[filterKey] = '';
+                 if (filterKey === 'version') {
+                    (updated as any)[filterKey] = [];
+                 } else {
+                    (updated as any)[filterKey] = '';
+                 }
             }
         }
 
