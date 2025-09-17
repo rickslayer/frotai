@@ -135,15 +135,13 @@ const DashboardClient: FC = () => {
   // Effect for fetching dynamic filter options based on selections
   useEffect(() => {
     const fetchFilterOptions = async () => {
-       // Only fetch if manufacturer is selected
+       // Only fetch if manufacturer is selected. If not, the options should be empty.
        if (!filters.manufacturer) {
-           // If manufacturer is cleared, we might want to reset dependent filters
            setFilterOptions(prev => ({...prev, models: [], versions: [], years: []}));
            return;
        }
 
        // Fetch options for the current manufacturer and model.
-       // We pass only manufacturer and model to get all available versions and years for that combo.
        const options = await getInitialFilterOptions({
             manufacturer: filters.manufacturer,
             model: filters.model
@@ -151,30 +149,33 @@ const DashboardClient: FC = () => {
 
         setFilterOptions(prev => ({
             ...prev,
-            models: options.models.length > 0 ? options.models : [],
-            versions: options.versions.length > 0 ? options.versions : [],
-            years: options.years.length > 0 ? options.years : prev.years,
+            models: options.models || [],
+            versions: options.versions || [],
+            years: options.years || [],
         }));
     };
     
-    // This effect should run when manufacturer or model changes.
+    // This effect should run when manufacturer or model changes to update dependent filters.
     fetchFilterOptions();
   }, [filters.manufacturer, filters.model]);
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
         const updated = { ...prev };
+        const previous = { ...prev };
         updated[key] = value;
 
         // --- Cascading Logic ---
-        if (key === 'manufacturer') {
+        if (key === 'manufacturer' && value !== previous.manufacturer) {
             updated.model = '';
             updated.version = [];
             updated.year = '';
+             setFilterOptions(opts => ({ ...opts, models: [], versions: [], years: [] }));
         }
-        if (key === 'model') {
+        if (key === 'model' && value !== previous.model) {
             updated.version = [];
             updated.year = '';
+             setFilterOptions(opts => ({ ...opts, versions: [], years: [] }));
         }
         
         return updated;
@@ -183,6 +184,7 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
+    // After clearing filters, fetch all available manufacturers again
     getInitialFilterOptions().then(options => {
         setFilterOptions(options);
     });
