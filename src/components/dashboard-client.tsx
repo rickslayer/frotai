@@ -17,7 +17,6 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import RegionalFleetChart from './dashboard/regional-fleet-chart';
-import { regionToStatesMap, allRegions, stateToRegionMap } from '@/lib/regions';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
@@ -34,7 +33,6 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 const emptyDashboardData: DashboardData = {
   totalVehicles: 0,
-  topCity: { name: '-', quantity: 0 },
   topModel: { name: '-', quantity: 0 },
   topManufacturer: null,
   regionalData: [],
@@ -44,13 +42,10 @@ const emptyDashboardData: DashboardData = {
 };
 
 const initialFilters: Filters = {
-    region: '', state: '', city: '', manufacturer: '', model: '', version: [], year: '',
+    manufacturer: '', model: '', version: [], year: '',
 };
 
 const emptyFilterOptions: FilterOptions = {
-    regions: [],
-    states: [],
-    cities: [],
     manufacturers: [],
     models: [],
     versions: [],
@@ -65,7 +60,7 @@ const DashboardClient: FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData>(emptyDashboardData);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>(emptyFilterOptions);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const debouncedFilters = useDebounce(filters, 300);
@@ -86,8 +81,6 @@ const DashboardClient: FC = () => {
     });
   }, [filters]);
   
-  const isStateDisabled = useMemo(() => !filters.region, [filters.region]);
-  const isCityDisabled = useMemo(() => !filters.state, [filters.state]);
   const isModelDisabled = useMemo(() => !filters.manufacturer, [filters.manufacturer]);
   const isVersionDisabled = useMemo(() => !filters.model, [filters.model]);
 
@@ -143,28 +136,24 @@ const DashboardClient: FC = () => {
   useEffect(() => {
     const fetchFilterOptions = async () => {
        // Don't fetch if the top-level dependencies are not set
-       if (!filters.region && !filters.state && !filters.manufacturer && !filters.model) {
+       if (!filters.manufacturer && !filters.model) {
            return;
        }
 
        const options = await getInitialFilterOptions({
-            region: filters.region,
-            state: filters.state,
             manufacturer: filters.manufacturer,
             model: filters.model
         });
 
         setFilterOptions(prev => ({
             ...prev,
-            states: filters.region ? regionToStatesMap[filters.region] || [] : prev.states,
-            cities: options.cities.length > 0 ? options.cities : prev.cities,
             models: options.models.length > 0 ? options.models : prev.models,
             versions: options.versions.length > 0 ? options.versions : prev.versions,
         }));
     };
     
     fetchFilterOptions();
-  }, [filters.region, filters.state, filters.manufacturer, filters.model]);
+  }, [filters.manufacturer, filters.model]);
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
@@ -172,21 +161,6 @@ const DashboardClient: FC = () => {
         updated[key] = value;
 
         // --- Cascading Logic ---
-        if (key === 'region') {
-            updated.state = '';
-            updated.city = '';
-        }
-        if (key === 'state') {
-            updated.city = '';
-            if (value && !updated.region) {
-                 const regionForState = stateToRegionMap[value];
-                 if (regionForState) {
-                    updated.region = regionForState;
-                 }
-            } else if (!value) {
-                updated.region = ''; // Clear region if state is cleared
-            }
-        }
         if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
@@ -230,7 +204,7 @@ const DashboardClient: FC = () => {
     };
     
     addSection(t('total_vehicles'), dashboardData.totalVehicles.toLocaleString());
-    addSection(t('main_city'), dashboardData.topCity.name);
+    addSection(t('main_manufacturer'), dashboardData.topManufacturer?.name || '-');
     addSection(t('main_model'), dashboardData.topModel.name);
     y += 5;
 
@@ -408,7 +382,7 @@ const DashboardClient: FC = () => {
 
     return (
        <>
-        <StatCards data={dashboardData} filters={filters} />
+        <StatCards data={dashboardData} />
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
             <div id="regional-chart">
@@ -461,8 +435,6 @@ const DashboardClient: FC = () => {
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           filterOptions={filterOptions}
-          isStateDisabled={isStateDisabled}
-          isCityDisabled={isCityDisabled}
           isModelDisabled={isModelDisabled}
           isVersionDisabled={isVersionDisabled}
         />

@@ -14,25 +14,14 @@ export type Vehicle = {
   city: string;
 };
 
-export type CityOption = {
-    name: string;
-    state: string;
-}
-
 export type FilterOptions = {
-  regions: string[];
   manufacturers: string[];
   models: string[];
   versions: string[];
-  states: string[];
-  cities: CityOption[];
   years: number[];
 };
 
 export type Filters = {
-  region: string;
-  state: string;
-  city: string;
   manufacturer: string;
   model: string;
   version: string[];
@@ -121,7 +110,6 @@ export type FleetByYear = {
 
 export type DashboardData = {
   totalVehicles: number;
-  topCity: TopEntity;
   topModel: TopEntity;
   topManufacturer: TopEntity | null;
   regionalData: RegionData[];

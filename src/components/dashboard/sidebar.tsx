@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { Car, MapPin, Calendar, SlidersHorizontal, FilterX } from 'lucide-react';
+import { Car, Calendar, SlidersHorizontal, FilterX } from 'lucide-react';
 import type { FilterOptions, Filters } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,8 +20,6 @@ interface DashboardSidebarProps {
   onFilterChange: (key: keyof Filters, value: any) => void;
   onClearFilters: () => void;
   filterOptions: FilterOptions;
-  isStateDisabled: boolean;
-  isCityDisabled: boolean;
   isModelDisabled: boolean;
   isVersionDisabled: boolean;
 }
@@ -31,8 +29,6 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
     onFilterChange,
     onClearFilters,
     filterOptions,
-    isStateDisabled,
-    isCityDisabled,
     isModelDisabled,
     isVersionDisabled,
 }) => {
@@ -60,42 +56,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
         <ScrollArea className="flex-1">
           <div className="p-4">
             <h2 className="mb-4 text-lg font-semibold tracking-tight">{t('filters')}</h2>
-            <Accordion type="multiple" defaultValue={['location', 'vehicle', 'time']} className="w-full">
-              <AccordionItem value="location">
-                <AccordionTrigger>
-                  <div className='flex items-center gap-2'>
-                    <MapPin className="h-4 w-4" /> <span>{t('location')}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="space-y-4 pt-4">
-                   <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value)}>
-                    <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
-                    <SelectContent>
-                      {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={filters.state}
-                    onValueChange={(value) => handleFilterValueChange('state', value)}
-                    disabled={isStateDisabled}
-                  >
-                    <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
-                    <SelectContent>
-                      {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={filters.city}
-                    onValueChange={(value) => handleFilterValueChange('city', value)}
-                    disabled={isCityDisabled}
-                    >
-                    <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
-                    <SelectContent>
-                      {(filterOptions.cities || []).map(c => <SelectItem key={`${c.name}-${c.state}`} value={c.name}>{c.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </AccordionContent>
-              </AccordionItem>
+            <Accordion type="multiple" defaultValue={['vehicle', 'time']} className="w-full">
               <AccordionItem value="vehicle">
                 <AccordionTrigger>
                   <div className='flex items-center gap-2'>

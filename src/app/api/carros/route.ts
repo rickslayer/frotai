@@ -31,11 +31,12 @@ async function connectToMongo() {
 
 const generateCacheKey = (filters: Partial<Filters>): string => {
     const sortedFilters: any = {};
-    Object.keys(filters).sort().forEach(key => {
-        const filterKey = key as keyof Filters;
-        const value = filters[filterKey];
+    const filterKeys = Object.keys(filters).sort() as (keyof Filters)[];
+
+    filterKeys.forEach(key => {
+        const value = filters[key];
         if (value && (Array.isArray(value) ? value.length > 0 : value !== '')) {
-            sortedFilters[filterKey] = Array.isArray(value) ? [...value].sort() : value;
+            sortedFilters[key] = Array.isArray(value) ? [...value].sort() : value;
         }
     });
     return JSON.stringify(sortedFilters);
@@ -58,14 +59,14 @@ export async function GET(request: NextRequest) {
 
     const filters: Partial<Filters> = {};
     searchParams.forEach((value, key) => {
-        if (key === 'year') {
-            if (value) (filters as any)[key] = parseInt(value, 10);
-        } else if (key === 'version') {
-             if (!filters.version) filters.version = [];
-             filters.version.push(value);
-        }
-        else {
-            if (value) (filters as any)[key] = value;
+        const filterKey = key as keyof Filters;
+        if (filterKey === 'year' && value) {
+            filters.year = parseInt(value, 10);
+        } else if (filterKey === 'version' && value) {
+            if (!filters.version) filters.version = [];
+            filters.version.push(value);
+        } else if (value && filterKey !== 'year' && filterKey !== 'version') {
+            (filters as any)[filterKey] = value;
         }
     });
     
@@ -83,21 +84,22 @@ export async function GET(request: NextRequest) {
     const query: any = {};
     for (const key in filters) {
         const filterKey = key as keyof Filters;
-        if (filters[filterKey] && filters[filterKey] !== '') {
-            if (filterKey === 'version' && Array.isArray(filters.version) && filters.version!.length > 0) {
-                 query.version = { $in: filters.version };
+        const filterValue = filters[filterKey];
+
+        if (filterValue && (Array.isArray(filterValue) ? filterValue.length > 0 : filterValue !== '')) {
+            if (filterKey === 'version' && Array.isArray(filterValue) && filterValue.length > 0) {
+                 query.version = { $in: filterValue };
             } else if (filterKey !== 'version') {
-                query[key] = filters[filterKey];
+                query[key] = filterValue;
             }
         }
     }
-
+    
     const currentYear = new Date().getFullYear();
 
     // Run aggregations in parallel
     const [
         totalVehicles,
-        topCity,
         topModel,
         topManufacturer,
         regionalData,
@@ -106,9 +108,7 @@ export async function GET(request: NextRequest) {
         fleetAgeBrackets,
     ] = await Promise.all([
         // Total Vehicles
-        aggregateData(collection, query, { $group: { _id: null, total: { $sum: '$quantity' } } }),
-        // Top City
-        aggregateData(collection, query, { $group: { _id: '$city', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
+        collection.countDocuments(query),
         // Top Model
         aggregateData(collection, query, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
         // Top Manufacturer
@@ -135,8 +135,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const dashboardData: DashboardData = {
-        totalVehicles: totalVehicles[0]?.total || 0,
-        topCity: { name: topCity[0]?._id || '-', quantity: topCity[0]?.total || 0 },
+        totalVehicles: totalVehicles || 0,
         topModel: { name: topModel[0]?._id || '-', quantity: topModel[0]?.total || 0 },
         topManufacturer: topManufacturer[0] ? { name: topManufacturer[0]._id, quantity: topManufacturer[0].total } : null,
         regionalData: allRegions.map(region => {
@@ -144,7 +143,7 @@ export async function GET(request: NextRequest) {
             return { name: region, quantity: found?.total || 0 };
         }),
         topModelsChart: topModelsChart.map((d: any) => ({ model: d._id, quantity: d.total })),
-        fleetByYearChart: fleetByYearChart.map((d: any) => ({ year: d._id, quantity: d.total })),
+        fleetByYearChart: fleetByYearChart.map((d: any) => ({ year: d.year, quantity: d.total })),
         fleetAgeBrackets: fleetAgeBrackets.map((b: any) => {
             const rangeMap: Record<number, string> = { 0: '0-3', 4: '4-7', 8: '8-12', 13: '13+' };
             return {
