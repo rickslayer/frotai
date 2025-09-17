@@ -47,17 +47,19 @@ const initialFilters: Filters = {
     region: '', state: '', city: '', manufacturer: '', model: '', version: [], year: '',
 };
 
-const DashboardClient: FC = () => {
+interface DashboardClientProps {
+  initialFilterOptions: FilterOptions;
+}
+
+const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
   const [dashboardData, setDashboardData] = useState<DashboardData>(emptyDashboardData);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
-    regions: allRegions, states: [], cities: [], manufacturers: [], models: [], versions: [], years: [],
-  });
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>(initialFilterOptions);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const debouncedFilters = useDebounce(filters, 300);
@@ -135,48 +137,28 @@ const DashboardClient: FC = () => {
     fetchFilterOptions();
   }, [filters.region, filters.state, filters.manufacturer, filters.model]);
 
-  // Effect for initial load (manufacturers and years)
-  useEffect(() => {
-    const loadInitialOptions = async () => {
-        setIsLoading(true);
-        try {
-            const options = await getInitialFilterOptions();
-            setFilterOptions(prev => ({
-                ...prev,
-                manufacturers: options.manufacturers,
-                years: options.years,
-            }));
-        } catch (error) {
-            console.error('Failed to fetch initial options:', error);
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while fetching initial data.';
-            toast({ variant: 'destructive', title: t('error'), description: errorMessage });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    loadInitialOptions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast, t]);
-
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
         const updated = { ...prev };
         updated[key] = value;
 
         // --- Cascading Logic ---
-        if (key === 'region') {
+        if (key === 'region' && value) {
             updated.state = '';
             updated.city = '';
         }
-        if (key === 'state') {
+        if (key === 'state' && value) {
             updated.city = '';
-            // Also auto-select region if state is chosen first
             if (value && !updated.region) {
                  const regionForState = stateToRegionMap[value];
                  if (regionForState) {
                     updated.region = regionForState;
                  }
             }
+        }
+         if (key === 'state' && !value) {
+            updated.city = '';
+            updated.region = '';
         }
         if (key === 'manufacturer') {
             updated.model = '';
@@ -457,7 +439,7 @@ const DashboardClient: FC = () => {
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           filterOptions={filterOptions}
-          isStateDisabled={isStateDisabled}
+          isStateDisabled={false}
           isCityDisabled={isCityDisabled}
           isModelDisabled={isModelDisabled}
           isVersionDisabled={isVersionDisabled}
