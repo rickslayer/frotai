@@ -135,11 +135,15 @@ const DashboardClient: FC = () => {
   // Effect for fetching dynamic filter options based on selections
   useEffect(() => {
     const fetchFilterOptions = async () => {
-       // Don't fetch if the top-level dependencies are not set
+       // Only fetch if manufacturer is selected
        if (!filters.manufacturer) {
+           // If manufacturer is cleared, we might want to reset dependent filters
+           setFilterOptions(prev => ({...prev, models: [], versions: [], years: []}));
            return;
        }
 
+       // Fetch options for the current manufacturer and model.
+       // We pass only manufacturer and model to get all available versions and years for that combo.
        const options = await getInitialFilterOptions({
             manufacturer: filters.manufacturer,
             model: filters.model
@@ -147,12 +151,13 @@ const DashboardClient: FC = () => {
 
         setFilterOptions(prev => ({
             ...prev,
-            models: options.models.length > 0 ? options.models : prev.models,
-            versions: options.versions.length > 0 ? options.versions : [], // Reset versions when model changes
+            models: options.models.length > 0 ? options.models : [],
+            versions: options.versions.length > 0 ? options.versions : [],
             years: options.years.length > 0 ? options.years : prev.years,
         }));
     };
     
+    // This effect should run when manufacturer or model changes.
     fetchFilterOptions();
   }, [filters.manufacturer, filters.model]);
 
@@ -178,15 +183,8 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    // Re-fetch initial options after clearing
     getInitialFilterOptions().then(options => {
-        setFilterOptions(prev => ({
-            ...prev,
-            manufacturers: options.manufacturers,
-            models: [],
-            versions: [],
-            years: options.years,
-        }));
+        setFilterOptions(options);
     });
     setDashboardData(emptyDashboardData);
   }, []);

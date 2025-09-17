@@ -45,14 +45,13 @@ export async function GET(request: NextRequest) {
     const manufacturer = searchParams.get('manufacturer');
     const model = searchParams.get('model');
 
-    const match: any = {};
-    if (manufacturer) match.manufacturer = manufacturer;
-    if (model) match.model = model;
+    // Base match query for dependent filters
+    const baseMatch: any = {};
+    if (manufacturer) baseMatch.manufacturer = manufacturer;
+    if (model) baseMatch.model = model;
     
-    // The versions should also be filtered by the current selections
-    const versionParams = searchParams.getAll('version');
-    if (versionParams.length > 0) match.version = { $in: versionParams };
-
+    // Years should be filtered only by manufacturer and model, not by version.
+    const yearMatch = { ...baseMatch };
 
     const [
       manufacturers,
@@ -63,7 +62,7 @@ export async function GET(request: NextRequest) {
       getDistinctValues(collection, 'manufacturer', {}), // Always get all manufacturers
       manufacturer ? getDistinctValues(collection, 'model', { manufacturer }) : [],
       model ? getDistinctValues(collection, 'version', { manufacturer, model }) : [],
-      getDistinctValues(collection, 'year', match), // Filter years based on current selections
+      getDistinctValues(collection, 'year', yearMatch), // Filter years based on base selections
     ]);
 
     const filterOptions: FilterOptions = {
