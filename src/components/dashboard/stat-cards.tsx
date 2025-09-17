@@ -25,43 +25,22 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
     const determineTopRegion = async () => {
       setIsRegionLoading(true);
 
-      // Priority 1: If a location filter is active, it dictates the region.
+      // Priority 1: If a region filter is active, it dictates the region.
       if (filters.region) {
         setTopRegion(t(filters.region as any));
         setIsRegionLoading(false);
         return;
       }
+      
+      // Priority 2: If a state filter is active, derive from it.
       if (filters.state) {
         const regionForState = stateToRegionMap[filters.state];
         if (regionForState) {
           setTopRegion(t(regionForState as any));
-          setIsRegionLoading(false);
+          setIsRegionLoading(false)
           return;
         }
       }
-
-      // Priority 2: If top city is available, derive region from it.
-      if (data.topCity && data.topCity.name !== '-') {
-        // This is a special case. The filters API can give us the state for a city.
-        // We fetch all states and cities to find the state of the topCity.
-        try {
-          const allFilters = await getInitialFilterOptions();
-          const cityStatePair = allFilters.cities.find(c => c.name === data.topCity.name);
-
-          if (cityStatePair) {
-            const region = stateToRegionMap[cityStatePair.state];
-            if(region) {
-              setTopRegion(t(region as any));
-              setIsRegionLoading(false);
-              return;
-            }
-          }
-        } catch (error) {
-            console.error("Could not fetch city data to determine region:", error);
-            // Fall through to next logic
-        }
-      }
-
 
       // Priority 3: Fallback to the region with the most vehicles from the returned data.
       if (data.regionalData && data.regionalData.length > 0) {
@@ -79,7 +58,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
     };
 
     determineTopRegion();
-  }, [data, filters, t]);
+  }, [data.regionalData, filters.region, filters.state, t]);
 
 
   return (
