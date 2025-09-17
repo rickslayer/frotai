@@ -67,7 +67,8 @@ export const getInitialFilterOptions = cache(async (filters?: Partial<Filters>):
         });
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_FILTER_API_URL || '/api/filters';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
+    const apiUrl = `${baseUrl}/api/filters`;
     const res = await fetch(`${apiUrl}?${query.toString()}`);
     
     if (!res.ok) {
