@@ -113,7 +113,22 @@ const DashboardClient: FC = () => {
 
   // Effect for fetching DASHBOARD DATA based on DEBOUNCED filters
   useEffect(() => {
-    if (isLoading) return; // Don't run this during the initial load
+    // Do not run on initial render, as the initial data is already being fetched.
+    if (isLoading) return; 
+
+    // This check prevents re-fetching the "all data" view right after the initial load.
+    const hasActiveFilters = Object.values(debouncedFilters).some(value => {
+        if (Array.isArray(value)) return value.length > 0;
+        return !!value;
+    });
+
+    // If there are no active filters, and we have just loaded, we already have the global data.
+    if (!hasActiveFilters && !isFiltered) {
+        // Optional: If you want to ensure data is always fresh, you can remove this block.
+        // But it prevents an unnecessary second fetch for the "all" state on page load.
+        return;
+    }
+
 
     const fetchData = async () => {
       startTransition(async () => {
@@ -128,7 +143,7 @@ const DashboardClient: FC = () => {
       });
     };
     fetchData();
-  }, [debouncedFilters, toast, isLoading]);
+  }, [debouncedFilters, toast, isLoading, isFiltered]);
 
 
   // Effect for fetching FILTER OPTIONS immediately when a filter changes
@@ -203,8 +218,21 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    getInitialFilterOptions().then(setFilterOptions);
-  }, []);
+    // After clearing, we fetch the "all" data view again.
+    startTransition(async () => {
+        try {
+            const [options, data] = await Promise.all([
+                getInitialFilterOptions(),
+                getFleetData({})
+            ]);
+            setFilterOptions(options);
+            setDashboardData(data);
+        } catch (error) {
+            console.error(error);
+            toast({ variant: 'destructive', title: t('error'), description: 'Failed to reload data.' });
+        }
+    });
+  }, [toast]);
   
   const handleExportPDF = async () => {
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -403,6 +431,7 @@ const DashboardClient: FC = () => {
       );
     }
     
+    // Welcome placeholder is only shown if the initial data load results in zero vehicles.
     if (!isFiltered && dashboardData.totalVehicles === 0) {
         return <WelcomePlaceholder />;
     }
@@ -431,7 +460,7 @@ const DashboardClient: FC = () => {
           <div id="final-analysis-card">
               <FinalAnalysis
                   filters={filters}
-                  disabled={!isFiltered || dashboardData.totalVehicles === 0}
+                  disabled={dashboardData.totalVehicles === 0}
                   fleetAgeBrackets={fleetAgeBracketsWithLabels}
                   regionalData={dashboardData.regionalData}
                   fleetByYearData={dashboardData.fleetByYearChart.map(d => ({ name: String(d.year), quantity: d.quantity }))}
@@ -444,7 +473,7 @@ const DashboardClient: FC = () => {
               <PartDemandForecast
                   fleetAgeBrackets={fleetAgeBracketsWithLabels}
                   filters={filters}
-                  disabled={!isFiltered || dashboardData.totalVehicles === 0 || !filters.manufacturer || filters.model.length !== 1}
+                  disabled={dashboardData.totalVehicles === 0 || !filters.manufacturer || filters.model.length !== 1}
                   onDemandPredicted={setDemandAnalysis}
               />
           </div>
@@ -510,5 +539,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
