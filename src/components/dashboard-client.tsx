@@ -136,20 +136,18 @@ const DashboardClient: FC = () => {
   useEffect(() => {
     const fetchFilterOptions = async () => {
         const { manufacturer, model, version } = filters;
-        const query: Partial<Filters> = {};
-
-        if (manufacturer) query.manufacturer = manufacturer;
-        if (model) query.model = model;
-        if (version.length > 0) query.version = version;
-
-        // If no manufacturer, no need to fetch anything dynamically
+        
+        // Don't fetch if there's no manufacturer
         if (!manufacturer) return;
 
+        const query: Partial<Filters> = { manufacturer };
+        if (model) query.model = model;
+        if (version.length > 0) query.version = version;
+        
         const options = await getInitialFilterOptions(query);
-
         setFilterOptions(prev => ({
             ...prev,
-            models: manufacturer ? options.models : [],
+            models: options.models,
             versions: model ? options.versions : [],
             years: options.years,
         }));
@@ -160,22 +158,27 @@ const DashboardClient: FC = () => {
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
-        const updated: Filters = { ...prev, [key]: value };
+        const updated: Filters = { ...prev };
 
-        // When manufacturer changes, reset model, version, and year
+        // Handle cascading resets
         if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
             updated.year = '';
-            setFilterOptions(prevOpts => ({ ...prevOpts, models: [], versions: [], years: [] }));
+            setFilterOptions(opts => ({ ...opts, models: [], versions: [], years: [] }));
         }
-        // When model changes, reset version and year
         if (key === 'model') {
             updated.version = [];
             updated.year = '';
-            setFilterOptions(prevOpts => ({ ...prevOpts, versions: [], years: [] }));
+             setFilterOptions(opts => ({ ...opts, versions: [], years: [] }));
         }
+
+        updated[key] = value;
         
+        if (key === 'year' && value !== '') {
+            updated.year = Number(value);
+        }
+
         return updated;
     });
   }, []);
@@ -183,7 +186,7 @@ const DashboardClient: FC = () => {
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
     setDashboardData(emptyDashboardData);
-    setFilterOptions(emptyFilterOptions); // Clear options immediately
+    setFilterOptions(prevOpts => ({ ...prevOpts, models: [], versions: [], years: [] })); // Clear options immediately
     getInitialFilterOptions().then(options => {
         setFilterOptions(options);
     });
@@ -491,3 +494,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
