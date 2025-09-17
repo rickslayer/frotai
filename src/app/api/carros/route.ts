@@ -52,19 +52,29 @@ const findTopEntity = async (
     matchStage: any,
     field: string
 ): Promise<TopEntity | null> => {
-    const topResult = await aggregateData(collection, [
-      matchStage,
-      { $match: { [field]: { $ne: null, $ne: "" } } },
+
+    const baseMatch = matchStage.$match ? { ...matchStage.$match } : {};
+
+    const pipeline = [
+      {
+        $match: {
+          ...baseMatch,
+          [field]: { $ne: null, $ne: "" }
+        }
+      },
       { $group: { _id: `$${field}`, total: { $sum: '$quantity' } } },
       { $sort: { total: -1 } },
       { $limit: 1 }
-    ]);
+    ];
+
+    const topResult = await aggregateData(collection, pipeline);
 
     if (topResult.length > 0 && topResult[0]._id) {
         return { name: topResult[0]._id, quantity: topResult[0].total };
     }
     return null;
 }
+
 
 export async function GET(request: NextRequest) {
   try {
