@@ -46,11 +46,15 @@ export async function GET(request: NextRequest) {
 
     const manufacturer = searchParams.get('manufacturer');
     const model = searchParams.get('model');
+    const versionsParam = searchParams.getAll('version');
     
     // Base match query for dependent filters
     const baseMatch: any = {};
     if (manufacturer) baseMatch.manufacturer = manufacturer;
     if (model) baseMatch.model = model;
+    if (versionsParam && versionsParam.length > 0) {
+      baseMatch.version = { $in: versionsParam };
+    }
     
     const [
       manufacturers,
@@ -64,7 +68,7 @@ export async function GET(request: NextRequest) {
       manufacturer ? getDistinctValues(collection, 'model', { manufacturer }) : [],
       // Get versions only if a model is selected
       model ? getDistinctValues(collection, 'version', { manufacturer, model }) : [],
-      // Get years based on manufacturer and model if available
+      // Get years based on the current selection context
       getDistinctValues(collection, 'year', baseMatch),
     ]);
 

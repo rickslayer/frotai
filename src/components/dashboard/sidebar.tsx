@@ -56,7 +56,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
         <ScrollArea className="flex-1">
           <div className="p-4">
             <h2 className="mb-4 text-lg font-semibold tracking-tight">{t('filters')}</h2>
-            <Accordion type="multiple" defaultValue={['vehicle', 'time']} className="w-full">
+            <Accordion type="multiple" defaultValue={['vehicle']} className="w-full">
               <AccordionItem value="vehicle">
                 <AccordionTrigger>
                   <div className='flex items-center gap-2'>
@@ -86,15 +86,6 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                       placeholder={t('select_version_multi')}
                       disabled={isVersionDisabled}
                    />
-                </AccordionContent>
-              </AccordionItem>
-              <AccordionItem value="time">
-                <AccordionTrigger>
-                  <div className='flex items-center gap-2'>
-                    <Calendar className="h-4 w-4" /> <span>{t('manufacturing_year')}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4">
                    <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                     <SelectContent>

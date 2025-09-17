@@ -135,25 +135,28 @@ const DashboardClient: FC = () => {
   // Effect for fetching dynamic filter options based on selections
   useEffect(() => {
     const fetchFilterOptions = async () => {
-      const { manufacturer, model } = filters;
+        const { manufacturer, model, version } = filters;
+        const query: Partial<Filters> = {};
 
-      if (manufacturer && !model) {
-        // Manufacturer changed, model is cleared
-        const options = await getInitialFilterOptions({ manufacturer });
-        setFilterOptions(prev => ({ ...prev, models: options.models, years: options.years, versions: [] }));
-      } else if (manufacturer && model) {
-        // Model changed
-        const options = await getInitialFilterOptions({ manufacturer, model });
-        setFilterOptions(prev => ({ ...prev, versions: options.versions, years: options.years }));
-      } else if (!manufacturer) {
-        // All cleared, fetch initial manufacturers
-         const options = await getInitialFilterOptions();
-         setFilterOptions(options);
-      }
+        if (manufacturer) query.manufacturer = manufacturer;
+        if (model) query.model = model;
+        if (version.length > 0) query.version = version;
+
+        // If no manufacturer, no need to fetch anything dynamically
+        if (!manufacturer) return;
+
+        const options = await getInitialFilterOptions(query);
+
+        setFilterOptions(prev => ({
+            ...prev,
+            models: manufacturer ? options.models : [],
+            versions: model ? options.versions : [],
+            years: options.years,
+        }));
     };
 
     fetchFilterOptions();
-  }, [filters.manufacturer, filters.model]);
+  }, [filters.manufacturer, filters.model, filters.version]);
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
@@ -390,10 +393,8 @@ const DashboardClient: FC = () => {
        <>
         <StatCards data={dashboardData} />
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
-            <div id="regional-chart">
-                <RegionalFleetChart data={dashboardData.regionalData} />
-            </div>
+        <div id="regional-chart" className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
+            <RegionalFleetChart data={dashboardData.regionalData} />
             <div id="top-models-chart">
                 <TopModelsChart data={dashboardData.topModelsChart} />
             </div>
@@ -490,5 +491,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
