@@ -122,5 +122,6 @@
   "version_limit_error": "Para uma melhor análise, compare no máximo {{limit}} versões por vez, ou selecione todas as versões.",
   "attention_title": "Atenção",
   "comparison_warning": "Se a comparação estiver faltando continuidade no texto, por favor gere novamente, se o erro persistir entre em contato com o nosso suporte.",
-  "ok_close": "OK, fechar"
+  "ok_close": "OK, fechar",
+  "calculating": "Contabilizando..."
 }
