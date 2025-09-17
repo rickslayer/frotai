@@ -28,13 +28,19 @@ async function connectToMongo() {
 const getDistinctValues = async (collection: import('mongodb').Collection, field: string, match: any = {}) => {
   const query: any = { ...match };
   
-  if (field === 'year') {
-    query.year = { $ne: 0, $ne: null };
-  } else {
+  if (field !== 'year') {
     query[field] = { $ne: null, $ne: "" };
+  } else {
+    query[field] = { $ne: null };
   }
 
+
   const values = await collection.distinct(field, query);
+  
+  if (field === 'year') {
+    return (values as number[]).sort((a, b) => b - a);
+  }
+
   return values.sort();
 };
 
@@ -76,7 +82,7 @@ export async function GET(request: NextRequest) {
       manufacturers,
       models,
       versions,
-      years: (years as number[]).sort((a, b) => b - a),
+      years: years as number[],
     };
 
     return NextResponse.json(filterOptions);

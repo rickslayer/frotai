@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { Car, Calendar, SlidersHorizontal, FilterX } from 'lucide-react';
+import { Car, SlidersHorizontal, FilterX } from 'lucide-react';
 import type { FilterOptions, Filters } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -89,7 +89,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                    <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                     <SelectContent>
-                      {(filterOptions.years || []).map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                      {(filterOptions.years || []).map(y => <SelectItem key={y} value={String(y)}>{y === 0 ? "Indefinido" : y}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </AccordionContent>
