@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       getDistinctValues(collection, 'manufacturer', buildMatchExcept(baseMatch, ['manufacturer'])),
       getDistinctValues(collection, 'model', buildMatchExcept(baseMatch, ['model', 'version'])),
       getDistinctValues(collection, 'version', buildMatchExcept(baseMatch, ['version'])),
-      getDistinctValues(collection, 'year', buildMatchExcept(base-Match, ['year'])),
+      getDistinctValues(collection, 'year', buildMatchExcept(baseMatch, ['year'])),
       getDistinctValues(collection, 'region', buildMatchExcept(baseMatch, ['region', 'state', 'city'])),
       getDistinctValues(collection, 'state', buildMatchExcept(baseMatch, ['state', 'city'])),
       getDistinctValues(collection, 'city', buildMatchExcept(baseMatch, ['city'])),
