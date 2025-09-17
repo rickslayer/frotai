@@ -59,8 +59,8 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       getDistinctValues(collection, 'manufacturer', {}),
       manufacturer ? getDistinctValues(collection, 'model', { manufacturer }) : [],
-      model ? getDistinctValues(collection, 'version', { manufacturer, model }) : [],
-      model ? getDistinctValues(collection, 'year', { manufacturer, model }) : [],
+      model ? getDistinctValues(collection, 'version', baseMatch) : [],
+      manufacturer ? getDistinctValues(collection, 'year', baseMatch) : [],
     ]);
 
     const filterOptions: FilterOptions = {
@@ -77,7 +77,3 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }
 }
-
-    
-
-    

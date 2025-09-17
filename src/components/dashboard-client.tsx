@@ -135,22 +135,24 @@ const DashboardClient: FC = () => {
   // Effect for fetching dynamic filter options based on selections
   useEffect(() => {
     const fetchFilterOptions = async () => {
-      // If no manufacturer is selected, do nothing, as the initial state is already correct.
-      if (!filters.manufacturer) {
+      const { manufacturer, model } = filters;
+
+      // If no manufacturer is selected, do nothing, the initial full list is already there.
+      if (!manufacturer) {
         setFilterOptions(prev => ({ ...prev, models: [], versions: [], years: [] }));
         return;
       }
 
-      // If a manufacturer is selected, but no model, fetch only the models.
-      if (filters.manufacturer && !filters.model) {
-        const options = await getInitialFilterOptions({ manufacturer: filters.manufacturer });
-        setFilterOptions(prev => ({ ...prev, models: options.models, versions: [], years: [] }));
+      // If a manufacturer is selected, but no model, fetch models and years for that manufacturer.
+      if (manufacturer && !model) {
+        const options = await getInitialFilterOptions({ manufacturer });
+        setFilterOptions(prev => ({ ...prev, models: options.models, years: options.years, versions: [] }));
         return;
       }
 
       // If both manufacturer and model are selected, fetch their versions and years.
-      if (filters.manufacturer && filters.model) {
-        const options = await getInitialFilterOptions({ manufacturer: filters.manufacturer, model: filters.model });
+      if (manufacturer && model) {
+        const options = await getInitialFilterOptions({ manufacturer, model });
         setFilterOptions(prev => ({ ...prev, versions: options.versions, years: options.years }));
       }
     };
@@ -167,11 +169,13 @@ const DashboardClient: FC = () => {
             updated.model = '';
             updated.version = [];
             updated.year = '';
+             setFilterOptions(prev => ({ ...prev, models: [], versions: [], years: [] }));
         }
         // When model changes, reset version and year
         if (key === 'model') {
             updated.version = [];
             updated.year = '';
+            setFilterOptions(prev => ({ ...prev, versions: [], years: [] }));
         }
         
         return updated;
@@ -180,11 +184,10 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    // After clearing, fetch the initial list of all manufacturers
+    setDashboardData(emptyDashboardData);
     getInitialFilterOptions().then(options => {
         setFilterOptions(options);
     });
-    setDashboardData(emptyDashboardData);
   }, []);
   
   const handleExportPDF = async () => {
@@ -491,7 +494,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
-
-    
