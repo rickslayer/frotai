@@ -44,15 +44,11 @@ export async function GET(request: NextRequest) {
 
     const manufacturer = searchParams.get('manufacturer');
     const model = searchParams.get('model');
-    const year = searchParams.get('year');
-    const versionsParam = searchParams.getAll('version');
-
+    
     // Base match query for dependent filters
     const baseMatch: any = {};
     if (manufacturer) baseMatch.manufacturer = manufacturer;
     if (model) baseMatch.model = model;
-    if (year) baseMatch.year = parseInt(year, 10);
-    if (versionsParam.length > 0) baseMatch.version = { $in: versionsParam };
     
     
     const [
@@ -63,8 +59,8 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       getDistinctValues(collection, 'manufacturer', {}),
       manufacturer ? getDistinctValues(collection, 'model', { manufacturer }) : [],
-      model ? getDistinctValues(collection, 'version', { manufacturer, model, ...(year && { year: parseInt(year, 10) }) }) : [],
-      model ? getDistinctValues(collection, 'year', { manufacturer, model, ...(versionsParam.length > 0 && { version: { $in: versionsParam } })}) : [],
+      model ? getDistinctValues(collection, 'version', { manufacturer, model }) : [],
+      model ? getDistinctValues(collection, 'year', { manufacturer, model }) : [],
     ]);
 
     const filterOptions: FilterOptions = {
@@ -81,5 +77,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }
 }
+
+    
 
     

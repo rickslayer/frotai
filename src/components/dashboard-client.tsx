@@ -135,50 +135,40 @@ const DashboardClient: FC = () => {
   // Effect for fetching dynamic filter options based on selections
   useEffect(() => {
     const fetchFilterOptions = async () => {
-       if (!filters.manufacturer) {
-           setFilterOptions(prev => ({...prev, models: [], versions: [], years: []}));
-           return;
-       }
+      // If no manufacturer is selected, do nothing, as the initial state is already correct.
+      if (!filters.manufacturer) {
+        setFilterOptions(prev => ({ ...prev, models: [], versions: [], years: [] }));
+        return;
+      }
 
-       const queryFilters: Partial<Filters> = { manufacturer: filters.manufacturer };
-       if (filters.model) queryFilters.model = filters.model;
-       if (filters.year) queryFilters.year = filters.year;
-       if (filters.version && filters.version.length > 0) queryFilters.version = filters.version;
+      // If a manufacturer is selected, but no model, fetch only the models.
+      if (filters.manufacturer && !filters.model) {
+        const options = await getInitialFilterOptions({ manufacturer: filters.manufacturer });
+        setFilterOptions(prev => ({ ...prev, models: options.models, versions: [], years: [] }));
+        return;
+      }
 
-       const options = await getInitialFilterOptions(queryFilters);
-
-        setFilterOptions(prev => {
-            const newOptions: FilterOptions = { ...prev };
-            if (queryFilters.manufacturer && !queryFilters.model) {
-                // Manufacturer changed, update all dependents
-                newOptions.models = options.models;
-                newOptions.versions = options.versions;
-                newOptions.years = options.years;
-            } else {
-                // Model, Year, or Version changed
-                if (!queryFilters.year || queryFilters.year === '') {
-                    newOptions.years = options.years;
-                }
-                if (!queryFilters.version || queryFilters.version.length === 0) {
-                     newOptions.versions = options.versions;
-                }
-            }
-            return newOptions;
-        });
+      // If both manufacturer and model are selected, fetch their versions and years.
+      if (filters.manufacturer && filters.model) {
+        const options = await getInitialFilterOptions({ manufacturer: filters.manufacturer, model: filters.model });
+        setFilterOptions(prev => ({ ...prev, versions: options.versions, years: options.years }));
+      }
     };
-    
+
     fetchFilterOptions();
-  }, [filters.manufacturer, filters.model, filters.year, filters.version]);
+  }, [filters.manufacturer, filters.model]);
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
         const updated: Filters = { ...prev, [key]: value };
 
+        // When manufacturer changes, reset model, version, and year
         if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
             updated.year = '';
         }
+        // When model changes, reset version and year
         if (key === 'model') {
             updated.version = [];
             updated.year = '';
@@ -190,7 +180,7 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    setFilterOptions(prev => ({...prev, models: [], versions: [], years: []}));
+    // After clearing, fetch the initial list of all manufacturers
     getInitialFilterOptions().then(options => {
         setFilterOptions(options);
     });
@@ -501,5 +491,7 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
 
     
