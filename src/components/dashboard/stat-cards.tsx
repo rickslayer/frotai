@@ -2,13 +2,12 @@
 'use client';
 
 import type { FC } from 'react';
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { Filters, DashboardData } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Users2, Map, Factory, Star, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { stateToRegionMap } from '@/lib/regions';
-import { getInitialFilterOptions } from '@/lib/api-logic';
 
 interface StatCardsProps {
   data: DashboardData;
@@ -22,7 +21,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
   const [isRegionLoading, setIsRegionLoading] = useState(false);
 
   useEffect(() => {
-    const determineTopRegion = async () => {
+    const determineTopRegion = () => {
       setIsRegionLoading(true);
 
       // Priority 1: If a region filter is active, it dictates the region.
@@ -52,7 +51,7 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
         }
       }
 
-      // Fallback
+      // Final Fallback
       setTopRegion('-');
       setIsRegionLoading(false);
     };
