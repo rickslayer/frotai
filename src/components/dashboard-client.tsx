@@ -137,23 +137,18 @@ const DashboardClient: FC = () => {
     const fetchFilterOptions = async () => {
       const { manufacturer, model } = filters;
 
-      // If no manufacturer is selected, do nothing, the initial full list is already there.
-      if (!manufacturer) {
-        setFilterOptions(prev => ({ ...prev, models: [], versions: [], years: [] }));
-        return;
-      }
-
-      // If a manufacturer is selected, but no model, fetch models and years for that manufacturer.
       if (manufacturer && !model) {
+        // Manufacturer changed, model is cleared
         const options = await getInitialFilterOptions({ manufacturer });
         setFilterOptions(prev => ({ ...prev, models: options.models, years: options.years, versions: [] }));
-        return;
-      }
-
-      // If both manufacturer and model are selected, fetch their versions and years.
-      if (manufacturer && model) {
+      } else if (manufacturer && model) {
+        // Model changed
         const options = await getInitialFilterOptions({ manufacturer, model });
         setFilterOptions(prev => ({ ...prev, versions: options.versions, years: options.years }));
+      } else if (!manufacturer) {
+        // All cleared, fetch initial manufacturers
+         const options = await getInitialFilterOptions();
+         setFilterOptions(options);
       }
     };
 
@@ -169,13 +164,13 @@ const DashboardClient: FC = () => {
             updated.model = '';
             updated.version = [];
             updated.year = '';
-             setFilterOptions(prev => ({ ...prev, models: [], versions: [], years: [] }));
+            setFilterOptions(prevOpts => ({ ...prevOpts, models: [], versions: [], years: [] }));
         }
         // When model changes, reset version and year
         if (key === 'model') {
             updated.version = [];
             updated.year = '';
-            setFilterOptions(prev => ({ ...prev, versions: [], years: [] }));
+            setFilterOptions(prevOpts => ({ ...prevOpts, versions: [], years: [] }));
         }
         
         return updated;
@@ -185,6 +180,7 @@ const DashboardClient: FC = () => {
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
     setDashboardData(emptyDashboardData);
+    setFilterOptions(emptyFilterOptions); // Clear options immediately
     getInitialFilterOptions().then(options => {
         setFilterOptions(options);
     });
@@ -494,3 +490,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    

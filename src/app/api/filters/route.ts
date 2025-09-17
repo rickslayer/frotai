@@ -26,10 +26,12 @@ async function connectToMongo() {
 }
 
 const getDistinctValues = async (collection: import('mongodb').Collection, field: string, match: any = {}) => {
-  const query: any = { ...match, [field]: { $ne: null, $ne: "" } };
+  const query: any = { ...match };
   
   if (field === 'year') {
-    query[field].$ne = 0;
+    query.year = { $ne: 0, $ne: null };
+  } else {
+    query[field] = { $ne: null, $ne: "" };
   }
 
   const values = await collection.distinct(field, query);
@@ -57,10 +59,14 @@ export async function GET(request: NextRequest) {
       versions,
       years,
     ] = await Promise.all([
+      // Always get all manufacturers
       getDistinctValues(collection, 'manufacturer', {}),
+      // Get models only if a manufacturer is selected
       manufacturer ? getDistinctValues(collection, 'model', { manufacturer }) : [],
-      model ? getDistinctValues(collection, 'version', baseMatch) : [],
-      manufacturer ? getDistinctValues(collection, 'year', baseMatch) : [],
+      // Get versions only if a model is selected
+      model ? getDistinctValues(collection, 'version', { manufacturer, model }) : [],
+      // Get years based on manufacturer and model if available
+      getDistinctValues(collection, 'year', baseMatch),
     ]);
 
     const filterOptions: FilterOptions = {
@@ -77,3 +83,5 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }
 }
+
+    
