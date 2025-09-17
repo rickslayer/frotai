@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Users2, Map, Factory, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { stateToRegionMap } from '@/lib/regions';
+import { getInitialFilterOptions } from '@/lib/api-logic';
 
 interface StatCardsProps {
   data: DashboardData;
@@ -17,33 +18,55 @@ interface StatCardsProps {
 
 const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
   const { t } = useTranslation();
+  const [topRegion, setTopRegion] = useState('-');
 
-  const { topRegion } = useMemo(() => {
-    // Priority 1: If a location filter is active, it dictates the region.
-    if (filters.region) {
-      return { topRegion: t(filters.region as any) };
-    }
-    if (filters.state) {
-      const regionForState = stateToRegionMap[filters.state];
-      if (regionForState) {
-        return { topRegion: t(regionForState as any) };
+  useEffect(() => {
+    const determineTopRegion = async () => {
+      // Priority 1: If a location filter is active, it dictates the region.
+      if (filters.region) {
+        setTopRegion(t(filters.region as any));
+        return;
       }
-    }
+      if (filters.state) {
+        const regionForState = stateToRegionMap[filters.state];
+        if (regionForState) {
+          setTopRegion(t(regionForState as any));
+          return;
+        }
+      }
 
-    // Priority 2: If no location filter, find the region with the most vehicles from the returned data.
-    if (!data.regionalData || data.regionalData.length === 0) {
-      return { topRegion: '-' };
-    }
+      // Priority 2: If top city is available, derive region from it.
+      if (data.topCity && data.topCity.name !== '-') {
+        // This is a special case. The filters API can give us the state for a city.
+        // We fetch all states and cities to find the state of the topCity.
+        const allFilters = await getInitialFilterOptions();
+        const cityStatePair = allFilters.cities.find(c => c.name === data.topCity.name);
 
-    const sortedRegions = [...data.regionalData].sort((a, b) => b.quantity - a.quantity);
-    
-    if (sortedRegions[0] && sortedRegions[0].quantity > 0) {
-      return { topRegion: t(sortedRegions[0].name as any) };
-    }
+        if (cityStatePair) {
+           const region = stateToRegionMap[cityStatePair.state];
+           if(region) {
+            setTopRegion(t(region as any));
+            return;
+           }
+        }
+      }
 
-    // Fallback
-    return { topRegion: '-' };
-  }, [data.regionalData, filters, t]);
+
+      // Priority 3: Fallback to the region with the most vehicles from the returned data.
+      if (data.regionalData && data.regionalData.length > 0) {
+        const sortedRegions = [...data.regionalData].sort((a, b) => b.quantity - a.quantity);
+        if (sortedRegions[0] && sortedRegions[0].quantity > 0) {
+          setTopRegion(t(sortedRegions[0].name as any));
+          return;
+        }
+      }
+
+      // Fallback
+      setTopRegion('-');
+    };
+
+    determineTopRegion();
+  }, [data, filters, t]);
 
 
   return (

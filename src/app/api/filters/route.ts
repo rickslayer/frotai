@@ -1,7 +1,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
-import type { FilterOptions } from '@/types';
+import type { FilterOptions, CityOption } from '@/types';
 import { allRegions } from '@/lib/regions';
 
 const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://frotai:X7Ra8kREnBX6z6SC@frotai.bylfte3.mongodb.net/';
@@ -21,7 +21,7 @@ async function connectToMongo() {
     return client.db(dbName);
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
-    client = null; 
+    client = null;
     throw new Error('Failed to connect to the database.');
   }
 }
@@ -30,6 +30,18 @@ const getDistinctValues = async (collection: import('mongodb').Collection, field
   const values = await collection.distinct(field, { ...match, [field]: { $ne: null, $ne: "" } });
   return values.sort();
 };
+
+const getCitiesWithState = async (collection: import('mongodb').Collection, match: any = {}): Promise<CityOption[]> => {
+    const pipeline = [
+        { $match: { ...match, city: { $ne: null, $ne: "" }, state: { $ne: null, $ne: "" } } },
+        { $group: { _id: { city: "$city", state: "$state" } } },
+        { $sort: { "_id.city": 1 } },
+        { $project: { _id: 0, name: "$_id.city", state: "$_id.state" } }
+    ];
+    const cities = await collection.aggregate(pipeline).toArray();
+    return cities as CityOption[];
+}
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,13 +53,13 @@ export async function GET(request: NextRequest) {
     const state = searchParams.get('state');
     const manufacturer = searchParams.get('manufacturer');
     const model = searchParams.get('model');
-    
+
     const match: any = {};
     if (region) match.region = region;
     if (state) match.state = state;
     if (manufacturer) match.manufacturer = manufacturer;
     if (model) match.model = model;
-    
+
     const [
       manufacturers,
       models,
@@ -55,11 +67,11 @@ export async function GET(request: NextRequest) {
       years,
       cities
     ] = await Promise.all([
-      !manufacturer && !model ? getDistinctValues(collection, 'manufacturer', match) : [],
-      manufacturer && !model ? getDistinctValues(collection, 'model', match) : [],
+      getDistinctValues(collection, 'manufacturer', region || state ? { ...(region && {region}), ...(state && {state}) } : {}),
+      manufacturer ? getDistinctValues(collection, 'model', match) : [],
       model ? getDistinctValues(collection, 'version', match) : [],
       getDistinctValues(collection, 'year', {}),
-      state ? getDistinctValues(collection, 'city', { state }) : []
+      state ? getCitiesWithState(collection, { state }) : getCitiesWithState(collection) // Fetch all cities if no state
     ]);
 
     const filterOptions: FilterOptions = {

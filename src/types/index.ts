@@ -4,8 +4,8 @@ import { z } from 'zod';
 export type Vehicle = {
   id: string;
   manufacturer: string;
-  model: string; 
-  version: string; 
+  model: string;
+  version: string;
   fullName: string;
   year: number;
   quantity: number;
@@ -14,13 +14,18 @@ export type Vehicle = {
   city: string;
 };
 
+export type CityOption = {
+    name: string;
+    state: string;
+}
+
 export type FilterOptions = {
   regions: string[];
   manufacturers: string[];
   models: string[];
   versions: string[];
   states: string[];
-  cities: string[];
+  cities: CityOption[];
   years: number[];
 };
 
