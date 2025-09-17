@@ -1,7 +1,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { MongoClient, WithId, Document } from 'mongodb';
-import { Filters, DashboardData } from '@/types';
+import type { Filters, DashboardData, TopEntity, RegionData, TopModel, FleetByYear, FleetAgeBracket } from '@/types';
 import { allRegions } from '@/lib/regions';
 
 const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://frotai:X7Ra8kREnBX6z6SC@frotai.bylfte3.mongodb.net/';
@@ -41,9 +41,19 @@ const generateCacheKey = (filters: Partial<Filters>): string => {
     return JSON.stringify(sortedFilters);
 };
 
+// Helper function for a single aggregation
+const aggregateData = async (collection: import('mongodb').Collection, matchQuery: any, groupStage: any, sortStage?: any, limit?: number) => {
+    const pipeline: Document[] = [{ $match: matchQuery }];
+    pipeline.push(groupStage);
+    if (sortStage) pipeline.push(sortStage);
+    if (limit) pipeline.push({ $limit: limit });
+    return collection.aggregate(pipeline).toArray();
+};
+
 export async function GET(request: NextRequest) {
   try {
     const db = await connectToMongo();
+    const collection = db.collection(collectionName);
     const { searchParams } = request.nextUrl;
 
     const filters: Partial<Filters> = {};
@@ -73,7 +83,7 @@ export async function GET(request: NextRequest) {
     const query: any = {};
     for (const key in filters) {
         const filterKey = key as keyof Filters;
-        if (filters[filterKey]) {
+        if (filters[filterKey] && filters[filterKey] !== '') {
             if (filterKey === 'version' && Array.isArray(filters.version) && filters.version!.length > 0) {
                  query.version = { $in: filters.version };
             } else if (filterKey !== 'version') {
@@ -82,103 +92,66 @@ export async function GET(request: NextRequest) {
         }
     }
 
-
     const currentYear = new Date().getFullYear();
 
-    const aggregationPipeline: Document[] = [
-      { $match: query },
-      {
-        $facet: {
-          totalVehicles: [
-            { $group: { _id: null, total: { $sum: '$quantity' } } }
-          ],
-          topCity: [
-            { $group: { _id: '$city', total: { $sum: '$quantity' } } },
-            { $sort: { total: -1 } },
-            { $limit: 1 },
-            { $project: { name: '$_id', quantity: '$total' } }
-          ],
-          topModel: [
-            { $group: { _id: '$fullName', total: { $sum: '$quantity' } } },
-            { $sort: { total: -1 } },
-            { $limit: 1 },
-            { $project: { name: '$_id', quantity: '$total' } }
-          ],
-          topManufacturer: [
-              { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } },
-              { $sort: { total: -1 } },
-              { $limit: 1 },
-              { $project: { name: '$_id', quantity: '$total' } }
-          ],
-          regionalData: [
-            { $group: { _id: '$region', total: { $sum: '$quantity' } } },
-            { $project: { name: '$_id', quantity: '$total' } }
-          ],
-          topModelsChart: [
-            { $group: { _id: '$fullName', total: { $sum: '$quantity' } } },
-            { $sort: { total: -1 } },
-            { $limit: 10 },
-            { $project: { model: '$_id', quantity: '$total' } }
-          ],
-          fleetByYearChart: [
-            { $group: { _id: '$year', total: { $sum: '$quantity' } } },
-            { $sort: { _id: 1 } },
-            { $project: { year: '$_id', quantity: '$total' } }
-          ],
-          fleetAgeBrackets: [
-            {
-              $project: {
-                quantity: '$quantity',
-                age: { $subtract: [currentYear, '$year'] }
-              }
-            },
+    // Run aggregations in parallel
+    const [
+        totalVehicles,
+        topCity,
+        topModel,
+        topManufacturer,
+        regionalData,
+        topModelsChart,
+        fleetByYearChart,
+        fleetAgeBrackets,
+    ] = await Promise.all([
+        // Total Vehicles
+        aggregateData(collection, query, { $group: { _id: null, total: { $sum: '$quantity' } } }),
+        // Top City
+        aggregateData(collection, query, { $group: { _id: '$city', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
+        // Top Model
+        aggregateData(collection, query, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
+        // Top Manufacturer
+        aggregateData(collection, query, { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
+        // Regional Data
+        aggregateData(collection, query, { $group: { _id: '$region', total: { $sum: '$quantity' } } }),
+        // Top Models Chart
+        aggregateData(collection, query, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 10),
+        // Fleet by Year Chart
+        aggregateData(collection, query, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }),
+        // Fleet Age Brackets
+        collection.aggregate([
+            { $match: query },
+            { $project: { quantity: '$quantity', age: { $subtract: [currentYear, '$year'] } } },
             {
               $bucket: {
                 groupBy: '$age',
                 boundaries: [0, 4, 8, 13, Infinity],
                 default: 'old',
-                output: {
-                  total: { $sum: '$quantity' }
-                }
+                output: { total: { $sum: '$quantity' } }
               }
             },
-            {
-              $project: {
-                range: {
-                  $switch: {
-                    branches: [
-                      { case: { $eq: ['$_id', 0] }, then: '0-3' },
-                      { case: { $eq: ['$_id', 4] }, then: '4-7' },
-                      { case: { $eq: ['$_id', 8] }, then: '8-12' },
-                      { case: { $eq: ['$_id', 13] }, then: '13+' },
-                    ],
-                    default: '13+'
-                  }
-                },
-                quantity: '$total'
-              }
-            }
-          ]
-        }
-      }
-    ];
+        ]).toArray(),
+    ]);
 
-    const result = await db.collection(collectionName).aggregate(aggregationPipeline).toArray();
-    
-    const aggregatedData = result[0];
-    
     const dashboardData: DashboardData = {
-        totalVehicles: aggregatedData.totalVehicles[0]?.total || 0,
-        topCity: aggregatedData.topCity[0] || { name: '-', quantity: 0 },
-        topModel: aggregatedData.topModel[0] || { name: '-', quantity: 0 },
-        topManufacturer: aggregatedData.topManufacturer?.[0] || null,
+        totalVehicles: totalVehicles[0]?.total || 0,
+        topCity: { name: topCity[0]?._id || '-', quantity: topCity[0]?.total || 0 },
+        topModel: { name: topModel[0]?._id || '-', quantity: topModel[0]?.total || 0 },
+        topManufacturer: topManufacturer[0] ? { name: topManufacturer[0]._id, quantity: topManufacturer[0].total } : null,
         regionalData: allRegions.map(region => {
-            const found = aggregatedData.regionalData.find((r: any) => r.name === region);
-            return { name: region, quantity: found?.quantity || 0 };
+            const found = regionalData.find((r: any) => r._id === region);
+            return { name: region, quantity: found?.total || 0 };
         }),
-        topModelsChart: aggregatedData.topModelsChart,
-        fleetByYearChart: aggregatedData.fleetByYearChart,
-        fleetAgeBrackets: aggregatedData.fleetAgeBrackets.map((b: any) => ({...b, label: ''})), // Label is set on client
+        topModelsChart: topModelsChart.map((d: any) => ({ model: d._id, quantity: d.total })),
+        fleetByYearChart: fleetByYearChart.map((d: any) => ({ year: d._id, quantity: d.total })),
+        fleetAgeBrackets: fleetAgeBrackets.map((b: any) => {
+            const rangeMap: Record<number, string> = { 0: '0-3', 4: '4-7', 8: '8-12', 13: '13+' };
+            return {
+                range: rangeMap[b._id as number] || '13+',
+                quantity: b.total,
+            }
+        }),
     };
     
     await cacheCollection.updateOne(
