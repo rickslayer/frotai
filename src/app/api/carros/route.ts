@@ -35,12 +35,15 @@ const generateCacheKey = (filters: Partial<Filters>): string => {
 
     filterKeys.forEach(key => {
         const value = filters[key];
-        if (value && (Array.isArray(value) ? value.length > 0 : value !== '')) {
+        // Only include non-empty, non-null, and non-'all' values in the cache key
+        if (value && value !== 'all' && (Array.isArray(value) ? value.length > 0 : value !== '')) {
             sortedFilters[key] = Array.isArray(value) ? [...value].sort() : value;
         }
     });
+    // An empty object `{}` is a valid key for the "all data" query
     return JSON.stringify(sortedFilters);
 };
+
 
 // Helper function for a single aggregation
 const aggregateData = async (collection: import('mongodb').Collection, pipeline: Document[]) => {
@@ -200,3 +203,5 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }
 }
+
+    
