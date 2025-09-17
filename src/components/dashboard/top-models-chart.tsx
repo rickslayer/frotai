@@ -17,15 +17,18 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import type { TopModel } from '@/types';
+import type { TopModel, TopEntity } from '@/types';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
+import { Factory } from 'lucide-react';
+import { Badge } from '../ui/badge';
 
 interface TopModelsChartProps {
   data: TopModel[];
+  topManufacturer: TopEntity | null;
 }
 
-const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
+const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   const { t } = useTranslation();
   const [topN, setTopN] = useState<'5' | '10'>('5');
 
@@ -43,8 +46,11 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <div className="flex items-center justify-between gap-4">
-           <CardTitle>{t('top_models_by_volume', { count: topN })}</CardTitle>
+        <div className="flex items-start justify-between gap-4">
+           <div className='flex-1'>
+            <CardTitle>{t('top_models_by_volume', { count: topN })}</CardTitle>
+            <CardDescription>{t('top_models_by_volume_description_short')}</CardDescription>
+           </div>
            <Tabs defaultValue="5" onValueChange={(value) => setTopN(value as '5' | '10')} className='w-auto'>
             <TabsList>
               <TabsTrigger value="5">{t('top_5')}</TabsTrigger>
@@ -52,7 +58,13 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data }) => {
             </TabsList>
           </Tabs>
         </div>
-        <CardDescription>{t('top_models_by_volume_description_short')}</CardDescription>
+         {topManufacturer && topManufacturer.name !== '-' && (
+            <div className='flex items-center gap-2 pt-4'>
+                <Factory className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-sm font-medium">{t('main_manufacturer')}</h3>
+                <Badge variant="secondary" className='text-sm'>{topManufacturer.name}</Badge>
+            </div>
+        )}
       </CardHeader>
       <CardContent className="flex-grow">
         <ChartContainer config={chartConfig} className="h-full min-h-[300px] w-full">

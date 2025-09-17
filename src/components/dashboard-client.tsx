@@ -35,7 +35,9 @@ const emptyDashboardData: DashboardData = {
   totalVehicles: 0,
   topModel: { name: '-', quantity: 0 },
   topManufacturer: { name: '-', quantity: 0 },
-  mainLocation: null,
+  topRegion: null,
+  topState: null,
+  topCity: null,
   regionalData: [],
   topModelsChart: [],
   fleetByYearChart: [],
@@ -230,7 +232,7 @@ const DashboardClient: FC = () => {
     addSection(t('total_vehicles'), dashboardData.totalVehicles.toLocaleString());
     addSection(t('main_manufacturer'), dashboardData.topManufacturer?.name || '-');
     addSection(t('main_model'), dashboardData.topModel.name);
-    addSection(t('main_city'), dashboardData.mainLocation?.name || '-');
+    addSection(t('main_city'), dashboardData.topCity?.name || '-');
     y += 5;
 
     const formatTextForPdf = (htmlText: string | null | undefined): string => {
@@ -413,8 +415,8 @@ const DashboardClient: FC = () => {
             <div id="regional-map" className="lg:col-span-3">
                 <RegionalFleetMap data={dashboardData.regionalData} />
             </div>
-            <div id="regional-chart" className="lg:col-span-2">
-                <TopModelsChart data={dashboardData.topModelsChart} />
+            <div id="top-models-chart" className="lg:col-span-2">
+                <TopModelsChart data={dashboardData.topModelsChart} topManufacturer={dashboardData.topManufacturer} />
             </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">

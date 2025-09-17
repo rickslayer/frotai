@@ -47,49 +47,24 @@ const aggregateData = async (collection: import('mongodb').Collection, pipeline:
     return collection.aggregate(pipeline).toArray();
 };
 
-const findTopLocation = async (collection: import('mongodb').Collection, matchStage: any): Promise<TopEntity | null> => {
-    // 1. Try to find by City and State (most specific)
-    const topCityState = await aggregateData(collection, [
+const findTopEntity = async (
+    collection: import('mongodb').Collection,
+    matchStage: any,
+    field: string
+): Promise<TopEntity | null> => {
+    const topResult = await aggregateData(collection, [
       matchStage,
-      { $match: { city: { $ne: null, $ne: "" }, state: { $ne: null, $ne: "" } } },
-      { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } },
+      { $match: { [field]: { $ne: null, $ne: "" } } },
+      { $group: { _id: `$${field}`, total: { $sum: '$quantity' } } },
       { $sort: { total: -1 } },
       { $limit: 1 }
     ]);
 
-    if (topCityState.length > 0 && topCityState[0]._id.city && topCityState[0]._id.state) {
-        return { name: `${topCityState[0]._id.city}, ${topCityState[0]._id.state}`, quantity: topCityState[0].total };
+    if (topResult.length > 0 && topResult[0]._id) {
+        return { name: topResult[0]._id, quantity: topResult[0].total };
     }
-
-    // 2. Fallback to State
-    const topState = await aggregateData(collection, [
-       matchStage,
-       { $match: { state: { $ne: null, $ne: "" } } },
-       { $group: { _id: '$state', total: { $sum: '$quantity' } } },
-       { $sort: { total: -1 } },
-       { $limit: 1 }
-    ]);
-
-    if (topState.length > 0 && topState[0]._id) {
-        return { name: topState[0]._id, quantity: topState[0].total };
-    }
-    
-    // 3. Fallback to Region
-    const topRegion = await aggregateData(collection, [
-       matchStage,
-       { $match: { region: { $ne: null, $ne: "" } } },
-       { $group: { _id: '$region', total: { $sum: '$quantity' } } },
-       { $sort: { total: -1 } },
-       { $limit: 1 }
-    ]);
-
-    if (topRegion.length > 0 && topRegion[0]._id) {
-        return { name: topRegion[0]._id, quantity: topRegion[0].total };
-    }
-
     return null;
 }
-
 
 export async function GET(request: NextRequest) {
   try {
@@ -142,13 +117,14 @@ export async function GET(request: NextRequest) {
     const currentYear = new Date().getFullYear();
     const matchStage = { $match: query };
 
-    const topLocation = await findTopLocation(collection, matchStage);
-
-    // Run other aggregations in parallel
+    // Run all aggregations in parallel
     const [
         totalVehiclesResult,
         topModel,
         topManufacturer,
+        topRegion,
+        topState,
+        topCity,
         regionalData,
         topModelsChart,
         fleetByYearChart,
@@ -156,7 +132,10 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
         aggregateData(collection, [matchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
-        aggregateData(collection, [matchStage, { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
+        findTopEntity(collection, matchStage, 'manufacturer'),
+        findTopEntity(collection, matchStage, 'region'),
+        findTopEntity(collection, matchStage, 'state'),
+        findTopEntity(collection, matchStage, 'city'),
         aggregateData(collection, [matchStage, { $group: { _id: '$region', total: { $sum: '$quantity' } } }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]),
@@ -179,8 +158,10 @@ export async function GET(request: NextRequest) {
     const dashboardData: DashboardData = {
         totalVehicles,
         topModel: { name: topModel[0]?._id || '-', quantity: topModel[0]?.total || 0 },
-        topManufacturer: topManufacturer[0] ? { name: topManufacturer[0]._id, quantity: topManufacturer[0].total } : null,
-        mainLocation: topLocation,
+        topManufacturer,
+        topRegion,
+        topState,
+        topCity,
         regionalData: allRegions.map(region => {
             const found = regionalData.find((r: any) => r._id === region);
             return { name: region, quantity: found?.total || 0 };

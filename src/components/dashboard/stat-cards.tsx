@@ -4,7 +4,7 @@
 import type { FC } from 'react';
 import type { DashboardData } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users2, Factory, Star, MapPin } from 'lucide-react';
+import { Users2, Map, Globe, Flag, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 interface StatCardsProps {
@@ -29,12 +29,22 @@ const StatCards: FC<StatCardsProps> = ({ data }) => {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('main_manufacturer')}</CardTitle>
-          <Factory className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">{t('main_region')}</CardTitle>
+          <Globe className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold truncate">{data.topManufacturer?.name || '-'}</div>
-          <p className="text-xs text-muted-foreground uppercase">{t('main_manufacturer_description')}</p>
+          <div className="text-2xl font-bold truncate">{data.topRegion?.name ? t(data.topRegion.name as any) : '-'}</div>
+          <p className="text-xs text-muted-foreground uppercase">{t('main_region_description')}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{t('main_state')}</CardTitle>
+          <Flag className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold truncate">{data.topState?.name || '-'}</div>
+          <p className="text-xs text-muted-foreground uppercase">{t('main_state_description')}</p>
         </CardContent>
       </Card>
       <Card>
@@ -45,16 +55,6 @@ const StatCards: FC<StatCardsProps> = ({ data }) => {
         <CardContent>
           <div className="text-2xl font-bold truncate">{data.topModel.name}</div>
           <p className="text-xs text-muted-foreground uppercase">{t('main_model_description')}</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('main_city')}</CardTitle>
-          <MapPin className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold truncate">{data.mainLocation?.name || '-'}</div>
-          <p className="text-xs text-muted-foreground uppercase">{t('main_city_description')}</p>
         </CardContent>
       </Card>
     </div>
