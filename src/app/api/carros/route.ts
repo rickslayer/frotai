@@ -112,7 +112,8 @@ export async function GET(request: NextRequest) {
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
         aggregateData(collection, [
-            { $match: { ...query, city: { $ne: null, $ne: "" }, state: { $ne: null, $ne: "" } } },
+            matchStage,
+            { $match: { city: { $ne: null, $ne: "" }, state: { $ne: null, $ne: "" } } },
             { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } },
             { $sort: { total: -1 } },
             { $limit: 1 }
