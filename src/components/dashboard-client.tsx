@@ -86,6 +86,7 @@ const DashboardClient: FC = () => {
     city: !filters.state
   }), [filters]);
 
+  // Effect for initial data load (once)
   useEffect(() => {
     const fetchInitialData = async () => {
       setIsLoading(true);
@@ -108,64 +109,76 @@ const DashboardClient: FC = () => {
   }, [t, toast]);
 
 
+  // Effect for fetching DASHBOARD DATA based on DEBOUNCED filters
   useEffect(() => {
+    if (isLoading) return; // Don't run this during the initial load
+
     const fetchData = async () => {
-      if (!isFiltered) {
-        setDashboardData(prev => ({ ...prev, totalVehicles: prev.totalVehicles || 0})); // Keep total if available
-        setIsLoading(false);
-        return;
-      }
-      setIsLoading(true);
       startTransition(async () => {
         try {
-          const [data, options] = await Promise.all([
-            getFleetData(debouncedFilters),
-            getInitialFilterOptions(debouncedFilters)
-          ]);
+          const data = await getFleetData(debouncedFilters);
           setDashboardData(data);
-          setFilterOptions(prev => ({
-              ...prev,
-              ...options,
-              manufacturers: options.manufacturers.length ? options.manufacturers : prev.manufacturers,
-              regions: options.regions.length ? options.regions : prev.regions,
-          }));
         } catch (error) {
           console.error(error);
           toast({ variant: 'destructive', title: t('error'), description: 'Failed to load dashboard data.' });
           setDashboardData(emptyDashboardData);
-        } finally {
-          setIsLoading(false);
         }
       });
     };
     fetchData();
-  }, [debouncedFilters, isFiltered, toast, t]);
+  }, [debouncedFilters, toast]);
+
+
+  // Effect for fetching FILTER OPTIONS immediately when a parent filter changes
+  useEffect(() => {
+    if (isLoading) return;
+
+    const fetchOptions = async () => {
+        const relevantFilters: Partial<Filters> = {
+            region: filters.region,
+            state: filters.state,
+            manufacturer: filters.manufacturer,
+            model: filters.model,
+            version: filters.version,
+            year: filters.year,
+        };
+        const options = await getInitialFilterOptions(relevantFilters);
+        setFilterOptions(prev => ({
+            ...prev,
+            ...options
+        }));
+    };
+    
+    fetchOptions();
+  }, [filters.region, filters.state, filters.manufacturer, filters.model, filters.version, filters.year, isLoading]);
 
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
         const updated: Filters = { ...prev };
-        
-        // Treat "all" as an empty string to clear the filter
         const finalValue = value === 'all' ? '' : value;
         updated[key] = finalValue;
-        
-        // Cascading filter logic
+
+        // --- Strict Cascading Logic ---
         if (key === 'region') {
             updated.state = '';
             updated.city = '';
+            setFilterOptions(opts => ({ ...opts, states: [], cities: [] }));
         }
         if (key === 'state') {
             updated.city = '';
+            setFilterOptions(opts => ({ ...opts, cities: [] }));
         }
         if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
             updated.year = '';
+            setFilterOptions(opts => ({ ...opts, models: [], versions: [], years: [] }));
         }
         if (key === 'model') {
             updated.version = [];
             updated.year = '';
+            setFilterOptions(opts => ({ ...opts, versions: [], years: [] }));
         }
         
         if (key === 'year' && finalValue !== '') {
@@ -180,7 +193,6 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    // Refetch initial options after clearing
     getInitialFilterOptions().then(setFilterOptions);
   }, []);
   
@@ -484,3 +496,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
