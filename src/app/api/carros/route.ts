@@ -47,6 +47,47 @@ const aggregateData = async (collection: import('mongodb').Collection, pipeline:
     return collection.aggregate(pipeline).toArray();
 };
 
+const findTopLocation = async (collection: import('mongodb').Collection, matchStage: any): Promise<TopEntity | null> => {
+    // 1. Try to find by City and State
+    const topCityState = await aggregateData(collection, [
+      { $match: { ...matchStage.$match, city: { $ne: null, $ne: "" }, state: { $ne: null, $ne: "" } } },
+      { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } },
+      { $sort: { total: -1 } },
+      { $limit: 1 }
+    ]);
+
+    if (topCityState.length > 0) {
+        return { name: `${topCityState[0]._id.city}, ${topCityState[0]._id.state}`, quantity: topCityState[0].total };
+    }
+
+    // 2. Fallback to State
+    const topState = await aggregateData(collection, [
+       { $match: { ...matchStage.$match, state: { $ne: null, $ne: "" } } },
+       { $group: { _id: '$state', total: { $sum: '$quantity' } } },
+       { $sort: { total: -1 } },
+       { $limit: 1 }
+    ]);
+
+    if (topState.length > 0) {
+        return { name: topState[0]._id, quantity: topState[0].total };
+    }
+    
+    // 3. Fallback to Region
+    const topRegion = await aggregateData(collection, [
+       { $match: { ...matchStage.$match, region: { $ne: null, $ne: "" } } },
+       { $group: { _id: '$region', total: { $sum: '$quantity' } } },
+       { $sort: { total: -1 } },
+       { $limit: 1 }
+    ]);
+
+    if (topRegion.length > 0) {
+        return { name: topRegion[0]._id, quantity: topRegion[0].total };
+    }
+
+    return null;
+}
+
+
 export async function GET(request: NextRequest) {
   try {
     const db = await connectToMongo();
@@ -97,12 +138,13 @@ export async function GET(request: NextRequest) {
     const currentYear = new Date().getFullYear();
     const matchStage = { $match: query };
 
-    // Run aggregations in parallel
+    const topLocation = await findTopLocation(collection, matchStage);
+
+    // Run other aggregations in parallel
     const [
         totalVehiclesResult,
         topModel,
         topManufacturer,
-        topLocation,
         regionalData,
         topModelsChart,
         fleetByYearChart,
@@ -111,13 +153,6 @@ export async function GET(request: NextRequest) {
         aggregateData(collection, [matchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
-        aggregateData(collection, [
-            matchStage,
-            { $match: { city: { $ne: null, $ne: "" }, state: { $ne: null, $ne: "" } } },
-            { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } },
-            { $sort: { total: -1 } },
-            { $limit: 1 }
-        ]),
         aggregateData(collection, [matchStage, { $group: { _id: '$region', total: { $sum: '$quantity' } } }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]),
@@ -141,7 +176,7 @@ export async function GET(request: NextRequest) {
         totalVehicles,
         topModel: { name: topModel[0]?._id || '-', quantity: topModel[0]?.total || 0 },
         topManufacturer: topManufacturer[0] ? { name: topManufacturer[0]._id, quantity: topManufacturer[0].total } : null,
-        mainLocation: topLocation[0] ? { name: `${topLocation[0]._id.city}, ${topLocation[0]._id.state}`, quantity: topLocation[0].total } : null,
+        mainLocation: topLocation,
         regionalData: allRegions.map(region => {
             const found = regionalData.find((r: any) => r._id === region);
             return { name: region, quantity: found?.total || 0 };
