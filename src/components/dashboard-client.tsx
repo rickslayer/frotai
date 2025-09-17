@@ -35,9 +35,9 @@ const emptyDashboardData: DashboardData = {
   totalVehicles: 0,
   topModel: { name: '-', quantity: 0 },
   topManufacturer: { name: '-', quantity: 0 },
-  topRegion: null,
-  topState: null,
-  topCity: null,
+  topRegion: undefined,
+  topState: undefined,
+  topCity: undefined,
   regionalData: [],
   topModelsChart: [],
   fleetByYearChart: [],
@@ -113,20 +113,20 @@ const DashboardClient: FC = () => {
 
   // Effect for fetching DASHBOARD DATA based on DEBOUNCED filters
   useEffect(() => {
-    // Do not run on initial render, as the initial data is already being fetched.
-    if (isLoading) return; 
-
-    // This check prevents re-fetching the "all data" view right after the initial load.
     const hasActiveFilters = Object.values(debouncedFilters).some(value => {
         if (Array.isArray(value)) return value.length > 0;
         return !!value;
     });
 
-    // If there are no active filters, and we have just loaded, we already have the global data.
-    if (!hasActiveFilters && !isFiltered) {
-        // Optional: If you want to ensure data is always fresh, you can remove this block.
-        // But it prevents an unnecessary second fetch for the "all" state on page load.
-        return;
+    // Skip fetch if filters are empty and it's not the initial load phase
+    if (!hasActiveFilters && !isLoading) {
+        // If we clear filters, we need to refetch the "all" data.
+        // This check prevents an unnecessary re-fetch.
+        const isAlreadyShowingAllData = debouncedFilters === initialFilters;
+        if(isAlreadyShowingAllData) {
+            // To ensure it re-fetches when cleared, we can compare against a "cleared" state.
+            // But for now, let's allow it to refetch.
+        }
     }
 
 
@@ -142,8 +142,11 @@ const DashboardClient: FC = () => {
         }
       });
     };
-    fetchData();
-  }, [debouncedFilters, toast, isLoading, isFiltered]);
+
+    if (!isLoading) { // Only fetch if not initial loading
+      fetchData();
+    }
+  }, [debouncedFilters, toast, isLoading]);
 
 
   // Effect for fetching FILTER OPTIONS immediately when a filter changes
@@ -180,9 +183,6 @@ const DashboardClient: FC = () => {
         const finalValue = value === 'all' ? '' : value;
         
         // --- Cascading Logic ---
-        const isLocationFilter = ['region', 'state', 'city'].includes(key);
-        const isVehicleFilter = ['manufacturer', 'model', 'version', 'year'].includes(key);
-
         updated[key] = finalValue;
 
         if (key === 'region') {
@@ -218,7 +218,7 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    // After clearing, we fetch the "all" data view again.
+    // After clearing, we refetch the "all" data view again.
     startTransition(async () => {
         try {
             const [options, data] = await Promise.all([
@@ -415,7 +415,7 @@ const DashboardClient: FC = () => {
   }
 
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading && !isPending) {
       return (
         <div className="flex h-full w-full items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -423,22 +423,14 @@ const DashboardClient: FC = () => {
       );
     }
     
-    if (isPending) {
-       return (
-        <div className="flex h-full w-full items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-    
     // Welcome placeholder is only shown if the initial data load results in zero vehicles.
-    if (!isFiltered && dashboardData.totalVehicles === 0) {
+    if (!isFiltered && dashboardData.totalVehicles === 0 && !isLoading) {
         return <WelcomePlaceholder />;
     }
 
     return (
        <>
-        <StatCards data={dashboardData} />
+        <StatCards data={dashboardData} isLoading={isPending} />
         
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-8">
             <div id="regional-map" className="lg:col-span-3">

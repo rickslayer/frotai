@@ -2,61 +2,85 @@
 'use client';
 
 import type { FC } from 'react';
-import type { DashboardData } from '@/types';
+import type { DashboardData, TopEntity } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users2, Map, Globe, Flag, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Skeleton } from '../ui/skeleton';
 
 interface StatCardsProps {
   data: DashboardData;
+  isLoading?: boolean;
 }
 
-
-const StatCards: FC<StatCardsProps> = ({ data }) => {
+const StatCard: FC<{title: string, value: string | null, description: string, icon: React.ReactNode, isLoading?: boolean}> = ({ title, value, description, icon, isLoading }) => {
   const { t } = useTranslation();
+  
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <>
+            <Skeleton className="h-7 w-1/2" />
+            <Skeleton className="h-3 w-full mt-2" />
+          </>
+        ) : (
+          <>
+            <div className="text-2xl font-bold truncate">{value || '-'}</div>
+            <p className="text-xs text-muted-foreground uppercase">{description}</p>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+
+const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
+  const { t } = useTranslation();
+  
+  const isCardLoading = (entity: TopEntity | null | undefined) => {
+    // If the main data is loading, all cards are loading.
+    if (isLoading) return true;
+    // If data has loaded, but a specific entity is undefined, it means it's still being calculated.
+    if (entity === undefined) return true;
+    return false;
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('total_vehicles')}</CardTitle>
-          <Users2 className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{data.totalVehicles.toLocaleString()}</div>
-          <p className="text-xs text-muted-foreground uppercase">{t('total_vehicles_description')}</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('main_region')}</CardTitle>
-          <Globe className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold truncate">{data.topRegion?.name ? t(data.topRegion.name as any) : '-'}</div>
-          <p className="text-xs text-muted-foreground uppercase">{t('main_region_description')}</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('main_state')}</CardTitle>
-          <Flag className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold truncate">{data.topState?.name || '-'}</div>
-          <p className="text-xs text-muted-foreground uppercase">{t('main_state_description')}</p>
-        </CardContent>
-      </Card>
-       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('main_city')}</CardTitle>
-          <Map className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold truncate">{data.topCity?.name || '-'}</div>
-          <p className="text-xs text-muted-foreground uppercase">{t('main_city_description')}</p>
-        </CardContent>
-      </Card>
+      <StatCard
+        title={t('total_vehicles')}
+        value={isLoading ? null : data.totalVehicles.toLocaleString()}
+        description={t('total_vehicles_description')}
+        icon={<Users2 className="h-4 w-4 text-muted-foreground" />}
+        isLoading={isLoading}
+      />
+      <StatCard
+        title={t('main_region')}
+        value={data.topRegion?.name ? t(data.topRegion.name as any) : null}
+        description={t('main_region_description')}
+        icon={<Globe className="h-4 w-4 text-muted-foreground" />}
+        isLoading={isCardLoading(data.topRegion)}
+      />
+      <StatCard
+        title={t('main_state')}
+        value={data.topState?.name || null}
+        description={t('main_state_description')}
+        icon={<Flag className="h-4 w-4 text-muted-foreground" />}
+        isLoading={isCardLoading(data.topState)}
+      />
+       <StatCard
+        title={t('main_city')}
+        value={data.topCity?.name || null}
+        description={t('main_city_description')}
+        icon={<Map className="h-4 w-4 text-muted-foreground" />}
+        isLoading={isCardLoading(data.topCity)}
+      />
     </div>
   );
 };

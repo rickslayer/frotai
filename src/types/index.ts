@@ -118,9 +118,9 @@ export type DashboardData = {
   totalVehicles: number;
   topModel: TopEntity;
   topManufacturer: TopEntity | null;
-  topRegion: TopEntity | null;
-  topState: TopEntity | null;
-  topCity: TopEntity | null;
+  topRegion?: TopEntity | null;
+  topState?: TopEntity | null;
+  topCity?: TopEntity | null;
   regionalData: RegionData[];
   topModelsChart: TopModel[];
   fleetByYearChart: FleetByYear[];

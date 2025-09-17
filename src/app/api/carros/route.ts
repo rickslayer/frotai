@@ -45,7 +45,7 @@ const generateCacheKey = (filters: Partial<Filters>): string => {
 
 // Helper function for a single aggregation
 const aggregateData = async (collection: import('mongodb').Collection, pipeline: Document[]) => {
-    return collection.aggregate(pipeline).toArray();
+    return collection.aggregate(pipeline, { maxTimeMS: 20000 }).toArray(); // 20 second timeout
 };
 
 const findTopEntity = async (
@@ -53,24 +53,29 @@ const findTopEntity = async (
     query: any,
     field: string
 ): Promise<TopEntity | null> => {
-    const pipeline = [
-      {
-        $match: {
-          ...query,
-          [field]: { $ne: null, $ne: "" }
+    try {
+        const pipeline = [
+          {
+            $match: {
+              ...query,
+              [field]: { $ne: null, $ne: "" }
+            }
+          },
+          { $group: { _id: `$${field}`, total: { $sum: '$quantity' } } },
+          { $sort: { total: -1 } },
+          { $limit: 1 }
+        ];
+
+        const topResult = await aggregateData(collection, pipeline);
+
+        if (topResult.length > 0 && topResult[0]._id) {
+            return { name: topResult[0]._id, quantity: topResult[0].total };
         }
-      },
-      { $group: { _id: `$${field}`, total: { $sum: '$quantity' } } },
-      { $sort: { total: -1 } },
-      { $limit: 1 }
-    ];
-
-    const topResult = await aggregateData(collection, pipeline);
-
-    if (topResult.length > 0 && topResult[0]._id) {
-        return { name: topResult[0]._id, quantity: topResult[0].total };
+        return null;
+    } catch (err) {
+        console.error(`Error finding top entity for field "${field}":`, err);
+        return null; // Return null on error to not break the entire response
     }
-    return null;
 }
 
 
@@ -138,15 +143,15 @@ export async function GET(request: NextRequest) {
         fleetByYearChart,
         fleetAgeBrackets,
     ] = await Promise.all([
-        aggregateData(collection, [matchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]),
-        aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
+        aggregateData(collection, [matchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]).catch(() => [{ total: 0 }]),
+        aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]).catch(() => [null]),
         findTopEntity(collection, query, 'manufacturer'),
         findTopEntity(collection, query, 'region'),
         findTopEntity(collection, query, 'state'),
         findTopEntity(collection, query, 'city'),
-        aggregateData(collection, [matchStage, { $group: { _id: '$region', total: { $sum: '$quantity' } } }]),
-        aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]),
-        aggregateData(collection, [matchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]),
+        aggregateData(collection, [matchStage, { $group: { _id: '$region', total: { $sum: '$quantity' } } }]).catch(() => []),
+        aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]).catch(() => []),
+        aggregateData(collection, [matchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]).catch(() => []),
         aggregateData(collection, [
             { $match: { ...query, year: { $ne: 0 } } },
             { $project: { quantity: '$quantity', age: { $subtract: [currentYear, '$year'] } } },
@@ -158,7 +163,7 @@ export async function GET(request: NextRequest) {
                 output: { total: { $sum: '$quantity' } }
               }
             },
-        ]),
+        ]).catch(() => []),
     ]);
     
     const totalVehicles = totalVehiclesResult[0]?.total || 0;
