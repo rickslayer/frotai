@@ -15,6 +15,9 @@ export type Vehicle = {
 };
 
 export type FilterOptions = {
+  regions: string[];
+  states: string[];
+  cities: string[];
   manufacturers: string[];
   models: string[];
   versions: string[];
@@ -22,6 +25,9 @@ export type FilterOptions = {
 };
 
 export type Filters = {
+  region: string;
+  state: string;
+  city: string;
   manufacturer: string;
   model: string;
   version: string[];
@@ -112,10 +118,9 @@ export type DashboardData = {
   totalVehicles: number;
   topModel: TopEntity;
   topManufacturer: TopEntity | null;
+  mainLocation: TopEntity | null;
   regionalData: RegionData[];
   topModelsChart: TopModel[];
   fleetByYearChart: FleetByYear[];
   fleetAgeBrackets: Omit<FleetAgeBracket, 'label'>[];
 };
-
-    

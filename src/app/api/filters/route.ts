@@ -31,16 +31,16 @@ const getDistinctValues = async (collection: import('mongodb').Collection, field
   if (field !== 'year') {
     query[field] = { $ne: null, $ne: "" };
   } else {
-    query[field] = { $ne: null };
+    query[field] = { $ne: null, $ne: 0 };
   }
-
 
   const values = await collection.distinct(field, query);
   
   if (field === 'year') {
     return (values as number[]).sort((a, b) => b - a);
   }
-
+  // For cities, we might get a lot, maybe sorting isn't the best idea if the list is huge.
+  // For now, let's keep it sorted.
   return values.sort();
 };
 
@@ -53,29 +53,35 @@ export async function GET(request: NextRequest) {
     const manufacturer = searchParams.get('manufacturer');
     const model = searchParams.get('model');
     const versionsParam = searchParams.getAll('version');
+    const year = searchParams.get('year');
+    const region = searchParams.get('region');
+    const state = searchParams.get('state');
     
     // Base match query for dependent filters
     const baseMatch: any = {};
     if (manufacturer) baseMatch.manufacturer = manufacturer;
     if (model) baseMatch.model = model;
-    if (versionsParam && versionsParam.length > 0) {
-      baseMatch.version = { $in: versionsParam };
-    }
+    if (versionsParam && versionsParam.length > 0) baseMatch.version = { $in: versionsParam };
+    if (year) baseMatch.year = parseInt(year);
+    if (region) baseMatch.region = region;
+    if (state) baseMatch.state = state;
     
     const [
       manufacturers,
       models,
       versions,
       years,
+      regions,
+      states,
+      cities,
     ] = await Promise.all([
-      // Always get all manufacturers
       getDistinctValues(collection, 'manufacturer', {}),
-      // Get models only if a manufacturer is selected
-      manufacturer ? getDistinctValues(collection, 'model', { manufacturer }) : [],
-      // Get versions only if a model is selected
-      model ? getDistinctValues(collection, 'version', { manufacturer, model }) : [],
-      // Get years based on the current selection context
+      manufacturer ? getDistinctValues(collection, 'model', { manufacturer, ...baseMatch }) : [],
+      model ? getDistinctValues(collection, 'version', { manufacturer, model, ...baseMatch }) : [],
       getDistinctValues(collection, 'year', baseMatch),
+      getDistinctValues(collection, 'region', baseMatch),
+      region ? getDistinctValues(collection, 'state', { region, ...baseMatch }) : [],
+      state ? getDistinctValues(collection, 'city', { state, ...baseMatch }) : [],
     ]);
 
     const filterOptions: FilterOptions = {
@@ -83,6 +89,9 @@ export async function GET(request: NextRequest) {
       models,
       versions,
       years: years as number[],
+      regions,
+      states,
+      cities,
     };
 
     return NextResponse.json(filterOptions);

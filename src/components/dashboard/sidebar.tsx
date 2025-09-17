@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { Car, SlidersHorizontal, FilterX } from 'lucide-react';
+import { Car, SlidersHorizontal, FilterX, Map } from 'lucide-react';
 import type { FilterOptions, Filters } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,8 +20,12 @@ interface DashboardSidebarProps {
   onFilterChange: (key: keyof Filters, value: any) => void;
   onClearFilters: () => void;
   filterOptions: FilterOptions;
-  isModelDisabled: boolean;
-  isVersionDisabled: boolean;
+  disabledFilters: {
+    model: boolean;
+    version: boolean;
+    state: boolean;
+    city: boolean;
+  };
 }
 
 const DashboardSidebar: FC<DashboardSidebarProps> = ({
@@ -29,8 +33,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
     onFilterChange,
     onClearFilters,
     filterOptions,
-    isModelDisabled,
-    isVersionDisabled,
+    disabledFilters,
 }) => {
   const { t } = useTranslation();
 
@@ -56,7 +59,37 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
         <ScrollArea className="flex-1">
           <div className="p-4">
             <h2 className="mb-4 text-lg font-semibold tracking-tight">{t('filters')}</h2>
-            <Accordion type="multiple" defaultValue={['vehicle']} className="w-full">
+            <Accordion type="multiple" defaultValue={['location', 'vehicle']} className="w-full">
+               <AccordionItem value="location">
+                <AccordionTrigger>
+                  <div className='flex items-center gap-2'>
+                    <Map className="h-4 w-4" /> <span>{t('location')}</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="space-y-4 pt-4">
+                   <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value as string)}>
+                    <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
+                    <SelectContent>
+                       <SelectItem value="">{t('all_regions')}</SelectItem>
+                      {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value as string)} disabled={disabledFilters.state}>
+                    <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">{t('all_states')}</SelectItem>
+                      {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                   <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value as string)} disabled={disabledFilters.city}>
+                    <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">{t('all_cities')}</SelectItem>
+                      {(filterOptions.cities || []).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </AccordionContent>
+              </AccordionItem>
               <AccordionItem value="vehicle">
                 <AccordionTrigger>
                   <div className='flex items-center gap-2'>
@@ -67,6 +100,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                   <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
                     <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                     <SelectContent>
+                       <SelectItem value="">{t('all_manufacturers')}</SelectItem>
                       {(filterOptions.manufacturers || []).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -77,19 +111,20 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                     placeholder={t('select_model')}
                     searchPlaceholder={t('search_model_placeholder')}
                     noResultsText={t('no_model_found')}
-                    disabled={isModelDisabled}
+                    disabled={disabledFilters.model}
                   />
                    <MultiSelectDropdown
-                      options={(filterOptions.versions || []).map(v => ({ value: v, label: v || t('base_model_version')}))}
+                      options={(filterOptions.versions || []).map(v => ({ value: v || 'null_version', label: v || t('base_model_version')}))}
                       selectedValues={filters.version}
                       onChange={(selected) => handleFilterValueChange('version', selected)}
                       placeholder={t('select_version_multi')}
-                      disabled={isVersionDisabled}
+                      disabled={disabledFilters.version}
                    />
                    <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                     <SelectContent>
-                      {(filterOptions.years || []).map(y => <SelectItem key={y} value={String(y)}>{y === 0 ? "Indefinido" : y}</SelectItem>)}
+                      <SelectItem value="">{t('all_years')}</SelectItem>
+                      {(filterOptions.years || []).map(y => <SelectItem key={y} value={String(y)}>{y === 0 ? t('Indefinido') : y}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </AccordionContent>

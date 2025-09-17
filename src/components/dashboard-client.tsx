@@ -16,7 +16,7 @@ import {
   Sidebar,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import RegionalFleetChart from './dashboard/regional-fleet-chart';
+import RegionalFleetMap from './dashboard/regional-fleet-map';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
@@ -35,6 +35,7 @@ const emptyDashboardData: DashboardData = {
   totalVehicles: 0,
   topModel: { name: '-', quantity: 0 },
   topManufacturer: { name: '-', quantity: 0 },
+  mainLocation: null,
   regionalData: [],
   topModelsChart: [],
   fleetByYearChart: [],
@@ -42,14 +43,13 @@ const emptyDashboardData: DashboardData = {
 };
 
 const initialFilters: Filters = {
+    region: '', state: '', city: '',
     manufacturer: '', model: '', version: [], year: '',
 };
 
 const emptyFilterOptions: FilterOptions = {
-    manufacturers: [],
-    models: [],
-    versions: [],
-    years: [],
+    regions: [], states: [], cities: [],
+    manufacturers: [], models: [], versions: [], years: [],
 };
 
 const DashboardClient: FC = () => {
@@ -74,109 +74,99 @@ const DashboardClient: FC = () => {
   
   const isFiltered = useMemo(() => {
     return Object.values(filters).some(value => {
-        if (Array.isArray(value)) {
-            return value.length > 0;
-        }
+        if (Array.isArray(value)) return value.length > 0;
         return value && value !== '';
     });
   }, [filters]);
   
-  const isModelDisabled = useMemo(() => !filters.manufacturer, [filters.manufacturer]);
-  const isVersionDisabled = useMemo(() => !filters.model, [filters.model]);
+  const disabledFilters = useMemo(() => ({
+    model: !filters.manufacturer,
+    version: !filters.model,
+    state: !filters.region,
+    city: !filters.state
+  }), [filters]);
 
-  // Effect for fetching initial filter options on mount
   useEffect(() => {
-    const fetchInitialOptions = async () => {
+    const fetchInitialData = async () => {
       setIsLoading(true);
       try {
-        const options = await getInitialFilterOptions();
+        const [options, data] = await Promise.all([
+            getInitialFilterOptions(),
+            getFleetData({})
+        ]);
         setFilterOptions(options);
-      } catch (error) {
-        console.error(error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to load initial filter options.';
-        toast({ variant: 'destructive', title: t('error'), description: errorMessage });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchInitialOptions();
-  }, [t, toast]);
-
-
-  // Effect for fetching main dashboard data when debounced filters change
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!isFiltered) {
-        setDashboardData(emptyDashboardData);
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        const data = await getFleetData(debouncedFilters);
         setDashboardData(data);
       } catch (error) {
         console.error(error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to load dashboard data.';
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load initial data.';
         toast({ variant: 'destructive', title: t('error'), description: errorMessage });
-        setDashboardData(emptyDashboardData);
       } finally {
         setIsLoading(false);
       }
     };
-    
-    startTransition(() => {
-        fetchData();
-    });
+    fetchInitialData();
+  }, [t, toast]);
 
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!isFiltered) {
+        setDashboardData(prev => ({ ...prev, totalVehicles: prev.totalVehicles || 0})); // Keep total if available
+        setIsLoading(false);
+        return;
+      }
+      setIsLoading(true);
+      startTransition(async () => {
+        try {
+          const [data, options] = await Promise.all([
+            getFleetData(debouncedFilters),
+            getInitialFilterOptions(debouncedFilters)
+          ]);
+          setDashboardData(data);
+          setFilterOptions(prev => ({
+              ...prev,
+              ...options,
+              manufacturers: options.manufacturers.length ? options.manufacturers : prev.manufacturers,
+              regions: options.regions.length ? options.regions : prev.regions,
+          }));
+        } catch (error) {
+          console.error(error);
+          toast({ variant: 'destructive', title: t('error'), description: 'Failed to load dashboard data.' });
+          setDashboardData(emptyDashboardData);
+        } finally {
+          setIsLoading(false);
+        }
+      });
+    };
+    fetchData();
   }, [debouncedFilters, isFiltered, toast, t]);
 
-  // Effect for fetching dynamic filter options based on selections
-  useEffect(() => {
-    const fetchFilterOptions = async () => {
-        const { manufacturer, model, version } = filters;
-        
-        // Don't fetch if there's no manufacturer
-        if (!manufacturer) return;
-
-        const query: Partial<Filters> = { manufacturer };
-        if (model) query.model = model;
-        if (version.length > 0) query.version = version;
-        
-        const options = await getInitialFilterOptions(query);
-        setFilterOptions(prev => ({
-            ...prev,
-            models: options.models,
-            versions: model ? options.versions : [],
-            years: options.years,
-        }));
-    };
-
-    fetchFilterOptions();
-  }, [filters.manufacturer, filters.model, filters.version]);
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
         const updated: Filters = { ...prev };
-
-        // Handle cascading resets
+        updated[key] = value;
+        
+        // Cascading filter logic
+        if (key === 'region') {
+            updated.state = '';
+            updated.city = '';
+        }
+        if (key === 'state') {
+            updated.city = '';
+        }
         if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
-            updated.year = '';
-            setFilterOptions(opts => ({ ...opts, models: [], versions: [], years: [] }));
         }
         if (key === 'model') {
             updated.version = [];
-            updated.year = '';
-             setFilterOptions(opts => ({ ...opts, versions: [], years: [] }));
         }
-
-        updated[key] = value;
         
         if (key === 'year' && value !== '') {
             updated.year = Number(value);
+        } else if (key === 'year' && value === '') {
+            updated.year = '';
         }
 
         return updated;
@@ -185,11 +175,8 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    setDashboardData(emptyDashboardData);
-    setFilterOptions(prevOpts => ({ ...prevOpts, models: [], versions: [], years: [] })); // Clear options immediately
-    getInitialFilterOptions().then(options => {
-        setFilterOptions(options);
-    });
+    // Refetch initial options after clearing
+    getInitialFilterOptions().then(setFilterOptions);
   }, []);
   
   const handleExportPDF = async () => {
@@ -210,7 +197,7 @@ const DashboardClient: FC = () => {
       doc.setFontSize(12);
       doc.text(title, 14, y);
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
+      docsetFontSize(11);
       doc.text(value, 60, y);
       y += 8;
     };
@@ -218,6 +205,7 @@ const DashboardClient: FC = () => {
     addSection(t('total_vehicles'), dashboardData.totalVehicles.toLocaleString());
     addSection(t('main_manufacturer'), dashboardData.topManufacturer?.name || '-');
     addSection(t('main_model'), dashboardData.topModel.name);
+    addSection(t('main_city'), dashboardData.mainLocation?.name || '-');
     y += 5;
 
     const formatTextForPdf = (htmlText: string | null | undefined): string => {
@@ -313,7 +301,7 @@ const DashboardClient: FC = () => {
       return y;
     };
 
-    y = await addBase64ImageToPdf(doc, 'regional-chart', y, t('regional_fleet_analysis'));
+    y = await addBase64ImageToPdf(doc, 'regional-map', y, t('regional_fleet_analysis'));
     y = await addBase64ImageToPdf(doc, 'top-models-chart', y, t('top_models_by_volume', { count: 5 }));
     y = await addBase64ImageToPdf(doc, 'fleet-by-year-chart', y, t('fleet_by_year'));
     y = await addBase64ImageToPdf(doc, 'fleet-age-chart', y, t('fleet_by_age_bracket'));
@@ -373,7 +361,11 @@ const DashboardClient: FC = () => {
 
   const renderContent = () => {
     if (isLoading && !isFiltered) {
-      return (
+      return <WelcomePlaceholder />;
+    }
+    
+    if (isLoading || isPending) {
+       return (
         <div className="flex h-full w-full items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -384,21 +376,15 @@ const DashboardClient: FC = () => {
         return <WelcomePlaceholder />;
     }
 
-    if (isLoading || isPending) {
-       return (
-        <div className="flex h-full w-full items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
     return (
        <>
         <StatCards data={dashboardData} />
         
-        <div id="regional-chart" className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
-            <RegionalFleetChart data={dashboardData.regionalData} />
-            <div id="top-models-chart">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-8">
+            <div id="regional-map" className="lg:col-span-3">
+                <RegionalFleetMap data={dashboardData.regionalData} />
+            </div>
+            <div id="regional-chart" className="lg:col-span-2">
                 <TopModelsChart data={dashboardData.topModelsChart} />
             </div>
         </div>
@@ -445,8 +431,7 @@ const DashboardClient: FC = () => {
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           filterOptions={filterOptions}
-          isModelDisabled={isModelDisabled}
-          isVersionDisabled={isVersionDisabled}
+          disabledFilters={disabledFilters}
         />
       </Sidebar>
       <SidebarInset>
@@ -494,5 +479,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    

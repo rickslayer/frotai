@@ -89,7 +89,10 @@ export async function GET(request: NextRequest) {
         if (filterValue && (Array.isArray(filterValue) ? filterValue.length > 0 : filterValue !== '')) {
             if (filterKey === 'version' && Array.isArray(filterValue) && filterValue.length > 0) {
                  query.version = { $in: filterValue };
-            } else if (filterKey !== 'version') {
+            } else if (filterKey === 'year' && filterValue !== 0) {
+                query.year = filterValue;
+            }
+            else if (filterKey !== 'version' && filterKey !== 'year') {
                 query[key] = filterValue;
             }
         }
@@ -102,26 +105,21 @@ export async function GET(request: NextRequest) {
         totalVehicles,
         topModel,
         topManufacturer,
+        topLocation,
         regionalData,
         topModelsChart,
         fleetByYearChart,
         fleetAgeBrackets,
     ] = await Promise.all([
-        // Total Vehicles
         collection.countDocuments(query),
-        // Top Model
         aggregateData(collection, query, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
-        // Top Manufacturer
         aggregateData(collection, query, { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
-        // Regional Data
+        aggregateData(collection, query, { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
         aggregateData(collection, query, { $group: { _id: '$region', total: { $sum: '$quantity' } } }),
-        // Top Models Chart
         aggregateData(collection, query, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 10),
-        // Fleet by Year Chart
         aggregateData(collection, query, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }),
-        // Fleet Age Brackets
         collection.aggregate([
-            { $match: query },
+            { $match: { ...query, year: { $ne: 0 } } },
             { $project: { quantity: '$quantity', age: { $subtract: [currentYear, '$year'] } } },
             {
               $bucket: {
@@ -138,12 +136,13 @@ export async function GET(request: NextRequest) {
         totalVehicles: totalVehicles || 0,
         topModel: { name: topModel[0]?._id || '-', quantity: topModel[0]?.total || 0 },
         topManufacturer: topManufacturer[0] ? { name: topManufacturer[0]._id, quantity: topManufacturer[0].total } : null,
+        mainLocation: topLocation[0] ? { name: `${topLocation[0]._id.city}, ${topLocation[0]._id.state}`, quantity: topLocation[0].total } : null,
         regionalData: allRegions.map(region => {
             const found = regionalData.find((r: any) => r._id === region);
             return { name: region, quantity: found?.total || 0 };
         }),
         topModelsChart: topModelsChart.map((d: any) => ({ model: d._id, quantity: d.total })),
-        fleetByYearChart: fleetByYearChart.map((d: any) => ({ year: d.year, quantity: d.total })),
+        fleetByYearChart: fleetByYearChart.map((d: any) => ({ year: d._id, quantity: d.total })).filter(d => d.year !== 0),
         fleetAgeBrackets: fleetAgeBrackets.map((b: any) => {
             const rangeMap: Record<number, string> = { 0: '0-3', 4: '4-7', 8: '8-12', 13: '13+' };
             return {
