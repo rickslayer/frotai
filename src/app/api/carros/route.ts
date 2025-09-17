@@ -45,9 +45,17 @@ const generateCacheKey = (filters: Partial<Filters>): string => {
 // Helper function for a single aggregation
 const aggregateData = async (collection: import('mongodb').Collection, matchQuery: any, groupStage: any, sortStage?: any, limit?: number) => {
     const pipeline: Document[] = [{ $match: matchQuery }];
-    pipeline.push(groupStage);
+    if (Object.keys(groupStage).length > 0) {
+        pipeline.push(groupStage);
+    }
     if (sortStage) pipeline.push(sortStage);
     if (limit) pipeline.push({ $limit: limit });
+
+    // If we are just counting, we add a count stage.
+    if (Object.keys(groupStage).length === 0 && !sortStage && !limit) {
+      pipeline.push({ $count: 'total' });
+    }
+
     return collection.aggregate(pipeline).toArray();
 };
 
@@ -102,7 +110,7 @@ export async function GET(request: NextRequest) {
 
     // Run aggregations in parallel
     const [
-        totalVehicles,
+        totalVehiclesResult,
         topModel,
         topManufacturer,
         topLocation,
@@ -111,7 +119,7 @@ export async function GET(request: NextRequest) {
         fleetByYearChart,
         fleetAgeBrackets,
     ] = await Promise.all([
-        collection.countDocuments(query),
+        aggregateData(collection, query, { $group: { _id: null, total: { $sum: '$quantity' } } }),
         aggregateData(collection, query, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
         aggregateData(collection, query, { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
         aggregateData(collection, query, { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
@@ -131,9 +139,11 @@ export async function GET(request: NextRequest) {
             },
         ]).toArray(),
     ]);
+    
+    const totalVehicles = totalVehiclesResult[0]?.total || 0;
 
     const dashboardData: DashboardData = {
-        totalVehicles: totalVehicles || 0,
+        totalVehicles,
         topModel: { name: topModel[0]?._id || '-', quantity: topModel[0]?.total || 0 },
         topManufacturer: topManufacturer[0] ? { name: topManufacturer[0]._id, quantity: topManufacturer[0].total } : null,
         mainLocation: topLocation[0] ? { name: `${topLocation[0]._id.city}, ${topLocation[0]._id.state}`, quantity: topLocation[0].total } : null,
