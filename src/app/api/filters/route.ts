@@ -44,25 +44,27 @@ export async function GET(request: NextRequest) {
 
     const manufacturer = searchParams.get('manufacturer');
     const model = searchParams.get('model');
+    const year = searchParams.get('year');
+    const versionsParam = searchParams.getAll('version');
 
     // Base match query for dependent filters
     const baseMatch: any = {};
     if (manufacturer) baseMatch.manufacturer = manufacturer;
     if (model) baseMatch.model = model;
+    if (year) baseMatch.year = parseInt(year, 10);
+    if (versionsParam.length > 0) baseMatch.version = { $in: versionsParam };
     
-    // Years should be filtered only by manufacturer and model, not by version.
-    const yearMatch = { ...baseMatch };
-
+    
     const [
       manufacturers,
       models,
       versions,
       years,
     ] = await Promise.all([
-      getDistinctValues(collection, 'manufacturer', {}), // Always get all manufacturers
+      getDistinctValues(collection, 'manufacturer', {}),
       manufacturer ? getDistinctValues(collection, 'model', { manufacturer }) : [],
-      model ? getDistinctValues(collection, 'version', { manufacturer, model }) : [],
-      getDistinctValues(collection, 'year', yearMatch), // Filter years based on base selections
+      model ? getDistinctValues(collection, 'version', { manufacturer, model, ...(year && { year: parseInt(year, 10) }) }) : [],
+      model ? getDistinctValues(collection, 'year', { manufacturer, model, ...(versionsParam.length > 0 && { version: { $in: versionsParam } })}) : [],
     ]);
 
     const filterOptions: FilterOptions = {
@@ -79,3 +81,5 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }
 }
+
+    

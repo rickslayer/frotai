@@ -117,3 +117,5 @@ export type DashboardData = {
   fleetByYearChart: FleetByYear[];
   fleetAgeBrackets: Omit<FleetAgeBracket, 'label'>[];
 };
+
+    

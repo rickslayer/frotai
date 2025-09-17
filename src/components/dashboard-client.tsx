@@ -135,47 +135,53 @@ const DashboardClient: FC = () => {
   // Effect for fetching dynamic filter options based on selections
   useEffect(() => {
     const fetchFilterOptions = async () => {
-       // Only fetch if manufacturer is selected. If not, the options should be empty.
        if (!filters.manufacturer) {
            setFilterOptions(prev => ({...prev, models: [], versions: [], years: []}));
            return;
        }
 
-       // Fetch options for the current manufacturer and model.
-       const options = await getInitialFilterOptions({
-            manufacturer: filters.manufacturer,
-            model: filters.model
-        });
+       const queryFilters: Partial<Filters> = { manufacturer: filters.manufacturer };
+       if (filters.model) queryFilters.model = filters.model;
+       if (filters.year) queryFilters.year = filters.year;
+       if (filters.version && filters.version.length > 0) queryFilters.version = filters.version;
 
-        setFilterOptions(prev => ({
-            ...prev,
-            models: options.models || [],
-            versions: options.versions || [],
-            years: options.years || [],
-        }));
+       const options = await getInitialFilterOptions(queryFilters);
+
+        setFilterOptions(prev => {
+            const newOptions: FilterOptions = { ...prev };
+            if (queryFilters.manufacturer && !queryFilters.model) {
+                // Manufacturer changed, update all dependents
+                newOptions.models = options.models;
+                newOptions.versions = options.versions;
+                newOptions.years = options.years;
+            } else {
+                // Model, Year, or Version changed
+                if (!queryFilters.year || queryFilters.year === '') {
+                    newOptions.years = options.years;
+                }
+                if (!queryFilters.version || queryFilters.version.length === 0) {
+                     newOptions.versions = options.versions;
+                }
+            }
+            return newOptions;
+        });
     };
     
-    // This effect should run when manufacturer or model changes to update dependent filters.
     fetchFilterOptions();
-  }, [filters.manufacturer, filters.model]);
+  }, [filters.manufacturer, filters.model, filters.year, filters.version]);
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
-        const updated = { ...prev };
-        const previous = { ...prev };
-        updated[key] = value;
+        const updated: Filters = { ...prev, [key]: value };
 
-        // --- Cascading Logic ---
-        if (key === 'manufacturer' && value !== previous.manufacturer) {
+        if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
             updated.year = '';
-             setFilterOptions(opts => ({ ...opts, models: [], versions: [], years: [] }));
         }
-        if (key === 'model' && value !== previous.model) {
+        if (key === 'model') {
             updated.version = [];
             updated.year = '';
-             setFilterOptions(opts => ({ ...opts, versions: [], years: [] }));
         }
         
         return updated;
@@ -184,7 +190,7 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    // After clearing filters, fetch all available manufacturers again
+    setFilterOptions(prev => ({...prev, models: [], versions: [], years: []}));
     getInitialFilterOptions().then(options => {
         setFilterOptions(options);
     });
@@ -495,3 +501,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
