@@ -20,8 +20,8 @@ export const getFleetData = async (filters: Partial<Filters>): Promise<Dashboard
       }
     });
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/carros';
-    const res = await fetch(`${apiUrl}?${query.toString()}&_=${new Date().getTime()}`);
+    const apiUrl = `/api/carros`;
+    const res = await fetch(`${apiUrl}?${query.toString()}`);
 
 
     if (!res.ok) {
@@ -34,8 +34,15 @@ export const getFleetData = async (filters: Partial<Filters>): Promise<Dashboard
       console.error(`API Error Response: ${errorBody}`);
       throw new Error(`Failed to fetch dashboard data: ${res.statusText}`);
     }
+    
+    let data;
+    try {
+        data = await res.json();
+    } catch (e) {
+        throw new Error('Failed to parse JSON response from API.');
+    }
 
-    const data = await res.json();
+
     if (data.error) {
         throw new Error(`API returned an error: ${data.details || data.error}`);
     }
@@ -67,8 +74,7 @@ export const getInitialFilterOptions = cache(async (filters?: Partial<Filters>):
         });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
-    const apiUrl = `${baseUrl}/api/filters`;
+    const apiUrl = `/api/filters`;
     const res = await fetch(`${apiUrl}?${query.toString()}`);
     
     if (!res.ok) {

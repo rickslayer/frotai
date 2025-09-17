@@ -47,17 +47,23 @@ const initialFilters: Filters = {
     region: '', state: '', city: '', manufacturer: '', model: '', version: [], year: '',
 };
 
-interface DashboardClientProps {
-  initialFilterOptions: FilterOptions;
-}
+const emptyFilterOptions: FilterOptions = {
+    regions: [],
+    states: [],
+    cities: [],
+    manufacturers: [],
+    models: [],
+    versions: [],
+    years: [],
+};
 
-const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => {
+const DashboardClient: FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
   const [dashboardData, setDashboardData] = useState<DashboardData>(emptyDashboardData);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>(initialFilterOptions);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>(emptyFilterOptions);
 
   const [isLoading, setIsLoading] = useState(false);
   
@@ -80,11 +86,29 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
     });
   }, [filters]);
   
-  // Control when filters are disabled based on the cascade logic
   const isStateDisabled = useMemo(() => !filters.region, [filters.region]);
   const isCityDisabled = useMemo(() => !filters.state, [filters.state]);
   const isModelDisabled = useMemo(() => !filters.manufacturer, [filters.manufacturer]);
   const isVersionDisabled = useMemo(() => !filters.model, [filters.model]);
+
+  // Effect for fetching initial filter options on mount
+  useEffect(() => {
+    const fetchInitialOptions = async () => {
+      setIsLoading(true);
+      try {
+        const options = await getInitialFilterOptions();
+        setFilterOptions(options);
+      } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load initial filter options.';
+        toast({ variant: 'destructive', title: t('error'), description: errorMessage });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchInitialOptions();
+  }, [t, toast]);
+
 
   // Effect for fetching main dashboard data when debounced filters change
   useEffect(() => {
@@ -118,6 +142,11 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
   // Effect for fetching dynamic filter options based on selections
   useEffect(() => {
     const fetchFilterOptions = async () => {
+       // Don't fetch if the top-level dependencies are not set
+       if (!filters.region && !filters.state && !filters.manufacturer && !filters.model) {
+           return;
+       }
+
        const options = await getInitialFilterOptions({
             region: filters.region,
             state: filters.state,
@@ -127,10 +156,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
 
         setFilterOptions(prev => ({
             ...prev,
-            states: filters.region ? regionToStatesMap[filters.region] || [] : [],
-            cities: options.cities,
-            models: options.models,
-            versions: options.versions,
+            states: filters.region ? regionToStatesMap[filters.region] || [] : prev.states,
+            cities: options.cities.length > 0 ? options.cities : prev.cities,
+            models: options.models.length > 0 ? options.models : prev.models,
+            versions: options.versions.length > 0 ? options.versions : prev.versions,
         }));
     };
     
@@ -143,22 +172,20 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
         updated[key] = value;
 
         // --- Cascading Logic ---
-        if (key === 'region' && value) {
+        if (key === 'region') {
             updated.state = '';
             updated.city = '';
         }
-        if (key === 'state' && value) {
+        if (key === 'state') {
             updated.city = '';
             if (value && !updated.region) {
                  const regionForState = stateToRegionMap[value];
                  if (regionForState) {
                     updated.region = regionForState;
                  }
+            } else if (!value) {
+                updated.region = ''; // Clear region if state is cleared
             }
-        }
-         if (key === 'state' && !value) {
-            updated.city = '';
-            updated.region = '';
         }
         if (key === 'manufacturer') {
             updated.model = '';
@@ -174,13 +201,8 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    setFilterOptions(prev => ({
-        ...prev,
-        states: [],
-        cities: [],
-        models: [],
-        versions: [],
-    }))
+    // Re-fetch initial options after clearing
+    getInitialFilterOptions().then(setFilterOptions);
     setDashboardData(emptyDashboardData);
   }, []);
   
@@ -439,7 +461,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}
           filterOptions={filterOptions}
-          isStateDisabled={false}
+          isStateDisabled={isStateDisabled}
           isCityDisabled={isCityDisabled}
           isModelDisabled={isModelDisabled}
           isVersionDisabled={isVersionDisabled}
