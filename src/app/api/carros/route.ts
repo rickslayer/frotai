@@ -43,19 +43,7 @@ const generateCacheKey = (filters: Partial<Filters>): string => {
 };
 
 // Helper function for a single aggregation
-const aggregateData = async (collection: import('mongodb').Collection, matchQuery: any, groupStage: any, sortStage?: any, limit?: number) => {
-    const pipeline: Document[] = [{ $match: matchQuery }];
-    if (Object.keys(groupStage).length > 0) {
-        pipeline.push(groupStage);
-    }
-    if (sortStage) pipeline.push(sortStage);
-    if (limit) pipeline.push({ $limit: limit });
-
-    // If we are just counting, we add a count stage.
-    if (Object.keys(groupStage).length === 0 && !sortStage && !limit) {
-      pipeline.push({ $count: 'total' });
-    }
-
+const aggregateData = async (collection: import('mongodb').Collection, pipeline: Document[]) => {
     return collection.aggregate(pipeline).toArray();
 };
 
@@ -107,6 +95,7 @@ export async function GET(request: NextRequest) {
     }
     
     const currentYear = new Date().getFullYear();
+    const matchStage = { $match: query };
 
     // Run aggregations in parallel
     const [
@@ -119,14 +108,14 @@ export async function GET(request: NextRequest) {
         fleetByYearChart,
         fleetAgeBrackets,
     ] = await Promise.all([
-        aggregateData(collection, query, { $group: { _id: null, total: { $sum: '$quantity' } } }),
-        aggregateData(collection, query, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
-        aggregateData(collection, query, { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
-        aggregateData(collection, query, { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 1),
-        aggregateData(collection, query, { $group: { _id: '$region', total: { $sum: '$quantity' } } }),
-        aggregateData(collection, query, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, 10),
-        aggregateData(collection, query, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }),
-        collection.aggregate([
+        aggregateData(collection, [matchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]),
+        aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
+        aggregateData(collection, [matchStage, { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
+        aggregateData(collection, [matchStage, { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
+        aggregateData(collection, [matchStage, { $group: { _id: '$region', total: { $sum: '$quantity' } } }]),
+        aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]),
+        aggregateData(collection, [matchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]),
+        aggregateData(collection, [
             { $match: { ...query, year: { $ne: 0 } } },
             { $project: { quantity: '$quantity', age: { $subtract: [currentYear, '$year'] } } },
             {
@@ -137,7 +126,7 @@ export async function GET(request: NextRequest) {
                 output: { total: { $sum: '$quantity' } }
               }
             },
-        ]).toArray(),
+        ]),
     ]);
     
     const totalVehicles = totalVehiclesResult[0]?.total || 0;
