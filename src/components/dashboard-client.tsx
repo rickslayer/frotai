@@ -34,7 +34,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 const emptyDashboardData: DashboardData = {
   totalVehicles: 0,
   topModel: { name: '-', quantity: 0 },
-  topManufacturer: null,
+  topManufacturer: { name: '-', quantity: 0 },
   regionalData: [],
   topModelsChart: [],
   fleetByYearChart: [],
@@ -136,7 +136,7 @@ const DashboardClient: FC = () => {
   useEffect(() => {
     const fetchFilterOptions = async () => {
        // Don't fetch if the top-level dependencies are not set
-       if (!filters.manufacturer && !filters.model) {
+       if (!filters.manufacturer) {
            return;
        }
 
@@ -148,7 +148,8 @@ const DashboardClient: FC = () => {
         setFilterOptions(prev => ({
             ...prev,
             models: options.models.length > 0 ? options.models : prev.models,
-            versions: options.versions.length > 0 ? options.versions : prev.versions,
+            versions: options.versions.length > 0 ? options.versions : [], // Reset versions when model changes
+            years: options.years.length > 0 ? options.years : prev.years,
         }));
     };
     
@@ -164,9 +165,11 @@ const DashboardClient: FC = () => {
         if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
+            updated.year = '';
         }
         if (key === 'model') {
             updated.version = [];
+            updated.year = '';
         }
         
         return updated;
@@ -176,7 +179,15 @@ const DashboardClient: FC = () => {
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
     // Re-fetch initial options after clearing
-    getInitialFilterOptions().then(setFilterOptions);
+    getInitialFilterOptions().then(options => {
+        setFilterOptions(prev => ({
+            ...prev,
+            manufacturers: options.manufacturers,
+            models: [],
+            versions: [],
+            years: options.years,
+        }));
+    });
     setDashboardData(emptyDashboardData);
   }, []);
   

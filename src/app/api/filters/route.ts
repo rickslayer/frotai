@@ -42,6 +42,11 @@ export async function GET(request: NextRequest) {
     const match: any = {};
     if (manufacturer) match.manufacturer = manufacturer;
     if (model) match.model = model;
+    
+    // The versions should also be filtered by the current selections
+    const versionParams = searchParams.getAll('version');
+    if (versionParams.length > 0) match.version = { $in: versionParams };
+
 
     const [
       manufacturers,
@@ -49,10 +54,10 @@ export async function GET(request: NextRequest) {
       versions,
       years,
     ] = await Promise.all([
-      getDistinctValues(collection, 'manufacturer', {}),
+      getDistinctValues(collection, 'manufacturer', {}), // Always get all manufacturers
       manufacturer ? getDistinctValues(collection, 'model', { manufacturer }) : [],
       model ? getDistinctValues(collection, 'version', { manufacturer, model }) : [],
-      getDistinctValues(collection, 'year', {}),
+      getDistinctValues(collection, 'year', match), // Filter years based on current selections
     ]);
 
     const filterOptions: FilterOptions = {
