@@ -60,12 +60,12 @@ export async function GET(request: NextRequest) {
     const filters: Partial<Filters> = {};
     searchParams.forEach((value, key) => {
         const filterKey = key as keyof Filters;
-        if (filterKey === 'year' && value) {
+        if (key === 'year' && value && value !== 'all' && Number.isInteger(Number(value))) {
             filters.year = parseInt(value, 10);
-        } else if (filterKey === 'version' && value) {
+        } else if (key === 'version' && value) {
             if (!filters.version) filters.version = [];
             filters.version.push(value);
-        } else if (value && filterKey !== 'year' && filterKey !== 'version') {
+        } else if (value && value !== 'all' && !['year', 'version'].includes(key)) {
             (filters as any)[filterKey] = value;
         }
     });
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
         if (filterValue && (Array.isArray(filterValue) ? filterValue.length > 0 : filterValue !== '')) {
             if (filterKey === 'version' && Array.isArray(filterValue) && filterValue.length > 0) {
                  query.version = { $in: filterValue };
-            } else if (filterKey === 'year' && filterValue !== 0) {
+            } else if (filterKey === 'year' && (filterValue === 0 || filterValue)) {
                 query.year = filterValue;
             }
             else if (filterKey !== 'version' && filterKey !== 'year') {
