@@ -63,8 +63,8 @@ const findTopLocation = async (collection: import('mongodb').Collection, matchSt
 
     // 2. Fallback to State
     const topState = await aggregateData(collection, [
-       matchStage, // Use the original match stage
-       { $match: { state: { $ne: null, $ne: "" } } }, // Add a condition to ensure state is not null
+       matchStage,
+       { $match: { state: { $ne: null, $ne: "" } } },
        { $group: { _id: '$state', total: { $sum: '$quantity' } } },
        { $sort: { total: -1 } },
        { $limit: 1 }
@@ -76,8 +76,8 @@ const findTopLocation = async (collection: import('mongodb').Collection, matchSt
     
     // 3. Fallback to Region
     const topRegion = await aggregateData(collection, [
-       matchStage, // Use the original match stage
-       { $match: { region: { $ne: null, $ne: "" } } }, // Add a condition to ensure region is not null
+       matchStage,
+       { $match: { region: { $ne: null, $ne: "" } } },
        { $group: { _id: '$region', total: { $sum: '$quantity' } } },
        { $sort: { total: -1 } },
        { $limit: 1 }
@@ -129,13 +129,14 @@ export async function GET(request: NextRequest) {
         const filterKey = key as keyof Filters;
         const filterValue = filters[filterKey];
 
-        if (filterValue && (Array.isArray(filterValue) ? filterValue.length > 0 : filterValue !== '')) {
-            if ( (filterKey === 'version' || filterKey === 'model') && Array.isArray(filterValue) && filterValue.length > 0) {
-                 query[filterKey] = { $in: filterValue };
-            } else if (filterKey === 'year' && (filterValue === 0 || filterValue)) {
-                query.year = filterValue;
+        if (Array.isArray(filterValue)) {
+            if (filterValue.length > 0) {
+                query[filterKey] = { $in: filterValue };
             }
-            else if (filterKey !== 'version' && filterKey !== 'year' && filterKey !== 'model') {
+        } else if (filterValue) { // This now correctly handles non-empty strings and numbers
+            if (filterKey === 'year') {
+                query.year = filterValue;
+            } else {
                 query[key] = filterValue;
             }
         }
