@@ -1,7 +1,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { MongoClient, WithId, Document } from 'mongodb';
-import type { Filters, DashboardData, TopEntity, RegionData, TopModel, FleetByYear, FleetAgeBracket } from '@/types';
+import type { Filters, DashboardData, TopEntity } from '@/types';
 import { allRegions } from '@/lib/regions';
 
 const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://frotai:X7Ra8kREnBX6z6SC@frotai.bylfte3.mongodb.net/';
@@ -49,12 +49,9 @@ const aggregateData = async (collection: import('mongodb').Collection, pipeline:
 
 const findTopEntity = async (
     collection: import('mongodb').Collection,
-    matchStage: any,
+    baseMatch: any,
     field: string
 ): Promise<TopEntity | null> => {
-
-    const baseMatch = matchStage.$match ? { ...matchStage.$match } : {};
-
     const pipeline = [
       {
         $match: {
@@ -84,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     const filters: Partial<Filters> = {};
     for (const [key, value] of searchParams.entries()) {
-      if (value && value !== '' && value !== 'all') {
+      if (value && value !== 'all') {
         const filterKey = key as keyof Filters;
         if (filterKey === 'model' || filterKey === 'version') {
            if (!filters[filterKey]) {
@@ -142,10 +139,10 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
         aggregateData(collection, [matchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
-        findTopEntity(collection, matchStage, 'manufacturer'),
-        findTopEntity(collection, matchStage, 'region'),
-        findTopEntity(collection, matchStage, 'state'),
-        findTopEntity(collection, matchStage, 'city'),
+        findTopEntity(collection, query, 'manufacturer'),
+        findTopEntity(collection, query, 'region'),
+        findTopEntity(collection, query, 'state'),
+        findTopEntity(collection, query, 'city'),
         aggregateData(collection, [matchStage, { $group: { _id: '$region', total: { $sum: '$quantity' } } }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]),

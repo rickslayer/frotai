@@ -47,14 +47,14 @@ const StatCards: FC<StatCardsProps> = ({ data }) => {
           <p className="text-xs text-muted-foreground uppercase">{t('main_state_description')}</p>
         </CardContent>
       </Card>
-      <Card>
+       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{t('main_model')}</CardTitle>
-          <Star className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">{t('main_city')}</CardTitle>
+          <Map className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold truncate">{data.topModel.name}</div>
-          <p className="text-xs text-muted-foreground uppercase">{t('main_model_description')}</p>
+          <div className="text-2xl font-bold truncate">{data.topCity?.name || '-'}</div>
+          <p className="text-xs text-muted-foreground uppercase">{t('main_city_description')}</p>
         </CardContent>
       </Card>
     </div>
