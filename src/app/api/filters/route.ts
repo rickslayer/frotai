@@ -52,7 +52,6 @@ export async function GET(request: NextRequest) {
     if (manufacturer) baseMatch.manufacturer = manufacturer;
     if (model) baseMatch.model = model;
     
-    
     const [
       manufacturers,
       models,
@@ -83,5 +82,3 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }
 }
-
-    
