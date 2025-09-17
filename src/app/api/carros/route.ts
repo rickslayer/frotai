@@ -49,13 +49,13 @@ const aggregateData = async (collection: import('mongodb').Collection, pipeline:
 
 const findTopEntity = async (
     collection: import('mongodb').Collection,
-    baseMatch: any,
+    query: any, // The main filter query
     field: string
 ): Promise<TopEntity | null> => {
     const pipeline = [
       {
         $match: {
-          ...baseMatch,
+          ...query,
           [field]: { $ne: null, $ne: "" }
         }
       },
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
         const filterKey = key as keyof Filters;
         if (filterKey === 'model' || filterKey === 'version') {
            if (!filters[filterKey]) {
-             filters[filterKey] = [];
+             (filters[filterKey] as string[]) = [];
            }
            (filters[filterKey] as string[]).push(value);
         } else if (filterKey === 'year') {
