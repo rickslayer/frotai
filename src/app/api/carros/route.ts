@@ -98,20 +98,24 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
 
     const filters: Partial<Filters> = {};
-    searchParams.forEach((value, key) => {
+    for (const key of searchParams.keys()) {
         const filterKey = key as keyof Filters;
-        if (key === 'year' && value && value !== 'all' && Number.isInteger(Number(value))) {
-            filters.year = parseInt(value, 10);
-        } else if (key === 'version' && value) {
-            if (!filters.version) filters.version = [];
-            filters.version.push(value);
-        } else if (key === 'model' && value) {
-            if (!filters.model) filters.model = [];
-            filters.model.push(value);
-        } else if (value && value !== 'all' && !['year', 'version', 'model'].includes(key)) {
-            (filters as any)[filterKey] = value;
+        const value = searchParams.get(filterKey);
+        const allValues = searchParams.getAll(filterKey);
+
+        if (value && value !== '' && value !== 'all') {
+            if (filterKey === 'year') {
+                filters.year = parseInt(value, 10);
+            } else if (filterKey === 'model' || filterKey === 'version') {
+                if (!filters[filterKey]) {
+                    filters[filterKey] = [];
+                }
+                (filters[filterKey] as string[]).push(...allValues);
+            } else {
+                (filters as any)[filterKey] = value;
+            }
         }
-    });
+    }
     
     const cacheKey = generateCacheKey(filters);
     const cacheCollection = db.collection(cacheCollectionName);
