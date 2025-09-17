@@ -44,7 +44,7 @@ const emptyDashboardData: DashboardData = {
 
 const initialFilters: Filters = {
     region: '', state: '', city: '',
-    manufacturer: '', model: '', version: [], year: '',
+    manufacturer: '', model: [], version: [], year: '',
 };
 
 const emptyFilterOptions: FilterOptions = {
@@ -81,7 +81,7 @@ const DashboardClient: FC = () => {
   
   const disabledFilters = useMemo(() => ({
     model: !filters.manufacturer,
-    version: !filters.model,
+    version: filters.model.length === 0,
     state: !filters.region,
     city: !filters.state
   }), [filters]);
@@ -161,27 +161,38 @@ const DashboardClient: FC = () => {
     setFilters(prev => {
         const updated: Filters = { ...prev };
         const finalValue = value === 'all' ? '' : value;
+        
+        // --- Cascading Logic ---
+        const isLocationFilter = ['region', 'state', 'city'].includes(key);
+        const isVehicleFilter = ['manufacturer', 'model', 'version', 'year'].includes(key);
+
         updated[key] = finalValue;
 
-        // --- Strict Cascading Logic WITHIN each group ---
-        if (key === 'region') {
-            updated.state = '';
-            updated.city = '';
-            setFilterOptions(opts => ({ ...opts, states: [], cities: [] }));
-        } else if (key === 'state') {
-            updated.city = '';
-            setFilterOptions(opts => ({ ...opts, cities: [] }));
-        } else if (key === 'manufacturer') {
-            updated.model = '';
-            updated.version = [];
-            // Year is intentionally not cleared to allow cross-filtering
-            setFilterOptions(opts => ({ ...opts, models: [], versions: [] }));
-        } else if (key === 'model') {
-            updated.version = [];
-             // Year is intentionally not cleared
-            setFilterOptions(opts => ({ ...opts, versions: [] }));
+        if (isLocationFilter) {
+            if (key === 'region') {
+                updated.state = '';
+                updated.city = '';
+                setFilterOptions(opts => ({ ...opts, states: [], cities: [] }));
+            }
+            if (key === 'state') {
+                updated.city = '';
+                setFilterOptions(opts => ({ ...opts, cities: [] }));
+            }
         }
         
+        if (isVehicleFilter) {
+            if (key === 'manufacturer') {
+                updated.model = [];
+                updated.version = [];
+                setFilterOptions(opts => ({ ...opts, models: [], versions: [] }));
+            }
+            if (key === 'model') {
+                updated.version = [];
+                setFilterOptions(opts => ({ ...opts, versions: [] }));
+            }
+        }
+        
+        // Ensure year is a number or empty string
         if (key === 'year' && finalValue !== '') {
             updated.year = Number(finalValue);
         } else if (key === 'year' && finalValue === '') {
@@ -431,7 +442,7 @@ const DashboardClient: FC = () => {
               <PartDemandForecast
                   fleetAgeBrackets={fleetAgeBracketsWithLabels}
                   filters={filters}
-                  disabled={!isFiltered || dashboardData.totalVehicles === 0 || !filters.manufacturer || !filters.model}
+                  disabled={!isFiltered || dashboardData.totalVehicles === 0 || !filters.manufacturer || filters.model.length !== 1}
                   onDemandPredicted={setDemandAnalysis}
               />
           </div>

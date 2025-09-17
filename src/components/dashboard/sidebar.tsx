@@ -12,7 +12,6 @@ import { ScrollArea } from '../ui/scroll-area';
 import { useTranslation } from 'react-i18next';
 import { SidebarHeader, SidebarContent, SidebarFooter } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
-import { Combobox } from '../ui/combobox';
 import { MultiSelectDropdown } from '../ui/multi-select-dropdown';
 
 interface DashboardSidebarProps {
@@ -104,15 +103,13 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                       {(filterOptions.manufacturers || []).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Combobox
-                    items={(filterOptions.models || []).map(m => ({ value: m, label: m }))}
-                    value={filters.model}
-                    onChange={(value) => handleFilterValueChange('model', value)}
-                    placeholder={t('select_model')}
-                    searchPlaceholder={t('search_model_placeholder')}
-                    noResultsText={t('no_model_found')}
-                    disabled={disabledFilters.model}
-                  />
+                  <MultiSelectDropdown
+                      options={(filterOptions.models || []).map(m => ({ value: m || 'null_model', label: m || t('base_model')}))}
+                      selectedValues={filters.model}
+                      onChange={(selected) => handleFilterValueChange('model', selected)}
+                      placeholder={t('select_model')}
+                      disabled={disabledFilters.model}
+                   />
                    <MultiSelectDropdown
                       options={(filterOptions.versions || []).map(v => ({ value: v || 'null_version', label: v || t('base_model_version')}))}
                       selectedValues={filters.version}

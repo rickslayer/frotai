@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
 
     const manufacturer = searchParams.get('manufacturer');
-    const model = searchParams.get('model');
+    const modelsParam = searchParams.getAll('model');
     const versionsParam = searchParams.getAll('version');
     const year = searchParams.get('year');
     const region = searchParams.get('region');
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     // Base match query with ALL active filters
     const baseMatch: any = {};
     if (manufacturer) baseMatch.manufacturer = manufacturer;
-    if (model) baseMatch.model = model;
+    if (modelsParam && modelsParam.length > 0) baseMatch.model = { $in: modelsParam };
     if (versionsParam && versionsParam.length > 0) baseMatch.version = { $in: versionsParam };
     if (year) baseMatch.year = parseInt(year);
     if (region) baseMatch.region = region;

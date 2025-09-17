@@ -50,7 +50,8 @@ const aggregateData = async (collection: import('mongodb').Collection, pipeline:
 const findTopLocation = async (collection: import('mongodb').Collection, matchStage: any): Promise<TopEntity | null> => {
     // 1. Try to find by City and State (most specific)
     const topCityState = await aggregateData(collection, [
-      { $match: { ...matchStage.$match, city: { $ne: null, $ne: "" }, state: { $ne: null, $ne: "" } } },
+      matchStage,
+      { $match: { city: { $ne: null, $ne: "" }, state: { $ne: null, $ne: "" } } },
       { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } },
       { $sort: { total: -1 } },
       { $limit: 1 }
@@ -104,7 +105,10 @@ export async function GET(request: NextRequest) {
         } else if (key === 'version' && value) {
             if (!filters.version) filters.version = [];
             filters.version.push(value);
-        } else if (value && value !== 'all' && !['year', 'version'].includes(key)) {
+        } else if (key === 'model' && value) {
+            if (!filters.model) filters.model = [];
+            filters.model.push(value);
+        } else if (value && value !== 'all' && !['year', 'version', 'model'].includes(key)) {
             (filters as any)[filterKey] = value;
         }
     });
@@ -126,12 +130,12 @@ export async function GET(request: NextRequest) {
         const filterValue = filters[filterKey];
 
         if (filterValue && (Array.isArray(filterValue) ? filterValue.length > 0 : filterValue !== '')) {
-            if (filterKey === 'version' && Array.isArray(filterValue) && filterValue.length > 0) {
-                 query.version = { $in: filterValue };
+            if ( (filterKey === 'version' || filterKey === 'model') && Array.isArray(filterValue) && filterValue.length > 0) {
+                 query[filterKey] = { $in: filterValue };
             } else if (filterKey === 'year' && (filterValue === 0 || filterValue)) {
                 query.year = filterValue;
             }
-            else if (filterKey !== 'version' && filterKey !== 'year') {
+            else if (filterKey !== 'version' && filterKey !== 'year' && filterKey !== 'model') {
                 query[key] = filterValue;
             }
         }

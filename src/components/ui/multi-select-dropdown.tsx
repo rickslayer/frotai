@@ -21,6 +21,7 @@ interface MultiSelectDropdownProps {
   placeholder: string;
   disabled?: boolean;
   className?: string;
+  itemType?: 'version' | 'model';
 }
 
 export function MultiSelectDropdown({
@@ -30,6 +31,7 @@ export function MultiSelectDropdown({
   placeholder,
   disabled = false,
   className,
+  itemType = 'version'
 }: MultiSelectDropdownProps) {
   const { t } = useTranslation();
 
@@ -56,6 +58,23 @@ export function MultiSelectDropdown({
 
   const isAllSelected = options.length > 0 && selectedValues.length === options.length;
 
+  const getDisplayValue = () => {
+    if (selectedValues.length === 0) return placeholder;
+
+    if (isAllSelected) {
+        return itemType === 'version' ? t('all_versions') : t('all_models');
+    }
+
+    if (selectedValues.length === 1) {
+        return getLabel(selectedValues[0]);
+    }
+    
+    return itemType === 'version' 
+      ? t('selected_versions', { count: selectedValues.length })
+      : t('selected_models', { count: selectedValues.length });
+  };
+
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -65,16 +84,12 @@ export function MultiSelectDropdown({
           disabled={disabled}
           className={cn("w-full justify-between h-auto min-h-10", className)}
         >
-          <div className="flex gap-1 flex-wrap">
-             {selectedValues.length > 0 ? (
-                isAllSelected || selectedValues.length === options.length ? (
-                    <Badge variant="secondary" className="rounded-sm px-2 py-1">{t('all_versions')}</Badge>
-                ) : (
-                    <>
-                      <Badge variant="secondary" className="rounded-sm px-2 py-1">{t('selected_versions', {count: selectedValues.length})}</Badge>
-                    </>
-                )
-            ) : placeholder}
+          <div className="flex gap-1 flex-wrap items-center">
+             {selectedValues.length > 1 && !isAllSelected ? (
+                 <Badge variant="secondary" className="rounded-sm px-2 py-1 font-normal">{getDisplayValue()}</Badge>
+             ) : (
+                <span className="truncate font-normal">{getDisplayValue()}</span>
+             )}
           </div>
           <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -105,11 +120,11 @@ export function MultiSelectDropdown({
                   onClick={() => handleSelect(option.value)}
                 >
                    <Checkbox
-                      id={`version-${option.value}`}
+                      id={`item-${option.value}`}
                       checked={selectedValues.includes(option.value)}
                       onCheckedChange={() => handleSelect(option.value)}
                    />
-                  <Label htmlFor={`version-${option.value}`} className="truncate flex-1 cursor-pointer font-normal text-sm">
+                  <Label htmlFor={`item-${option.value}`} className="truncate flex-1 cursor-pointer font-normal text-sm">
                     {option.label}
                   </Label>
                 </div>

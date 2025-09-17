@@ -33,12 +33,16 @@ const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, fil
     setResult(null);
     onDemandPredicted(null);
     try {
+      // Since model is now an array, we'll send the first model if it's a single selection.
+      // The button will be disabled if more than one is selected.
+      const model = Array.isArray(filters.model) && filters.model.length === 1 ? filters.model[0] : '';
+      
       const demand = await predictPartsDemand({
         fleetAgeBrackets,
         partCategory,
         filters: {
             manufacturer: filters.manufacturer,
-            model: filters.model
+            model: model,
         }
       });
       setResult(demand);

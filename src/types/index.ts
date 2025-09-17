@@ -29,7 +29,7 @@ export type Filters = {
   state: string;
   city: string;
   manufacturer: string;
-  model: string;
+  model: string[];
   version: string[];
   year: number | '';
 };
