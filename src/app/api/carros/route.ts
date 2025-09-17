@@ -48,7 +48,7 @@ const aggregateData = async (collection: import('mongodb').Collection, pipeline:
 };
 
 const findTopLocation = async (collection: import('mongodb').Collection, matchStage: any): Promise<TopEntity | null> => {
-    // 1. Try to find by City and State
+    // 1. Try to find by City and State (most specific)
     const topCityState = await aggregateData(collection, [
       { $match: { ...matchStage.$match, city: { $ne: null, $ne: "" }, state: { $ne: null, $ne: "" } } },
       { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } },
@@ -56,31 +56,33 @@ const findTopLocation = async (collection: import('mongodb').Collection, matchSt
       { $limit: 1 }
     ]);
 
-    if (topCityState.length > 0) {
+    if (topCityState.length > 0 && topCityState[0]._id.city && topCityState[0]._id.state) {
         return { name: `${topCityState[0]._id.city}, ${topCityState[0]._id.state}`, quantity: topCityState[0].total };
     }
 
     // 2. Fallback to State
     const topState = await aggregateData(collection, [
-       { $match: { ...matchStage.$match, state: { $ne: null, $ne: "" } } },
+       matchStage, // Use the original match stage
+       { $match: { state: { $ne: null, $ne: "" } } }, // Add a condition to ensure state is not null
        { $group: { _id: '$state', total: { $sum: '$quantity' } } },
        { $sort: { total: -1 } },
        { $limit: 1 }
     ]);
 
-    if (topState.length > 0) {
+    if (topState.length > 0 && topState[0]._id) {
         return { name: topState[0]._id, quantity: topState[0].total };
     }
     
     // 3. Fallback to Region
     const topRegion = await aggregateData(collection, [
-       { $match: { ...matchStage.$match, region: { $ne: null, $ne: "" } } },
+       matchStage, // Use the original match stage
+       { $match: { region: { $ne: null, $ne: "" } } }, // Add a condition to ensure region is not null
        { $group: { _id: '$region', total: { $sum: '$quantity' } } },
        { $sort: { total: -1 } },
        { $limit: 1 }
     ]);
 
-    if (topRegion.length > 0) {
+    if (topRegion.length > 0 && topRegion[0]._id) {
         return { name: topRegion[0]._id, quantity: topRegion[0].total };
     }
 
