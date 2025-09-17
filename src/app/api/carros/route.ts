@@ -98,23 +98,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = request.nextUrl;
 
     const filters: Partial<Filters> = {};
-    for (const key of searchParams.keys()) {
+    for (const [key, value] of searchParams.entries()) {
+      if (value && value !== '' && value !== 'all') {
         const filterKey = key as keyof Filters;
-        const value = searchParams.get(filterKey);
-        const allValues = searchParams.getAll(filterKey);
-
-        if (value && value !== '' && value !== 'all') {
-            if (filterKey === 'year') {
-                filters.year = parseInt(value, 10);
-            } else if (filterKey === 'model' || filterKey === 'version') {
-                if (!filters[filterKey]) {
-                    filters[filterKey] = [];
-                }
-                (filters[filterKey] as string[]).push(...allValues);
-            } else {
-                (filters as any)[filterKey] = value;
-            }
+        if (filterKey === 'model' || filterKey === 'version') {
+           if (!filters[filterKey]) {
+             filters[filterKey] = [];
+           }
+           (filters[filterKey] as string[]).push(value);
+        } else if (filterKey === 'year') {
+            filters.year = parseInt(value, 10);
+        } else {
+           (filters as any)[filterKey] = value;
         }
+      }
     }
     
     const cacheKey = generateCacheKey(filters);
