@@ -9,10 +9,28 @@ import { MapPin, Users2, Map, Factory, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { stateToRegionMap } from '@/lib/regions';
 
+interface StatCardsProps {
+  data: DashboardData;
+  filters: Filters;
+}
+
+
 const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
   const { t } = useTranslation();
 
   const { topRegion } = useMemo(() => {
+    // Priority 1: If a location filter is active, it dictates the region.
+    if (filters.region) {
+      return { topRegion: t(filters.region as any) };
+    }
+    if (filters.state) {
+      const regionForState = stateToRegionMap[filters.state];
+      if (regionForState) {
+        return { topRegion: t(regionForState as any) };
+      }
+    }
+
+    // Priority 2: If no location filter, find the region with the most vehicles from the returned data.
     if (!data.regionalData || data.regionalData.length === 0) {
       return { topRegion: '-' };
     }
@@ -23,8 +41,9 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
       return { topRegion: t(sortedRegions[0].name as any) };
     }
 
+    // Fallback
     return { topRegion: '-' };
-  }, [data.regionalData, t]);
+  }, [data.regionalData, filters, t]);
 
 
   return (
