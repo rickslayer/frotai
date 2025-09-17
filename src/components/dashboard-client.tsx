@@ -137,6 +137,7 @@ const DashboardClient: FC = () => {
         const relevantFilters: Partial<Filters> = {
             region: filters.region,
             state: filters.state,
+            city: filters.city,
             manufacturer: filters.manufacturer,
             model: filters.model,
             version: filters.version,
@@ -150,7 +151,7 @@ const DashboardClient: FC = () => {
     };
     
     fetchOptions();
-  }, [filters.region, filters.state, filters.manufacturer, filters.model, filters.version, filters.year, isLoading]);
+  }, [filters.region, filters.state, filters.city, filters.manufacturer, filters.model, filters.version, filters.year, isLoading]);
 
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
@@ -164,21 +165,18 @@ const DashboardClient: FC = () => {
             updated.state = '';
             updated.city = '';
             setFilterOptions(opts => ({ ...opts, states: [], cities: [] }));
-        }
-        if (key === 'state') {
+        } else if (key === 'state') {
             updated.city = '';
             setFilterOptions(opts => ({ ...opts, cities: [] }));
-        }
-        if (key === 'manufacturer') {
+        } else if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
-            updated.year = '';
-            setFilterOptions(opts => ({ ...opts, models: [], versions: [], years: [] }));
-        }
-        if (key === 'model') {
+            // We keep the year filter
+            setFilterOptions(opts => ({ ...opts, models: [], versions: [] }));
+        } else if (key === 'model') {
             updated.version = [];
-            updated.year = '';
-            setFilterOptions(opts => ({ ...opts, versions: [], years: [] }));
+            // We keep the year filter
+            setFilterOptions(opts => ({ ...opts, versions: [] }));
         }
         
         if (key === 'year' && finalValue !== '') {
@@ -496,5 +494,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
