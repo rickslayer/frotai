@@ -111,7 +111,12 @@ export async function GET(request: NextRequest) {
         aggregateData(collection, [matchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$manufacturer', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
-        aggregateData(collection, [matchStage, { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]),
+        aggregateData(collection, [
+            { $match: { ...query, city: { $ne: null, $ne: "" }, state: { $ne: null, $ne: "" } } },
+            { $group: { _id: { city: '$city', state: '$state' }, total: { $sum: '$quantity' } } },
+            { $sort: { total: -1 } },
+            { $limit: 1 }
+        ]),
         aggregateData(collection, [matchStage, { $group: { _id: '$region', total: { $sum: '$quantity' } } }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]),
