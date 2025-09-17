@@ -91,7 +91,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                     >
                     <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                     <SelectContent>
-                      {(filterOptions.cities || []).map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
+                      {(filterOptions.cities || []).map(c => <SelectItem key={`${c.name}-${c.state}`} value={c.name}>{c.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </AccordionContent>
