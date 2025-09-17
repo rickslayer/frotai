@@ -25,22 +25,34 @@ async function connectToMongo() {
   }
 }
 
+// Helper to build the match object, excluding certain fields
+const buildMatchExcept = (baseMatch: any, exclude: string[]) => {
+    const match: any = {};
+    for (const key in baseMatch) {
+        if (!exclude.includes(key)) {
+            match[key] = baseMatch[key];
+        }
+    }
+    return match;
+};
+
 const getDistinctValues = async (collection: import('mongodb').Collection, field: string, match: any = {}) => {
   const query: any = { ...match };
   
   if (field !== 'year') {
     query[field] = { $ne: null, $ne: "" };
   } else {
-    query[field] = { $ne: null, $ne: 0 };
+    // Allows year 0 to be included if it exists for the selection
+    query[field] = { $ne: null };
   }
 
   const values = await collection.distinct(field, query);
   
   if (field === 'year') {
+    // Sort years descending, keeping 0 if it exists
     return (values as number[]).sort((a, b) => b - a);
   }
-  // For cities, we might get a lot, maybe sorting isn't the best idea if the list is huge.
-  // For now, let's keep it sorted.
+
   return values.sort();
 };
 
@@ -56,8 +68,9 @@ export async function GET(request: NextRequest) {
     const year = searchParams.get('year');
     const region = searchParams.get('region');
     const state = searchParams.get('state');
+    const city = searchParams.get('city');
     
-    // Base match query for dependent filters
+    // Base match query with ALL active filters
     const baseMatch: any = {};
     if (manufacturer) baseMatch.manufacturer = manufacturer;
     if (model) baseMatch.model = model;
@@ -65,7 +78,9 @@ export async function GET(request: NextRequest) {
     if (year) baseMatch.year = parseInt(year);
     if (region) baseMatch.region = region;
     if (state) baseMatch.state = state;
+    if (city) baseMatch.city = city;
     
+    // Each field's options should be filtered by all OTHER active filters
     const [
       manufacturers,
       models,
@@ -75,13 +90,13 @@ export async function GET(request: NextRequest) {
       states,
       cities,
     ] = await Promise.all([
-      getDistinctValues(collection, 'manufacturer', {}),
-      manufacturer ? getDistinctValues(collection, 'model', { manufacturer, ...baseMatch }) : [],
-      model ? getDistinctValues(collection, 'version', { manufacturer, model, ...baseMatch }) : [],
-      getDistinctValues(collection, 'year', baseMatch),
-      getDistinctValues(collection, 'region', baseMatch),
-      region ? getDistinctValues(collection, 'state', { region, ...baseMatch }) : [],
-      state ? getDistinctValues(collection, 'city', { state, ...baseMatch }) : [],
+      getDistinctValues(collection, 'manufacturer', buildMatchExcept(baseMatch, ['manufacturer'])),
+      getDistinctValues(collection, 'model', buildMatchExcept(baseMatch, ['model', 'version'])),
+      getDistinctValues(collection, 'version', buildMatchExcept(baseMatch, ['version'])),
+      getDistinctValues(collection, 'year', buildMatchExcept(base-Match, ['year'])),
+      getDistinctValues(collection, 'region', buildMatchExcept(baseMatch, ['region', 'state', 'city'])),
+      getDistinctValues(collection, 'state', buildMatchExcept(baseMatch, ['state', 'city'])),
+      getDistinctValues(collection, 'city', buildMatchExcept(baseMatch, ['city'])),
     ]);
 
     const filterOptions: FilterOptions = {

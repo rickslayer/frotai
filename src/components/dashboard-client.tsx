@@ -126,32 +126,35 @@ const DashboardClient: FC = () => {
       });
     };
     fetchData();
-  }, [debouncedFilters, toast]);
+  }, [debouncedFilters, toast, isLoading]);
 
 
-  // Effect for fetching FILTER OPTIONS immediately when a parent filter changes
+  // Effect for fetching FILTER OPTIONS immediately when a filter changes
   useEffect(() => {
     if (isLoading) return;
 
     const fetchOptions = async () => {
-        const relevantFilters: Partial<Filters> = {
-            region: filters.region,
-            state: filters.state,
-            city: filters.city,
-            manufacturer: filters.manufacturer,
-            model: filters.model,
-            version: filters.version,
-            year: filters.year,
-        };
-        const options = await getInitialFilterOptions(relevantFilters);
-        setFilterOptions(prev => ({
-            ...prev,
-            ...options
-        }));
+        try {
+            const options = await getInitialFilterOptions(filters);
+            setFilterOptions(prev => ({
+                // We preserve the previous options for fields that might become empty
+                // to avoid a flickering effect in the UI.
+                manufacturers: options.manufacturers?.length > 0 ? options.manufacturers : prev.manufacturers,
+                models: options.models?.length > 0 ? options.models : prev.models,
+                versions: options.versions?.length > 0 ? options.versions : prev.versions,
+                years: options.years?.length > 0 ? options.years : prev.years,
+                regions: options.regions?.length > 0 ? options.regions : prev.regions,
+                states: options.states?.length > 0 ? options.states : prev.states,
+                cities: options.cities?.length > 0 ? options.cities : prev.cities,
+            }));
+        } catch (error) {
+             console.error('Failed to fetch dynamic filter options:', error);
+             toast({ variant: 'destructive', title: t('error'), description: 'Failed to update filter options.' });
+        }
     };
     
     fetchOptions();
-  }, [filters.region, filters.state, filters.city, filters.manufacturer, filters.model, filters.version, filters.year, isLoading]);
+  }, [filters, isLoading, toast, t]);
 
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
@@ -160,7 +163,7 @@ const DashboardClient: FC = () => {
         const finalValue = value === 'all' ? '' : value;
         updated[key] = finalValue;
 
-        // --- Strict Cascading Logic ---
+        // --- Strict Cascading Logic WITHIN each group ---
         if (key === 'region') {
             updated.state = '';
             updated.city = '';
@@ -171,11 +174,11 @@ const DashboardClient: FC = () => {
         } else if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
-            // We keep the year filter
+            // Year is intentionally not cleared to allow cross-filtering
             setFilterOptions(opts => ({ ...opts, models: [], versions: [] }));
         } else if (key === 'model') {
             updated.version = [];
-            // We keep the year filter
+             // Year is intentionally not cleared
             setFilterOptions(opts => ({ ...opts, versions: [] }));
         }
         
