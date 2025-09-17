@@ -5,7 +5,7 @@ import type { FC } from 'react';
 import { useMemo, useState, useEffect } from 'react';
 import type { Filters, DashboardData } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, Users2, Map, Factory, Star } from 'lucide-react';
+import { MapPin, Users2, Map, Factory, Star, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { stateToRegionMap } from '@/lib/regions';
 import { getInitialFilterOptions } from '@/lib/api-logic';
@@ -109,8 +109,8 @@ const StatCards: FC<StatCardsProps> = ({ data, filters }) => {
           <Map className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold truncate uppercase">
-            {isRegionLoading ? t('calculating') : topRegion}
+          <div className="text-2xl font-bold truncate uppercase h-8 flex items-center">
+            {isRegionLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : topRegion}
           </div>
           <p className="text-xs text-muted-foreground uppercase">{t('main_region_description')}</p>
         </CardContent>
