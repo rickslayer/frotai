@@ -168,28 +168,24 @@ const DashboardClient: FC = () => {
 
         updated[key] = finalValue;
 
-        if (isLocationFilter) {
-            if (key === 'region') {
-                updated.state = '';
-                updated.city = '';
-                setFilterOptions(opts => ({ ...opts, states: [], cities: [] }));
-            }
-            if (key === 'state') {
-                updated.city = '';
-                setFilterOptions(opts => ({ ...opts, cities: [] }));
-            }
+        if (key === 'region') {
+            updated.state = '';
+            updated.city = '';
+            setFilterOptions(opts => ({ ...opts, states: [], cities: [] }));
+        }
+        if (key === 'state') {
+            updated.city = '';
+            setFilterOptions(opts => ({ ...opts, cities: [] }));
         }
         
-        if (isVehicleFilter) {
-            if (key === 'manufacturer') {
-                updated.model = [];
-                updated.version = [];
-                setFilterOptions(opts => ({ ...opts, models: [], versions: [] }));
-            }
-            if (key === 'model') {
-                updated.version = [];
-                setFilterOptions(opts => ({ ...opts, versions: [] }));
-            }
+        if (key === 'manufacturer') {
+            updated.model = [];
+            updated.version = [];
+            setFilterOptions(opts => ({ ...opts, models: [], versions: [] }));
+        }
+        if (key === 'model') {
+            updated.version = [];
+            setFilterOptions(opts => ({ ...opts, versions: [] }));
         }
         
         // Ensure year is a number or empty string
@@ -389,11 +385,15 @@ const DashboardClient: FC = () => {
   }
 
   const renderContent = () => {
-    if (isLoading && !isFiltered) {
-      return <WelcomePlaceholder />;
+    if (isLoading) {
+      return (
+        <div className="flex h-full w-full items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
     }
     
-    if (isLoading || isPending) {
+    if (isPending) {
        return (
         <div className="flex h-full w-full items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -401,7 +401,7 @@ const DashboardClient: FC = () => {
       );
     }
     
-    if (!isFiltered) {
+    if (!isFiltered && dashboardData.totalVehicles === 0) {
         return <WelcomePlaceholder />;
     }
 

@@ -129,16 +129,12 @@ export async function GET(request: NextRequest) {
         const filterKey = key as keyof Filters;
         const filterValue = filters[filterKey];
 
-        if (Array.isArray(filterValue)) {
-            if (filterValue.length > 0) {
-                query[filterKey] = { $in: filterValue };
-            }
-        } else if (filterValue) { // This now correctly handles non-empty strings and numbers
-            if (filterKey === 'year') {
-                query.year = filterValue;
-            } else {
-                query[key] = filterValue;
-            }
+        if (Array.isArray(filterValue) && filterValue.length > 0) {
+            query[filterKey] = { $in: filterValue };
+        } else if (typeof filterValue === 'string' && filterValue !== '') {
+            query[key] = filterValue;
+        } else if (typeof filterValue === 'number') {
+            query[key] = filterValue;
         }
     }
     
