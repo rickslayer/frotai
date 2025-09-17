@@ -70,21 +70,21 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                    <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value as string)}>
                     <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
                     <SelectContent>
-                       <SelectItem value="">{t('all_regions')}</SelectItem>
+                       <SelectItem value="all">{t('all_regions')}</SelectItem>
                       {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value as string)} disabled={disabledFilters.state}>
                     <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{t('all_states')}</SelectItem>
+                      <SelectItem value="all">{t('all_states')}</SelectItem>
                       {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                     </SelectContent>
                   </Select>
                    <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value as string)} disabled={disabledFilters.city}>
                     <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{t('all_cities')}</SelectItem>
+                      <SelectItem value="all">{t('all_cities')}</SelectItem>
                       {(filterOptions.cities || []).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -100,7 +100,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                   <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
                     <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                     <SelectContent>
-                       <SelectItem value="">{t('all_manufacturers')}</SelectItem>
+                       <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
                       {(filterOptions.manufacturers || []).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -123,7 +123,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                    <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
                     <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{t('all_years')}</SelectItem>
+                      <SelectItem value="all">{t('all_years')}</SelectItem>
                       {(filterOptions.years || []).map(y => <SelectItem key={y} value={String(y)}>{y === 0 ? t('Indefinido') : y}</SelectItem>)}
                     </SelectContent>
                   </Select>

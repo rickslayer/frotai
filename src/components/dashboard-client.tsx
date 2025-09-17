@@ -145,7 +145,10 @@ const DashboardClient: FC = () => {
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
     setFilters(prev => {
         const updated: Filters = { ...prev };
-        updated[key] = value;
+        
+        // Treat "all" as an empty string to clear the filter
+        const finalValue = value === 'all' ? '' : value;
+        updated[key] = finalValue;
         
         // Cascading filter logic
         if (key === 'region') {
@@ -158,14 +161,16 @@ const DashboardClient: FC = () => {
         if (key === 'manufacturer') {
             updated.model = '';
             updated.version = [];
+            updated.year = '';
         }
         if (key === 'model') {
             updated.version = [];
+            updated.year = '';
         }
         
-        if (key === 'year' && value !== '') {
-            updated.year = Number(value);
-        } else if (key === 'year' && value === '') {
+        if (key === 'year' && finalValue !== '') {
+            updated.year = Number(finalValue);
+        } else if (key === 'year' && finalValue === '') {
             updated.year = '';
         }
 
@@ -197,7 +202,7 @@ const DashboardClient: FC = () => {
       doc.setFontSize(12);
       doc.text(title, 14, y);
       doc.setFont('helvetica', 'normal');
-      docsetFontSize(11);
+      doc.setFontSize(11);
       doc.text(value, 60, y);
       y += 8;
     };
