@@ -26,7 +26,13 @@ async function connectToMongo() {
 }
 
 const getDistinctValues = async (collection: import('mongodb').Collection, field: string, match: any = {}) => {
-  const values = await collection.distinct(field, { ...match, [field]: { $ne: null, $ne: "" } });
+  const query: any = { ...match, [field]: { $ne: null, $ne: "" } };
+  
+  if (field === 'year') {
+    query[field].$ne = 0;
+  }
+
+  const values = await collection.distinct(field, query);
   return values.sort();
 };
 
