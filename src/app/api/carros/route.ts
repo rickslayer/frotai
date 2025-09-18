@@ -12,6 +12,11 @@ const cacheCollectionName = 'api_cache';
 let client: MongoClient | null = null;
 let db: import('mongodb').Db;
 
+const manufacturerAliases: Record<string, string[]> = {
+    "Mitsubishi": ["MMC"],
+    "MMC": ["Mitsubishi"]
+};
+
 async function connectToMongo() {
   if (client && client.topology && client.topology.isConnected()) {
     return client.db(dbName);
@@ -45,7 +50,7 @@ const generateCacheKey = (filters: Partial<Filters>): string => {
 
 // Helper function for a single aggregation
 const aggregateData = async (collection: import('mongodb').Collection, pipeline: Document[]) => {
-    return collection.aggregate(pipeline, { maxTimeMS: 20000 }).toArray(); // 20 second timeout
+    return collection.aggregate(pipeline, { maxTimeMS: 60000 }).toArray(); // 60 second timeout
 };
 
 const findTopEntity = async (
@@ -94,7 +99,7 @@ export async function GET(request: NextRequest) {
              (filters[filterKey] as string[]) = [];
            }
            (filters[filterKey] as string[]).push(value);
-        } else if (filterKey === 'year') {
+        } else if (filterKey === 'year' && value) {
             filters.year = parseInt(value, 10);
         } else {
            (filters as any)[filterKey] = value;
@@ -117,8 +122,10 @@ export async function GET(request: NextRequest) {
     for (const key in filters) {
         const filterKey = key as keyof Filters;
         const filterValue = filters[filterKey];
-
-        if (Array.isArray(filterValue) && filterValue.length > 0) {
+        
+        if (filterKey === 'manufacturer' && typeof filterValue === 'string' && manufacturerAliases[filterValue]) {
+            query[filterKey] = { $in: [filterValue, ...manufacturerAliases[filterValue]] };
+        } else if (Array.isArray(filterValue) && filterValue.length > 0) {
             query[filterKey] = { $in: filterValue };
         } else if (typeof filterValue === 'string' && filterValue !== '') {
             query[key] = filterValue;
@@ -153,7 +160,7 @@ export async function GET(request: NextRequest) {
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]).catch(() => []),
         aggregateData(collection, [matchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]).catch(() => []),
         aggregateData(collection, [
-            { $match: { ...query, year: { $ne: 0 } } },
+            { $match: { ...query, year: { $ne: 0, $ne: null } } },
             { $project: { quantity: '$quantity', age: { $subtract: [currentYear, '$year'] } } },
             {
               $bucket: {

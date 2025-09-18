@@ -9,6 +9,12 @@ const collectionName = 'carros';
 
 let client: MongoClient | null = null;
 
+const manufacturerAliases: Record<string, string> = {
+    "MMC": "Mitsubishi"
+};
+const primaryManufacturerNames = Object.values(manufacturerAliases);
+
+
 async function connectToMongo() {
   if (client && client.topology && client.topology.isConnected()) {
     return client.db(dbName);
@@ -45,9 +51,23 @@ const getDistinctValues = async (collection: import('mongodb').Collection, field
     // Allows year 0 to be included if it exists for the selection
     query[field] = { $ne: null };
   }
-
-  const values = await collection.distinct(field, query);
   
+  let values = await collection.distinct(field, query);
+
+  // Handle manufacturer aliases
+  if (field === 'manufacturer') {
+    const normalizedValues = new Set<string>();
+    values.forEach(val => {
+        const primaryName = manufacturerAliases[val];
+        if (primaryName) {
+            normalizedValues.add(primaryName);
+        } else {
+            normalizedValues.add(val);
+        }
+    });
+    values = Array.from(normalizedValues);
+  }
+
   if (field === 'year') {
     // Sort years descending, keeping 0 if it exists
     return (values as number[]).sort((a, b) => b - a);
@@ -72,7 +92,12 @@ export async function GET(request: NextRequest) {
     
     // Base match query with ALL active filters
     const baseMatch: any = {};
-    if (manufacturer) baseMatch.manufacturer = manufacturer;
+    if (manufacturer) {
+        const aliases = Object.keys(manufacturerAliases).filter(
+            key => manufacturerAliases[key] === manufacturer
+        );
+        baseMatch.manufacturer = { $in: [manufacturer, ...aliases] };
+    }
     if (modelsParam && modelsParam.length > 0) baseMatch.model = { $in: modelsParam };
     if (versionsParam && versionsParam.length > 0) baseMatch.version = { $in: versionsParam };
     if (year) baseMatch.year = parseInt(year);
