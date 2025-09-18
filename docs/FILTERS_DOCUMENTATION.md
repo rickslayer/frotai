@@ -1,109 +1,102 @@
 # Documentação da Lógica de Filtros - Frota.AI
 
-Este documento descreve o funcionamento detalhado do sistema de filtros de Veículo (Montadora, Modelo, Versão) e Ano de Fabricação, incluindo a lógica de cascata, interações no frontend e a comunicação com a API.
+Este documento descreve o funcionamento detalhado do sistema de filtros, que é baseado em dois caminhos de análise principais: **por Localização** e **por Veículo**.
 
-**Data do Ponto de Restauração:** 2024-10-27
+**Data do Ponto de Restauração:** 2024-10-28
 
 ## 1. Visão Geral e Objetivo
 
-O sistema de filtros foi projetado para permitir que o usuário explore a base de dados de frotas de maneira intuitiva e precisa. A principal característica é a **lógica de cascata hierárquica**, que garante que o usuário veja apenas combinações de filtros válidas, prevenindo seleções que resultariam em zero veículos.
+O sistema de filtros foi redesenhado para guiar o usuário por dois fluxos de análise distintos, garantindo performance e clareza nos resultados. A interface agora apresenta abas ("Local" e "Veículo") para tornar essa escolha explícita.
 
-A hierarquia é a seguinte:
-`Montadora` > `Modelo` > `Versão` / `Ano`
+A lógica de busca de dados do dashboard (`getFleetData`) é acionada somente quando uma das seguintes condições é atendida:
+1.  **Análise por Localização:** `Região` **E** `Estado` estão selecionados.
+2.  **Análise por Veículo:** `Montadora` **E** `Região` estão selecionados.
 
-## 2. Lógica de Cascata e Interação do Usuário
+Isso evita buscas excessivamente amplas e lentas, como consultar a frota de uma região inteira sem mais especificações.
 
-O comportamento dos filtros é regido por uma lógica estrita de limpeza e atualização, implementada principalmente no componente `src/components/dashboard-client.tsx`.
+## 2. Caminhos de Análise e Interação
 
-### Fluxo de Interação:
+### Caminho 1: Análise por Localização
+
+Este é o fluxo ideal para entender a frota de uma área geográfica específica.
+
+1.  **Seleção da Região:**
+    *   O usuário seleciona uma **Região** na aba "Local".
+    *   **Ação:** O dashboard aguarda a próxima seleção. Uma chamada é feita à API `/api/filters` para popular as opções de Estados daquela região.
+
+2.  **Seleção do Estado:**
+    *   O usuário seleciona um **Estado**.
+    *   **BUSCA PRINCIPAL:** A condição (`região` + `estado`) é atendida. A função `getFleetData` é chamada, e o dashboard é renderizado com todos os dados para aquele estado.
+    *   Outros filtros (cidade, montadora, etc.) podem ser aplicados para refinar ainda mais a análise.
+
+### Caminho 2: Análise por Veículo
+
+Este fluxo é ideal para entender a distribuição e as características de uma frota de veículos específica em uma grande área.
 
 1.  **Seleção da Montadora:**
-    *   O usuário seleciona uma **Montadora**.
-    *   **Ação de Limpeza:** Os filtros `model`, `version`, e `year` são imediatamente resetados (definidos como `''` ou `[]`). As opções (`filterOptions`) para `models`, `versions`, e `years` também são limpas.
-    *   **Busca de Dados:** Uma chamada é feita para a API `/api/filters` passando apenas a `manufacturer`.
-    *   **Resultado:** A API retorna a lista de `models` e `years` pertencentes àquela montadora. O frontend atualiza o estado para exibir essas novas opções.
+    *   O usuário seleciona uma **Montadora** na aba "Veículo".
+    *   **Ação:** O dashboard aguarda a seleção de uma região.
 
-2.  **Seleção do Modelo:**
-    *   O usuário seleciona um **Modelo**.
-    *   **Ação de Limpeza:** Os filtros `version` e `year` são resetados.
-    *   **Busca de Dados:** Uma chamada é feita para a API `/api/filters` passando a `manufacturer` e o `model`.
-    *   **Resultado:** A API retorna a lista de `versions` e `years` específicas para aquele modelo. O frontend exibe as novas opções. A lista de anos agora é mais refinada do que na etapa anterior.
+2.  **Seleção da Região:**
+    *   O usuário retorna à aba "Local" e seleciona uma **Região**.
+    *   **BUSCA PRINCIPAL:** A condição (`montadora` + `região`) é atendida. A função `getFleetData` é chamada, e o dashboard é renderizado com os dados daquela montadora para toda a região selecionada.
+    *   **Insight:** Isso permite, por exemplo, descobrir em qual **Estado** daquela região a "Fiat" tem a maior frota, uma vez que o card "Principal Estado" refletirá esse resultado.
 
-3.  **Seleção da Versão:**
-    *   O usuário seleciona uma ou mais **Versões**.
-    *   **Busca de Dados:** Uma chamada é feita para a API `/api/filters` passando `manufacturer`, `model`, e a(s) `version`(s).
-    *   **Resultado:** A API retorna uma lista de `years` ainda mais refinada, mostrando apenas os anos de fabricação existentes para a(s) versão(ões) selecionada(s).
+## 3. Lógica de Cascata e Limpeza
 
-4.  **Seleção do Ano:**
-    *   O usuário seleciona um **Ano**.
-    *   **Busca de Dados:** Uma chamada é feita para a API `/api/filters` passando `manufacturer`, `model`, e o `year`.
-    *   **Resultado:** A API retorna a lista de `versions` que foram fabricadas naquele ano específico para o modelo selecionado.
+A lógica de cascata hierárquica continua funcionando dentro de cada caminho para garantir que apenas combinações válidas sejam exibidas.
 
-Este fluxo garante que, a cada passo, o universo de opções é reduzido para refletir apenas combinações válidas.
+-   **`handleFilterChange`**: Orquestra a limpeza dos filtros "filhos" quando um "pai" é alterado.
+    -   Mudar `Região` -> Limpa `Estado` e `Cidade`.
+    -   Mudar `Estado` -> Limpa `Cidade`.
+    -   Mudar `Montadora` -> Limpa `Modelo` e `Versão`.
+    -   Mudar `Modelo` -> Limpa `Versão`.
 
-## 3. Componentes e Lógica
+-   **`useEffect` (para buscar opções dinâmicas)**: Monitora mudanças nos filtros e chama a API `/api/filters` para buscar as novas listas de opções (`models`, `versions`, `years`, `cities`, etc.) e atualizar o estado `filterOptions`.
+
+## 4. Componentes e API
 
 ### Frontend: `src/components/dashboard-client.tsx`
 
--   **`handleFilterChange`**: Esta é a função central que orquestra a lógica de cascata. Ela contém a lógica de limpeza dos filtros "filhos" sempre que um filtro "pai" é modificado.
--   **`useEffect` (para buscar opções dinâmicas)**: Este hook monitora as mudanças nos filtros `filters.manufacturer`, `filters.model`, e `filters.version`. Quando um deles muda, ele dispara uma nova chamada à função `getInitialFilterOptions` (que por sua vez chama a API `/api/filters`) para buscar as novas listas de opções (`models`, `versions`, `years`) e atualiza o estado `filterOptions`.
+-   **`useEffect` (para buscar dados do dashboard)**: Contém a lógica condicional principal: `if ((filters.region && filters.state) || (filters.manufacturer && filters.region))`.
+-   **Renderização Condicional:** Exibe o `WelcomePlaceholder` se nenhuma das duas condições de busca for atendida, guiando o usuário sobre qual filtro selecionar a seguir.
 
-### API: `src/app/api/filters/route.ts`
+### Frontend: `src/components/dashboard/sidebar.tsx`
 
--   **`GET(request)`**: O endpoint da API recebe os filtros atuais como parâmetros de URL (`manufacturer`, `model`, `version`, `year`).
--   **`getDistinctValues`**: Esta função interna monta e executa as consultas no MongoDB. Ela constrói dinamicamente um objeto de `match` com base nos filtros recebidos para buscar os valores distintos de cada campo. A lógica principal é:
-    -   A busca por `models` usa apenas `manufacturer`.
-    -   A busca por `versions` usa `manufacturer` e `model`.
-    -   A busca por `years` usa `manufacturer`, `model`, e `version` (se disponíveis), garantindo a máxima precisão.
+-   Utiliza o componente `Tabs` com as abas "Local" e "Veículo" para separar visualmente os filtros e guiar o fluxo do usuário.
 
-## 4. Casos Especiais
+### API: `src/app/api/filters/route.ts` e `src/app/api/carros/route.ts`
 
-### Tratamento do Ano "0" como "Indefinido"
+-   As APIs continuam a funcionar como antes, respondendo às consultas com base nos filtros fornecidos. A mudança principal está no *quando* o frontend decide chamar a API de dados principais.
 
--   **API (`/api/filters/route.ts`):** A busca na API não exclui mais o ano `0`. Ela retorna o valor `0` junto com os outros anos.
--   **Frontend (`src/components/dashboard/sidebar.tsx`):** Ao renderizar o componente `SelectItem` para o filtro de ano, há uma condição que verifica se o valor é `0`. Se for, ele exibe a string "Indefinido" para o usuário. Caso contrário, exibe o número do ano.
+## 5. Fluxo de Dados (Exemplo)
 
-## 5. Fluxo de Dados (Simplificado)
-
+**Cenário: Análise por Localização**
 ```
-Usuário seleciona Montadora "Audi"
-       |
-       v
-[Frontend] handleFilterChange:
-  - Limpa model, version, year
-  - Chama getInitialFilterOptions({ manufacturer: 'Audi' })
-       |
-       v
-[API] /api/filters?manufacturer=Audi:
-  - Busca `models` para 'Audi'
-  - Busca `years` para 'Audi'
-  - Retorna { models: [...], years: [...] }
+Usuário seleciona Região "Sudeste"
        |
        v
 [Frontend]
-  - Atualiza o estado `filterOptions`
-  - Renderiza os novos modelos e anos no sidebar
-
-----------------------------------------------------
-
-Usuário seleciona Modelo "80"
+  - Estado do dashboard: { region: 'Sudeste', ... }
+  - NENHUMA busca de dados principais.
+  - Tela de boas-vindas pede para selecionar um Estado.
+  - API /api/filters busca estados do Sudeste.
        |
        v
-[Frontend] handleFilterChange:
-  - Limpa version, year
-  - Chama getInitialFilterOptions({ manufacturer: 'Audi', model: '80' })
-       |
-       v
-[API] /api/filters?manufacturer=Audi&model=80:
-  - Busca `versions` para 'Audi 80'
-  - Busca `years` para 'Audi 80'
-  - Retorna { versions: [...], years: [...] }
+Usuário seleciona Estado "São Paulo"
        |
        v
 [Frontend]
-  - Atualiza o estado `filterOptions`
-  - Renderiza as novas versões e a lista de anos refinada
-
+  - Condição (region && state) atendida.
+  - Chama getFleetData({ region: 'Sudeste', state: 'SP' })
+       |
+       v
+[API] /api/carros?region=Sudeste&state=SP
+  - Retorna dados agregados para SP.
+       |
+       v
+[Frontend]
+  - Renderiza o dashboard completo com os dados de SP.
 ```
 
-Esta arquitetura garante uma experiência de usuário robusta, previsível e livre de erros, servindo como uma base sólida para a implementação de novos filtros.
+Esta arquitetura de duplo funil oferece um equilíbrio ideal entre flexibilidade, performance e experiência do usuário.

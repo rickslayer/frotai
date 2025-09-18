@@ -74,6 +74,11 @@ const DashboardClient: FC = () => {
   const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
+  // A search is considered valid if the user provides one of the two main analysis paths.
+  const isSearchEnabled = useMemo(() => {
+    return (debouncedFilters.region && debouncedFilters.state) || (debouncedFilters.manufacturer && debouncedFilters.region);
+  }, [debouncedFilters]);
+  
   const isFiltered = useMemo(() => {
     return Object.values(filters).some(value => {
         if (Array.isArray(value)) return value.length > 0;
@@ -109,8 +114,8 @@ const DashboardClient: FC = () => {
 
   // Effect for fetching DASHBOARD DATA based on DEBOUNCED filters
   useEffect(() => {
-    // Only fetch data if both region and state are selected.
-    if (!debouncedFilters.region || !debouncedFilters.state) {
+    // Only fetch data if one of the valid search paths is fulfilled.
+    if (!isSearchEnabled) {
       setDashboardData(emptyDashboardData);
       return;
     }
@@ -129,7 +134,7 @@ const DashboardClient: FC = () => {
     };
 
     fetchData();
-  }, [debouncedFilters, toast]);
+  }, [debouncedFilters, isSearchEnabled, toast]);
 
 
   // Effect for fetching FILTER OPTIONS immediately when a filter changes
@@ -140,19 +145,16 @@ const DashboardClient: FC = () => {
     const fetchOptions = async () => {
         try {
             const options = await getInitialFilterOptions(filters);
-            setFilterOptions(prev => {
-                const key = Object.keys(filters).find(k => filters[k as keyof Filters] !== initialFilters[k as keyof Filters]);
-                return {
-                    // Preserve previous options to avoid flickering
-                    manufacturers: options.manufacturers?.length > 0 ? options.manufacturers : prev.manufacturers,
-                    models: options.models?.length > 0 ? options.models : (key === 'manufacturer' ? [] : prev.models),
-                    versions: options.versions?.length > 0 ? options.versions : (key === 'model' ? [] : prev.versions),
-                    years: options.years?.length > 0 ? options.years : prev.years,
-                    regions: options.regions?.length > 0 ? options.regions : prev.regions,
-                    states: options.states?.length > 0 ? options.states : (key === 'region' ? [] : prev.states),
-                    cities: options.cities?.length > 0 ? options.cities : (key === 'state' ? [] : prev.cities),
-                }
-            });
+            setFilterOptions(prev => ({
+                // Preserve previous options to avoid flickering, but clear children when a parent changes.
+                regions: options.regions?.length > 0 ? options.regions : prev.regions,
+                states: filters.region ? (options.states ?? []) : [],
+                cities: filters.state ? (options.cities ?? []) : [],
+                manufacturers: options.manufacturers?.length > 0 ? options.manufacturers : prev.manufacturers,
+                models: filters.manufacturer ? (options.models ?? []) : [],
+                versions: filters.model.length > 0 ? (options.versions ?? []) : [],
+                years: options.years?.length > 0 ? options.years : prev.years,
+            }));
         } catch (error) {
              console.error('Failed to fetch dynamic filter options:', error);
              toast({ variant: 'destructive', title: t('error'), description: 'Failed to update filter options.' });
@@ -175,21 +177,17 @@ const DashboardClient: FC = () => {
         if (key === 'region') {
             updated.state = '';
             updated.city = '';
-            setFilterOptions(opts => ({ ...opts, states: [], cities: [] }));
         }
         if (key === 'state') {
             updated.city = '';
-            setFilterOptions(opts => ({ ...opts, cities: [] }));
         }
         
         if (key === 'manufacturer') {
             updated.model = [];
             updated.version = [];
-            setFilterOptions(opts => ({ ...opts, models: [], versions: [] }));
         }
         if (key === 'model') {
             updated.version = [];
-            setFilterOptions(opts => ({ ...opts, versions: [] }));
         }
         
         if (key === 'year' && finalValue !== '') {
@@ -396,8 +394,8 @@ const DashboardClient: FC = () => {
       );
     }
     
-    // Show placeholder if no region or state is selected
-    if (!filters.region || !filters.state) {
+    // Show placeholder if the search is not enabled yet
+    if (!isSearchEnabled) {
         const welcomeMessageKey = !filters.region ? 'welcome_title_region' : 'welcome_title_state';
         return <WelcomePlaceholder titleKey={welcomeMessageKey} />;
     }
