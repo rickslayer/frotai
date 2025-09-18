@@ -31,7 +31,7 @@ export function MultiSelectDropdown({
   placeholder,
   disabled = false,
   className,
-  itemType = 'version'
+  itemType = 'model'
 }: MultiSelectDropdownProps) {
   const { t } = useTranslation();
 
