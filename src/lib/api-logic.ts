@@ -6,23 +6,14 @@ import type { FilterOptions, Filters, DashboardData } from '@/types';
 // Fetches aggregated dashboard data from the API based on the provided filters.
 export const getFleetData = async (filters: Partial<Filters>): Promise<DashboardData> => {
   try {
-    const query = new URLSearchParams();
-    
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-         if (Array.isArray(value)) {
-            if (value.length > 0) {
-                value.forEach(v => query.append(key, v));
-            }
-         } else if (value !== '') {
-           query.append(key, String(value));
-         }
-      }
-    });
-
     const apiUrl = `/api/carros`;
-    const res = await fetch(`${apiUrl}?${query.toString()}`);
-
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(filters || {}),
+    });
 
     if (!res.ok) {
       const errorBody = await res.text();

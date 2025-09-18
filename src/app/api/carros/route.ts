@@ -79,28 +79,12 @@ const findTopEntity = async (
 }
 
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const db = await connectToMongo();
     const collection = db.collection(collectionName);
-    const { searchParams } = request.nextUrl;
-
-    const filters: Partial<Filters> = {};
-    for (const [key, value] of searchParams.entries()) {
-      if (value && value !== 'all') {
-        const filterKey = key as keyof Filters;
-        if (filterKey === 'model' || filterKey === 'version') {
-           if (!filters[filterKey]) {
-             (filters[filterKey] as string[]) = [];
-           }
-           (filters[filterKey] as string[]).push(value);
-        } else if (filterKey === 'year' && value) {
-            filters.year = parseInt(value, 10);
-        } else {
-           (filters as any)[filterKey] = value;
-        }
-      }
-    }
+    const body = await request.json();
+    const filters: Partial<Filters> = body || {};
     
     const cacheKey = generateCacheKey(filters);
     const cacheCollection = db.collection(cacheCollectionName);
@@ -116,7 +100,9 @@ export async function GET(request: NextRequest) {
     const query: any = {};
     for (const key in filters) {
         const filterKey = key as keyof Filters;
-        const filterValue = filters[filterKey];
+        let filterValue = filters[filterKey];
+
+        if (filterValue === 'all') filterValue = '';
         
         if (filterKey === 'manufacturer' && typeof filterValue === 'string' && manufacturerAliases[filterValue]) {
             query['$or'] = [
@@ -127,7 +113,7 @@ export async function GET(request: NextRequest) {
             query[filterKey] = { $in: filterValue };
         } else if (typeof filterValue === 'string' && filterValue !== '') {
             query[key] = filterValue;
-        } else if (typeof filterValue === 'number') {
+        } else if (typeof filterValue === 'number' && filterValue !== 0) {
             query[key] = filterValue;
         }
     }
@@ -241,7 +227,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(dashboardData);
 
   } catch (err) {
-    console.error('Error in GET /api/carros:', err);
+    console.error('Error in POST /api/carros:', err);
     const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }
