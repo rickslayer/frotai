@@ -44,37 +44,35 @@ const CustomLabel: FC<CustomLabelProps> = (props) => {
   const modelName = payload.model;
   const quantity = payload.quantity.toLocaleString();
   const textPadding = 8;
-  const quantityTextWidth = quantity.length * 7; 
+  const modelTextWidth = modelName.length * 6; // Approximate width
 
-  if (width < 50) {
-    return null; 
-  }
+  const canShowModelName = width > modelTextWidth + textPadding;
 
   return (
     <g>
-      <text
-        x={x + textPadding}
-        y={y + height / 2}
-        dy={4}
-        fill="#ffffff"
-        textAnchor="start"
-        className="text-xs font-medium truncate"
-      >
-        {modelName}
-      </text>
-      
-      {width > quantityTextWidth + 60 && (
-         <text
-          x={x + width + textPadding}
+      {canShowModelName && (
+        <text
+          x={x + textPadding}
           y={y + height / 2}
           dy={4}
-          fill="hsl(var(--foreground))"
+          fill="#ffffff"
           textAnchor="start"
-          className="text-xs font-medium"
+          className="text-xs font-medium truncate"
         >
-          {quantity}
+          {modelName}
         </text>
       )}
+      
+       <text
+        x={x + width + textPadding}
+        y={y + height / 2}
+        dy={4}
+        fill="hsl(var(--foreground))"
+        textAnchor="start"
+        className="text-xs font-medium"
+      >
+        {quantity}
+      </text>
     </g>
   );
 };
@@ -92,12 +90,12 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   const chartConfig = {
     quantity: {
       label: t('quantity'),
-      color: 'hsl(var(--accent))',
+      color: 'hsl(var(--chart-1))',
     },
   } satisfies ChartConfig;
 
   const chartData = useMemo(() => {
-    return data.slice(0, topN);
+    return data.slice(0, topN).sort((a,b) => a.quantity - b.quantity);
   }, [data, topN]);
 
   return (
