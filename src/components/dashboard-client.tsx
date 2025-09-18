@@ -24,6 +24,7 @@ import html2canvas from 'html2canvas';
 import { getFleetData, getInitialFilterOptions } from '@/lib/api-logic';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 
 const emptyDashboardData: DashboardData = {
@@ -464,15 +465,18 @@ const DashboardClient: FC = () => {
                     selectedRegion={filters.region}
                 />
             </div>
+             <div id="fleet-age-chart">
+                <FleetAgeBracketChart data={dashboardData.fleetAgeBrackets} />
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:gap-8">
              <div id="top-models-chart">
                 <TopModelsChart data={dashboardData.topModelsChart} topManufacturer={dashboardData.topManufacturer} />
             </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
-            <div id="fleet-age-chart">
-                <FleetAgeBracketChart data={dashboardData.fleetAgeBrackets} />
-            </div>
+        <div className="grid grid-cols-1 gap-4 md:gap-8">
             <div id="fleet-by-year-chart">
                 <FleetByYearChart data={dashboardData.fleetByYearChart} />
             </div>
@@ -491,14 +495,25 @@ const DashboardClient: FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 gap-4 md:gap-8">
-          <div id="part-demand-card">
-              <PartDemandForecast
-                  fleetAgeBrackets={fleetAgeBracketsWithLabels}
-                  filters={filters}
-                  disabled={dashboardData.totalVehicles === 0 || !filters.manufacturer || filters.model.length !== 1}
-                  onDemandPredicted={setDemandAnalysis}
-              />
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div id="part-demand-card">
+                        <PartDemandForecast
+                            fleetAgeBrackets={fleetAgeBracketsWithLabels}
+                            filters={filters}
+                            disabled={dashboardData.totalVehicles === 0 || !filters.manufacturer || filters.model.length !== 1}
+                            onDemandPredicted={setDemandAnalysis}
+                        />
+                    </div>
+                </TooltipTrigger>
+                { (dashboardData.totalVehicles === 0 || !filters.manufacturer || filters.model.length !== 1) &&
+                    <TooltipContent className="max-w-xs">
+                        <p>{t('part_demand_disabled_description')}</p>
+                    </TooltipContent>
+                }
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </>
     );
@@ -517,12 +532,12 @@ const DashboardClient: FC = () => {
           highlightedFilters={highlightedFilters}
         />
       </div>
-      <div className="flex flex-col">
+      <div className="overflow-auto">
         <DashboardHeader 
           onExport={handleExportPDF} 
           isFiltered={isFiltered && dashboardData.totalVehicles > 0}
         />
-        <main className="flex-1 overflow-auto p-4 md:p-8 bg-muted/20">
+        <main className="p-4 md:p-8 bg-muted/20">
              <div className="flex justify-between items-center gap-4">
                 <div>
                   {isFiltered && (
