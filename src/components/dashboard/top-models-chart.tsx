@@ -22,7 +22,6 @@ import { useTranslation } from 'react-i18next';
 import { Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { ScrollArea } from '../ui/scroll-area';
 
 interface TopModelsChartProps {
   data: TopModel[];
@@ -31,7 +30,7 @@ interface TopModelsChartProps {
 
 const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   const { t } = useTranslation();
-  const [topN, setTopN] = useState<string>('5');
+  const [topN, setTopN] = useState<string>('10');
 
   const chartConfig = {
     quantity: {
@@ -72,53 +71,51 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
             </div>
         )}
       </CardHeader>
-      <CardContent className="flex-grow overflow-hidden">
-        <ScrollArea className="h-full max-h-[400px] w-full overflow-y-auto pr-4">
-            <ChartContainer config={chartConfig} className="h-full min-h-[300px] w-full">
-              {chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={chartData.length * 45}>
-                  <BarChart
-                    accessibilityLayer
-                    data={chartData}
-                    layout="vertical"
-                    margin={{
-                      left: 10,
-                      right: 40,
-                      top: 0,
-                      bottom: 0,
-                    }}
-                  >
-                    <YAxis dataKey="model" type="category" width={0} tick={false} />
-                    <XAxis dataKey="quantity" type="number" hide />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted))' }}
-                      content={<ChartTooltipContent />}
+      <CardContent className="flex-grow">
+        <ChartContainer config={chartConfig} className="h-full min-h-[300px] w-full">
+            {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={chartData.length * 40}>
+                <BarChart
+                accessibilityLayer
+                data={chartData}
+                layout="vertical"
+                margin={{
+                    left: 10,
+                    right: 40,
+                    top: 0,
+                    bottom: 0,
+                }}
+                >
+                <YAxis dataKey="model" type="category" width={0} tick={false} />
+                <XAxis dataKey="quantity" type="number" hide />
+                <Tooltip
+                    cursor={{ fill: 'hsl(var(--muted))' }}
+                    content={<ChartTooltipContent />}
+                />
+                <Bar dataKey="quantity" layout="vertical" radius={5} barSize={30} fill="var(--color-quantity)">
+                    <LabelList
+                    dataKey="model"
+                    position="insideLeft"
+                    offset={8}
+                    className="fill-primary-foreground text-sm font-medium truncate"
+                    formatter={(value: string) => value}
                     />
-                    <Bar dataKey="quantity" layout="vertical" radius={5} barSize={35} fill="var(--color-quantity)">
-                      <LabelList
-                        dataKey="model"
-                        position="insideLeft"
+                    <LabelList 
+                        dataKey="quantity" 
+                        position="right"
                         offset={8}
-                        className="fill-primary-foreground text-sm font-medium truncate"
-                        formatter={(value: string) => value}
-                      />
-                       <LabelList 
-                          dataKey="quantity" 
-                          position="right"
-                          offset={8}
-                          className="fill-foreground font-semibold"
-                          formatter={(value: number) => value.toLocaleString()}
-                        />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
-                  {t('no_data_available')}
-                </div>
-              )}
-            </ChartContainer>
-        </ScrollArea>
+                        className="fill-foreground font-semibold"
+                        formatter={(value: number) => value.toLocaleString()}
+                    />
+                </Bar>
+                </BarChart>
+            </ResponsiveContainer>
+            ) : (
+            <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
+                {t('no_data_available')}
+            </div>
+            )}
+        </ChartContainer>
       </CardContent>
     </Card>
   );
