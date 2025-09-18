@@ -129,7 +129,7 @@ const DashboardClient: FC = () => {
         try {
           const data = await getFleetData(debouncedFilters);
           setDashboardData(data);
-        } catch (error) => {
+        } catch (error) {
           console.error(error);
           toast({ variant: 'destructive', title: t('error'), description: 'Failed to load dashboard data.' });
           setDashboardData(emptyDashboardData);
