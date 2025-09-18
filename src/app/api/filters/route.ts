@@ -69,19 +69,19 @@ const getDistinctValues = async (collection: import('mongodb').Collection, field
   return values.sort();
 };
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const db = await connectToMongo();
     const collection = db.collection(collectionName);
-    const { searchParams } = request.nextUrl;
+    const body = await request.json();
 
-    const manufacturer = searchParams.get('manufacturer');
-    const modelsParam = searchParams.getAll('model');
-    const versionsParam = searchParams.getAll('version');
-    const year = searchParams.get('year');
-    const region = searchParams.get('region');
-    const state = searchParams.get('state');
-    const city = searchParams.get('city');
+    const manufacturer = body.manufacturer;
+    const modelsParam = body.model;
+    const versionsParam = body.version;
+    const year = body.year;
+    const region = body.region;
+    const state = body.state;
+    const city = body.city;
     
     // Base match query with ALL active filters
     const baseMatch: any = {};
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     }
     if (modelsParam && modelsParam.length > 0) baseMatch.model = { $in: modelsParam };
     if (versionsParam && versionsParam.length > 0) baseMatch.version = { $in: versionsParam };
-    if (year) baseMatch.year = parseInt(year);
+    if (year) baseMatch.year = parseInt(String(year));
     if (region) baseMatch.region = region;
     if (state) baseMatch.state = state;
     if (city) baseMatch.city = city;
@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(filterOptions);
   } catch (err) {
-    console.error('Error in GET /api/filters:', err);
+    console.error('Error in POST /api/filters:', err);
     const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
     return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
   }

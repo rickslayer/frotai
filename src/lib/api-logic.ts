@@ -58,24 +58,17 @@ export const getFleetData = async (filters: Partial<Filters>): Promise<Dashboard
 };
 
 
-// Fetches the initial distinct options for the filters.
+// Fetches the initial distinct options for the filters using a POST request.
 export const getInitialFilterOptions = cache(async (filters?: Partial<Filters>): Promise<FilterOptions> => {
   try {
-    const query = new URLSearchParams();
-    if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-            if (value && value !== '') {
-                if (Array.isArray(value)) {
-                    value.forEach(v => query.append(key, v));
-                } else {
-                    query.append(key, String(value));
-                }
-            }
-        });
-    }
-
     const apiUrl = `/api/filters`;
-    const res = await fetch(`${apiUrl}?${query.toString()}`);
+    const res = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(filters || {}),
+    });
     
     if (!res.ok) {
       const errorBody = await res.text();
