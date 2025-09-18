@@ -115,6 +115,3 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
 };
 
 export default TopModelsChart;
-
-    
-    

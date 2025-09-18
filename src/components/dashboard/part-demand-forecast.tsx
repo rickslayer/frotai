@@ -13,6 +13,7 @@ import type { Filters, FleetAgeBracket, PredictPartsDemandOutput } from '@/types
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Badge } from '../ui/badge';
 import { Lightbulb, Wrench, Package, Loader2 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface PartDemandForecastProps {
   fleetAgeBrackets: FleetAgeBracket[];
@@ -72,8 +73,7 @@ const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, fil
     }
   };
 
-
-  return (
+  const cardContent = (
     <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle>{t('part_demand_forecast_title')}</CardTitle>
@@ -133,20 +133,36 @@ const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, fil
             )}
           </div>
         ) : (
-          !loading && disabled && (
+          !loading && !disabled && (
              <div className="flex flex-col items-center justify-center text-center text-muted-foreground flex-grow">
                 <Wrench className="h-10 w-10 mb-2 text-primary/30" />
-                <p className='font-semibold text-base'>{t('part_demand_disabled_title')}</p>
-                <p className='text-sm'>{t('part_demand_disabled_description')}</p>
             </div>
           )
         )}
       </CardContent>
     </Card>
   );
+
+  if (disabled) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className='h-full cursor-not-allowed'>
+                         <div className="relative h-full pointer-events-none opacity-50">
+                            {cardContent}
+                         </div>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{t('part_demand_disabled_description')}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    )
+  }
+
+  return cardContent;
 };
 
 export default PartDemandForecast;
-
-    
-    
