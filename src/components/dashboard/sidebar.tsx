@@ -4,7 +4,8 @@
 import type { FC } from 'react';
 import Link from 'next/link';
 import { Car, FilterX, MapPin } from 'lucide-react';
-import type { FilterOptions, Filters } from '@/types';
+import type { Filters } from '@/types';
+import type { FilterOptions } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '../ui/scroll-area';
@@ -25,7 +26,7 @@ interface DashboardSidebarProps {
     state: boolean;
     city: boolean;
   };
-  highlightedFilter: keyof Filters | null;
+  highlightedFilters: (keyof Filters)[];
 }
 
 const DashboardSidebar: FC<DashboardSidebarProps> = ({
@@ -34,7 +35,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
     onClearFilters,
     filterOptions,
     disabledFilters,
-    highlightedFilter,
+    highlightedFilters,
 }) => {
   const { t } = useTranslation();
 
@@ -44,7 +45,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
 
   const hasActiveFilters = Object.values(filters).some(f => (Array.isArray(f) ? f.length > 0 : f && f !== ''));
   
-  const highlightClass = (key: keyof Filters) => highlightedFilter === key ? 'animate-pulse-bright' : '';
+  const highlightClass = (key: keyof Filters) => highlightedFilters.includes(key) ? 'animate-pulse-bright' : '';
 
   return (
     <>

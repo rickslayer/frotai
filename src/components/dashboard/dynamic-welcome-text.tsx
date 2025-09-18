@@ -14,6 +14,7 @@ const welcomeMessageKeys: Record<string, string> = {
     welcome_title_location_needs_state: 'welcome_messages_location_needs_state',
     welcome_title_vehicle_needs_region: 'welcome_messages_vehicle_needs_region',
     welcome_title_vehicle_needs_model: 'welcome_messages_vehicle_needs_model',
+    welcome_title_location_needs_vehicle_details: 'welcome_messages_location_needs_vehicle_details',
 };
 
 const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {

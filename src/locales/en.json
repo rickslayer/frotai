@@ -90,6 +90,7 @@
   "welcome_title_location_needs_state": "Great! Now select a State to continue",
   "welcome_title_vehicle_needs_region": "Excellent! Now select a Region to see the distribution",
   "welcome_title_vehicle_needs_model": "Great! Now select a model to continue",
+  "welcome_title_location_needs_vehicle_details": "Perfect! Now, choose a Model or Year to see the data",
   "welcome_subtitle": "Start by selecting a filter on the side to explore the data.",
   "welcome_messages_start": [
     "Start by Location to see the fleet in an area, or by Vehicle to see its distribution.",
@@ -113,6 +114,12 @@
     "Select at least one model to run the analysis.",
     "Which models are you interested in?",
     "Let's focus the analysis on a specific model."
+  ],
+  "welcome_messages_location_needs_vehicle_details": [
+    "You are almost there! Select one or more Models or a specific Year.",
+    "What is the focus of your analysis in this state?",
+    "Let's add vehicle details to get the results.",
+    "Choose a model or year to unlock the data."
   ],
   "search_model_placeholder": "Search model...",
   "no_model_found": "No model found.",

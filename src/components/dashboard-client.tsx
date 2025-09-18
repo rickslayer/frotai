@@ -73,7 +73,7 @@ const DashboardClient: FC = () => {
   
   const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
-  const [highlightedFilter, setHighlightedFilter] = useState<keyof Filters | null>(null);
+  const [highlightedFilters, setHighlightedFilters] = useState<Array<keyof Filters>>([]);
   
   const isSearchEnabled = useMemo(() => {
     const { region, state, manufacturer, model, year } = debouncedFilters;
@@ -388,25 +388,48 @@ const DashboardClient: FC = () => {
       setIsComparing(false);
   }
 
-  const getWelcomeTitleKey = () => {
+  const getWelcomeTitleAndHighlights = (): { titleKey: string, highlights: (keyof Filters)[] } => {
     const { region, state, manufacturer, model } = filters;
-    if (manufacturer && region && model.length === 0) return 'welcome_title_vehicle_needs_model';
-    if (manufacturer && !region) return 'welcome_title_vehicle_needs_region';
-    if (region && !state) return 'welcome_title_location_needs_state';
-    return 'welcome_title_start';
+    
+    // No filters selected
+    if (!region && !manufacturer) {
+        return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };
+    }
+
+    // Location path started
+    if (region && !state) {
+        return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
+    }
+    
+    // Vehicle path started
+    if (manufacturer && !region) {
+        return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
+    }
+
+    // Location path advanced, needs vehicle details
+    if (region && state && model.length === 0 && !filters.year) {
+         return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
+    }
+    
+    // Vehicle path advanced, needs model
+    if (manufacturer && region && model.length === 0) {
+        return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model'] };
+    }
+
+    // Default if no specific guidance is needed but search is not yet enabled
+    return { titleKey: 'welcome_title_start', highlights: [] };
   }
   
   useEffect(() => {
-    const { region, state, manufacturer, model } = filters;
     if (!isSearchEnabled) {
-      if (manufacturer && region && model.length === 0) setHighlightedFilter('model');
-      else if (manufacturer && !region) setHighlightedFilter('region');
-      else if (region && !state) setHighlightedFilter('state');
-      else setHighlightedFilter(null);
+      const { highlights } = getWelcomeTitleAndHighlights();
+      setHighlightedFilters(highlights);
     } else {
-      setHighlightedFilter(null);
+      setHighlightedFilters([]);
     }
   }, [filters, isSearchEnabled]);
+
+  const { titleKey: welcomeTitleKey } = getWelcomeTitleAndHighlights();
 
   const renderContent = () => {
     if (isLoading && !isPending) {
@@ -418,7 +441,7 @@ const DashboardClient: FC = () => {
     }
     
     if (!isSearchEnabled) {
-        return <WelcomePlaceholder titleKey={getWelcomeTitleKey()} />;
+        return <WelcomePlaceholder titleKey={welcomeTitleKey} />;
     }
     
     if (isPending) {
@@ -489,7 +512,7 @@ const DashboardClient: FC = () => {
           onClearFilters={handleClearFilters}
           filterOptions={filterOptions}
           disabledFilters={disabledFilters}
-          highlightedFilter={highlightedFilter}
+          highlightedFilters={highlightedFilters}
         />
       </Sidebar>
       <SidebarInset>
