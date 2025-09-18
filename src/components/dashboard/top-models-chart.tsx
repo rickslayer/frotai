@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import { Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface TopModelsChartProps {
   data: TopModel[];
@@ -50,7 +51,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   } satisfies ChartConfig;
 
   const chartData = useMemo(() => {
-    return data.slice(0, topN);
+    return data;
   }, [data, topN]);
 
   return (
@@ -58,7 +59,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
       <CardHeader>
         <div className="flex items-center justify-between">
             <div>
-              <CardTitle>{t('top_models_by_volume', { count: topN })}</CardTitle>
+              <CardTitle>{t('top_models_by_volume', { count: 10 })}</CardTitle>
               <CardDescription>{t('top_models_by_volume_description')}</CardDescription>
             </div>
             <div className='flex gap-2'>
@@ -75,58 +76,60 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
         )}
       </CardHeader>
       <CardContent className="flex-grow">
-        <ChartContainer config={chartConfig} className="w-full h-full min-h-[400px]">
-            {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                    accessibilityLayer
-                    data={chartData}
-                    layout="vertical"
-                    margin={{
-                        left: 120,
-                        right: 30,
-                        top: 10,
-                        bottom: 10,
-                    }}
-                >
-                    <XAxis type="number" hide />
-                    <YAxis 
-                        dataKey="model" 
-                        type="category" 
-                        tickLine={false} 
-                        axisLine={false}
-                        stroke="#888888" 
-                        fontSize={12}
-                        interval={0}
-                        width={120}
-                    />
-                    <Tooltip
-                        cursor={{ fill: 'hsl(var(--muted))' }}
-                        content={
-                            <ChartTooltipContent 
-                                formatter={(value, name, props) => (
-                                    <div className="flex flex-col gap-1">
-                                      <div className='font-bold'>{props.payload.model}</div>
-                                      <div>{t('quantity')}: {Number(value).toLocaleString()}</div>
-                                    </div>
-                                )}
-                            />
-                        }
-                    />
-                    <Bar dataKey="quantity" fill="var(--color-quantity)" radius={[0, 4, 4, 0]}>
-                        <LabelList
-                            dataKey="quantity"
-                            content={<CustomLabel />}
+         <ScrollArea className="h-[400px] w-full">
+            <ChartContainer config={chartConfig} className="w-full h-full min-h-[400px]">
+                {chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={chartData.length * 40}>
+                    <BarChart
+                        accessibilityLayer
+                        data={chartData.slice(0, topN)}
+                        layout="vertical"
+                        margin={{
+                            left: 120,
+                            right: 30,
+                            top: 10,
+                            bottom: 10,
+                        }}
+                    >
+                        <XAxis type="number" hide />
+                        <YAxis 
+                            dataKey="model" 
+                            type="category" 
+                            tickLine={false} 
+                            axisLine={false}
+                            stroke="#888888" 
+                            fontSize={12}
+                            interval={0}
+                            width={120}
                         />
-                    </Bar>
-                </BarChart>
-            </ResponsiveContainer>
-            ) : (
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                {t('no_data_available')}
-            </div>
-            )}
-        </ChartContainer>
+                        <Tooltip
+                            cursor={{ fill: 'hsl(var(--muted))' }}
+                            content={
+                                <ChartTooltipContent 
+                                    formatter={(value, name, props) => (
+                                        <div className="flex flex-col gap-1">
+                                          <div className='font-bold'>{props.payload.model}</div>
+                                          <div>{t('quantity')}: {Number(value).toLocaleString()}</div>
+                                        </div>
+                                    )}
+                                />
+                            }
+                        />
+                        <Bar dataKey="quantity" fill="var(--color-quantity)" radius={[0, 4, 4, 0]} barSize={20}>
+                            <LabelList
+                                dataKey="quantity"
+                                content={<CustomLabel />}
+                            />
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+                ) : (
+                <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                    {t('no_data_available')}
+                </div>
+                )}
+            </ChartContainer>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
