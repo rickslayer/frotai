@@ -5,22 +5,25 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
-const DynamicWelcomeText = () => {
+interface DynamicWelcomeTextProps {
+    titleKey: string;
+}
+
+const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
     const { t } = useTranslation();
     const [messages, setMessages] = useState<string[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isVisible, setIsVisible] = useState(true);
 
     useEffect(() => {
-        // Acessa o array de mensagens da tradução. 
-        // `i18next.t` com a opção `returnObjects: true` retorna o array em vez de uma string.
-        const loadedMessages = t('welcome_messages', { returnObjects: true }) as string[];
+        // Acessa o array de mensagens da tradução.
+        const loadedMessages = t(titleKey === 'welcome_title_region' ? 'welcome_messages_region' : 'welcome_messages_state', { returnObjects: true }) as string[];
         if (Array.isArray(loadedMessages) && loadedMessages.length > 0) {
             setMessages(loadedMessages);
             // Inicia com um índice aleatório
             setCurrentIndex(Math.floor(Math.random() * loadedMessages.length));
         }
-    }, [t]);
+    }, [t, titleKey]);
 
     useEffect(() => {
         if (messages.length === 0) return;

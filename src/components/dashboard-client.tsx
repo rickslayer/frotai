@@ -109,8 +109,8 @@ const DashboardClient: FC = () => {
 
   // Effect for fetching DASHBOARD DATA based on DEBOUNCED filters
   useEffect(() => {
-    // Only fetch data if a region is selected.
-    if (!debouncedFilters.region) {
+    // Only fetch data if both region and state are selected.
+    if (!debouncedFilters.region || !debouncedFilters.state) {
       setDashboardData(emptyDashboardData);
       return;
     }
@@ -140,27 +140,28 @@ const DashboardClient: FC = () => {
     const fetchOptions = async () => {
         try {
             const options = await getInitialFilterOptions(filters);
-            setFilterOptions(prev => ({
-                // Preserve previous options to avoid flickering
-                manufacturers: options.manufacturers?.length > 0 ? options.manufacturers : prev.manufacturers,
-                models: options.models?.length > 0 ? options.models : (key === 'manufacturer' ? [] : prev.models),
-                versions: options.versions?.length > 0 ? options.versions : (key === 'model' ? [] : prev.versions),
-                years: options.years?.length > 0 ? options.years : prev.years,
-                regions: options.regions?.length > 0 ? options.regions : prev.regions,
-                states: options.states?.length > 0 ? options.states : (key === 'region' ? [] : prev.states),
-                cities: options.cities?.length > 0 ? options.cities : (key === 'state' ? [] : prev.cities),
-            }));
+            setFilterOptions(prev => {
+                const key = Object.keys(filters).find(k => filters[k as keyof Filters] !== initialFilters[k as keyof Filters]);
+                return {
+                    // Preserve previous options to avoid flickering
+                    manufacturers: options.manufacturers?.length > 0 ? options.manufacturers : prev.manufacturers,
+                    models: options.models?.length > 0 ? options.models : (key === 'manufacturer' ? [] : prev.models),
+                    versions: options.versions?.length > 0 ? options.versions : (key === 'model' ? [] : prev.versions),
+                    years: options.years?.length > 0 ? options.years : prev.years,
+                    regions: options.regions?.length > 0 ? options.regions : prev.regions,
+                    states: options.states?.length > 0 ? options.states : (key === 'region' ? [] : prev.states),
+                    cities: options.cities?.length > 0 ? options.cities : (key === 'state' ? [] : prev.cities),
+                }
+            });
         } catch (error) {
              console.error('Failed to fetch dynamic filter options:', error);
              toast({ variant: 'destructive', title: t('error'), description: 'Failed to update filter options.' });
         }
     };
     
-    // Determine the key that changed to manage cascading resets
-    const key = Object.keys(filters).find(k => filters[k as keyof Filters] !== initialFilters[k as keyof Filters]);
     fetchOptions();
 
-  }, [filters, isLoading, toast, t]);
+  }, [filters, isLoading, toast]);
 
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
@@ -395,9 +396,10 @@ const DashboardClient: FC = () => {
       );
     }
     
-    // Show placeholder if no region is selected
-    if (!filters.region) {
-        return <WelcomePlaceholder />;
+    // Show placeholder if no region or state is selected
+    if (!filters.region || !filters.state) {
+        const welcomeMessageKey = !filters.region ? 'welcome_title_region' : 'welcome_title_state';
+        return <WelcomePlaceholder titleKey={welcomeMessageKey} />;
     }
     
     if (isPending) {
@@ -511,5 +513,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    

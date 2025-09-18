@@ -86,16 +86,19 @@
   "no_opportunities_found_description": "O Frota.AI não conseguiu identificar peças de alta demanda para esta categoria e combinação de filtros. Tente uma categoria mais ampla ou filtros diferentes.",
   "welcome_title": "Bem-vindo ao Frota.AI",
   "welcome_title_region": "Selecione uma Região para Começar",
+  "welcome_title_state": "Agora, Selecione um Estado",
   "welcome_subtitle": "Comece selecionando um filtro ao lado para explorar os dados.",
-  "welcome_messages": [
+  "welcome_messages_region": [
     "Mapeando o mercado de autopeças do Brasil...",
     "Analisando milhões de registros para você...",
     "Onde estão suas próximas oportunidades de venda?",
-    "Transformando dados em decisões lucrativas.",
-    "Seu especialista em frota está a postos.",
-    "Entendendo a idade da frota para prever o futuro.",
-    "Insights preditivos ao seu alcance.",
-    "Encontre seu nicho em qualquer estado ou cidade."
+    "Transformando dados em decisões lucrativas."
+  ],
+  "welcome_messages_state": [
+    "Refinando a análise para você...",
+    "Vamos focar em um mercado específico.",
+    "Qual estado tem o maior potencial?",
+    "Aproxime para encontrar seu nicho."
   ],
   "search_model_placeholder": "Buscar modelo...",
   "no_model_found": "Nenhum modelo encontrado.",
@@ -131,5 +134,3 @@
   "ok_close": "OK, fechar",
   "calculating": "Contabilizando..."
 }
-
-    

@@ -40,7 +40,11 @@ const icons = [
     <Package key="package" className="w-12 h-12 text-primary" />,
 ];
 
-const WelcomePlaceholder = () => {
+interface WelcomePlaceholderProps {
+    titleKey: string;
+}
+
+const WelcomePlaceholder = ({ titleKey }: WelcomePlaceholderProps) => {
     const { t } = useTranslation();
     const [currentIconIndex, setCurrentIconIndex] = useState(0);
 
@@ -77,14 +81,12 @@ const WelcomePlaceholder = () => {
                 </div>
 
                 <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">
-                    {t('welcome_title_region')}
+                    {t(titleKey)}
                 </h2>
-                <DynamicWelcomeText />
+                <DynamicWelcomeText titleKey={titleKey} />
             </div>
         </div>
     );
 };
 
 export default WelcomePlaceholder;
-
-    

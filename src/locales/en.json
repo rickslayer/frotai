@@ -86,16 +86,19 @@
   "no_opportunities_found_description": "Frota.AI could not identify specific high-demand parts for this category and filter combination. Try a broader category or different filters.",
   "welcome_title": "Welcome to Frota.AI",
   "welcome_title_region": "Select a Region to Start",
+  "welcome_title_state": "Now, Select a State",
   "welcome_subtitle": "Start by selecting a filter on the side to explore the data.",
-  "welcome_messages": [
+  "welcome_messages_region": [
     "Mapping the Brazilian auto parts market...",
     "Analyzing millions of records for you...",
     "Where are your next sales opportunities?",
-    "Turning data into profitable decisions.",
-    "Your fleet specialist is standing by.",
-    "Understanding fleet age to predict the future.",
-    "Predictive insights at your fingertips.",
-    "Find your niche in any state or city."
+    "Turning data into profitable decisions."
+  ],
+  "welcome_messages_state": [
+    "Refining the analysis for you...",
+    "Let's focus on a specific market.",
+    "Which state holds the most potential?",
+    "Drill down to find your niche."
   ],
   "search_model_placeholder": "Search model...",
   "no_model_found": "No model found.",
@@ -131,5 +134,3 @@
   "ok_close": "OK, close",
   "calculating": "Calculating..."
 }
-
-    
