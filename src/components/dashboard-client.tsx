@@ -388,42 +388,43 @@ const DashboardClient: FC = () => {
       setIsComparing(false);
   }
 
-  const getWelcomeTitleAndHighlights = (): { titleKey: string, highlights: (keyof Filters)[] } => {
-    const { region, state, manufacturer, model } = filters;
+ const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
+    const { region, state, city, manufacturer, model, version } = filters;
 
-    // SCENARIO: Vehicle path almost complete -> needs model
-    if (manufacturer && region && model.length === 0) {
-        return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model'] };
+    // Path 1: Location
+    if (region && state && city && !manufacturer) {
+        return { titleKey: 'welcome_title_start', highlights: ['manufacturer', 'year'] };
     }
-    
-    // SCENARIO: User has selected Region and Manufacturer, can now choose Model or State
-    if (region && manufacturer && !state && model.length === 0) {
-        return { titleKey: 'welcome_title_start', highlights: ['model', 'state'] };
+    if (region && state && !city && !manufacturer) {
+        return { titleKey: 'welcome_title_start', highlights: ['city', 'manufacturer', 'year'] };
     }
-
-    // SCENARIO: Location path almost complete -> needs vehicle details
-    if (region && state && model.length === 0 && !filters.year) {
-         return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
-    }
-
-    // SCENARIO: Location path started -> needs state or manufacturer
     if (region && !state && !manufacturer) {
         return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
     }
-    
-    // SCENARIO: Vehicle path started -> needs region
-    if (manufacturer && !region) {
+
+    // Path 2: Vehicle
+    if (manufacturer && model.length > 0 && version.length > 0 && !region) {
         return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
     }
+    if (manufacturer && model.length > 0 && !region) {
+        return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['version', 'region'] };
+    }
+    if (manufacturer && !region) {
+        return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model', 'region'] };
+    }
+    
+    // Cross-path
+    if (region && manufacturer && !state && model.length === 0) {
+        return { titleKey: 'welcome_title_start', highlights: ['state', 'model'] };
+    }
 
-    // SCENARIO: No filters selected
+    // Default
     if (!region && !manufacturer) {
         return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };
     }
 
-    // Default if no specific guidance is needed but search is not yet enabled
     return { titleKey: 'welcome_title_start', highlights: [] };
-  }
+};
   
   useEffect(() => {
     if (!isSearchEnabled) {
@@ -565,5 +566,7 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
 
     
