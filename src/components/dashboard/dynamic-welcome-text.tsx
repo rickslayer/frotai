@@ -19,6 +19,9 @@ const welcomeMessageKeys: Record<string, string> = {
     welcome_title_vehicle_needs_model: 'welcome_messages_vehicle_needs_model',
 };
 
+// In-memory cache for generated audio
+const audioCache = new Map<string, string>();
+
 
 const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
     const { t } = useTranslation();
@@ -70,11 +73,19 @@ const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
     const generateAndPlayAudio = useCallback(async (text: string) => {
         if (!isSoundEnabled || !text) return;
         
+        // Check cache first
+        if (audioCache.has(text)) {
+            setAudioUrl(audioCache.get(text)!);
+            setIsAudioLoading(false);
+            return;
+        }
+
         setIsAudioLoading(true);
         setAudioUrl(null);
         try {
             const response = await textToSpeech(text);
             if (response.media) {
+                audioCache.set(text, response.media); // Save to cache
                 setAudioUrl(response.media);
             }
         } catch (error) {
@@ -102,7 +113,8 @@ const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
         const newSoundState = !isSoundEnabled;
         setIsSoundEnabled(newSoundState);
         localStorage.setItem('frotai-sound-enabled', JSON.stringify(newSoundState));
-        if (!newSoundState) {
+        if (!newSoundState && audioRef.current) {
+            audioRef.current.pause();
             setAudioUrl(null);
         }
     };
