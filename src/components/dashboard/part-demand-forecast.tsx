@@ -13,7 +13,6 @@ import type { Filters, FleetAgeBracket, PredictPartsDemandOutput } from '@/types
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Badge } from '../ui/badge';
 import { Lightbulb, Wrench, Package, Loader2 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface PartDemandForecastProps {
   fleetAgeBrackets: FleetAgeBracket[];
@@ -74,7 +73,7 @@ const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, fil
   };
 
 
-  const cardContent = (
+  return (
     <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle>{t('part_demand_forecast_title')}</CardTitle>
@@ -145,23 +144,8 @@ const PartDemandForecast: FC<PartDemandForecastProps> = ({ fleetAgeBrackets, fil
       </CardContent>
     </Card>
   );
-
-  if (!disabled) {
-    return cardContent;
-  }
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          {cardContent}
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs">
-          <p>A inteligência do Frota.AI, para prever a demanda de peças com precisão, precisa analisar o ciclo de vida e as características de um modelo de veículo específico. Se a análise fosse feita com múltiplos modelos ao mesmo tempo (ou nenhum), o resultado seria genérico e de pouco valor estratégico.</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
 };
 
 export default PartDemandForecast;
+
+    

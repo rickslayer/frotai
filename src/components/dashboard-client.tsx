@@ -24,7 +24,6 @@ import html2canvas from 'html2canvas';
 import { getFleetData, getInitialFilterOptions } from '@/lib/api-logic';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 
 const emptyDashboardData: DashboardData = {
@@ -495,25 +494,14 @@ const DashboardClient: FC = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 gap-4 md:gap-8">
-          <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div id="part-demand-card">
-                        <PartDemandForecast
-                            fleetAgeBrackets={fleetAgeBracketsWithLabels}
-                            filters={filters}
-                            disabled={dashboardData.totalVehicles === 0 || !filters.manufacturer || filters.model.length !== 1}
-                            onDemandPredicted={setDemandAnalysis}
-                        />
-                    </div>
-                </TooltipTrigger>
-                { (dashboardData.totalVehicles === 0 || !filters.manufacturer || filters.model.length !== 1) &&
-                    <TooltipContent className="max-w-xs">
-                        <p>{t('part_demand_disabled_description')}</p>
-                    </TooltipContent>
-                }
-            </Tooltip>
-          </TooltipProvider>
+          <div id="part-demand-card">
+              <PartDemandForecast
+                  fleetAgeBrackets={fleetAgeBracketsWithLabels}
+                  filters={filters}
+                  disabled={dashboardData.totalVehicles === 0 || !filters.manufacturer || filters.model.length !== 1}
+                  onDemandPredicted={setDemandAnalysis}
+              />
+          </div>
         </div>
       </>
     );
@@ -532,12 +520,12 @@ const DashboardClient: FC = () => {
           highlightedFilters={highlightedFilters}
         />
       </div>
-      <div className="overflow-auto">
+      <div className="flex flex-col">
         <DashboardHeader 
           onExport={handleExportPDF} 
           isFiltered={isFiltered && dashboardData.totalVehicles > 0}
         />
-        <main className="p-4 md:p-8 bg-muted/20">
+        <main className="flex-1 overflow-auto p-4 md:p-8 bg-muted/20">
              <div className="flex justify-between items-center gap-4">
                 <div>
                   {isFiltered && (
@@ -581,3 +569,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
