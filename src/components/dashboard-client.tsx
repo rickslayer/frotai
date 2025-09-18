@@ -391,13 +391,18 @@ const DashboardClient: FC = () => {
   const getWelcomeTitleAndHighlights = (): { titleKey: string, highlights: (keyof Filters)[] } => {
     const { region, state, manufacturer, model } = filters;
     
-    // No filters selected
-    if (!region && !manufacturer) {
-        return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };
+    // Vehicle path advanced, needs model
+    if (manufacturer && region && model.length === 0) {
+        return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model'] };
+    }
+
+    // Location path advanced, needs vehicle details
+    if (region && state && model.length === 0 && !filters.year) {
+         return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
     }
 
     // Location path started
-    if (region && !state) {
+    if (region && !manufacturer && !state) {
         return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
     }
     
@@ -406,14 +411,9 @@ const DashboardClient: FC = () => {
         return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
     }
 
-    // Location path advanced, needs vehicle details
-    if (region && state && model.length === 0 && !filters.year) {
-         return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
-    }
-    
-    // Vehicle path advanced, needs model
-    if (manufacturer && region && model.length === 0) {
-        return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model'] };
+    // No filters selected
+    if (!region && !manufacturer) {
+        return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };
     }
 
     // Default if no specific guidance is needed but search is not yet enabled
