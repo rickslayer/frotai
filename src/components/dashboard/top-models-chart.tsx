@@ -1,8 +1,8 @@
 'use client';
 
-import type { FC, SVGProps } from 'react';
+import type { FC } from 'react';
 import { useMemo, useState } from 'react';
-import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, LabelList, ResponsiveContainer } from 'recharts';
 import {
   Card,
   CardContent,
@@ -12,8 +12,6 @@ import {
 } from '@/components/ui/card';
 import {
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
 import type { TopModel, TopEntity } from '@/types';
@@ -24,38 +22,38 @@ import { Badge } from '../ui/badge';
 
 const CustomLabel = (props: any) => {
     const { x, y, width, height, value, payload } = props;
-    
-    if (!payload || width < 10) { // Não renderiza nada se a barra for muito pequena
+    const padding = 10;
+    const labelY = y + height / 2;
+
+    if (!payload || width < 20) {
         return null;
     }
 
     const modelName = payload.model;
-    const quantity = payload.quantity.toLocaleString();
-    const padding = 10;
+    const quantity = value.toLocaleString();
+    
+    // Check if both labels would fit
+    const fullText = `${modelName}${quantity}`;
+    // Simple estimation, might need adjustment
+    const estimatedTextWidth = fullText.length * 6; 
 
-    // Posição para o nome do modelo (dentro da barra)
-    const modelLabelX = x + padding;
-    const labelY = y + height / 2;
-
-    // Posição para a quantidade (fora da barra)
-    const quantityLabelX = x + width + padding;
-
-    const textProps = {
-        y: labelY,
-        dominantBaseline: "middle",
-        fontSize: 12,
-    };
-
+    if (width < estimatedTextWidth + (padding * 2)) {
+      // Just show quantity if it's too small for both
+       return (
+         <g>
+           <text x={x + width - padding} y={labelY} fill="#fff" textAnchor="end" dominantBaseline="middle" fontSize={12} fontWeight="bold">
+             {quantity}
+           </text>
+         </g>
+       );
+    }
+    
     return (
         <g>
-            {/* Nome do modelo dentro da barra, se couber */}
-            {width > 50 && (
-                 <text {...textProps} x={modelLabelX} fill="#fff" textAnchor="start" fontWeight="bold">
-                    {modelName}
-                </text>
-            )}
-            {/* Quantidade fora da barra */}
-            <text {...textProps} x={quantityLabelX} fill="hsl(var(--foreground))" textAnchor="start" fontWeight="bold">
+            <text x={x + padding} y={labelY} fill="#fff" textAnchor="start" dominantBaseline="middle" fontSize={12} fontWeight="bold">
+                {modelName}
+            </text>
+            <text x={x + width - padding} y={labelY} fill="#fff" textAnchor="end" dominantBaseline="middle" fontSize={12} fontWeight="bold">
                 {quantity}
             </text>
         </g>
@@ -119,12 +117,7 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                     accessibilityLayer
                     data={chartData}
                     layout="vertical"
-                    margin={{
-                        left: 0,
-                        right: 40, // Espaço para os valores à direita
-                        top: 10,
-                        bottom: 10,
-                    }}
+                    margin={{ left: 0, right: 0, top: 10, bottom: 10 }}
                     barCategoryGap="25%"
                 >
                     <XAxis type="number" hide />
