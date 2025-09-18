@@ -33,20 +33,6 @@ const CustomLabel = (props: any) => {
     const padding = 10;
     const textColor = 'hsl(var(--primary-foreground))';
 
-    const fullText = `${modelName}${quantity}`;
-    const estimatedTextWidth = fullText.length * 7;
-
-    // A secondary check to avoid clutter if both texts are too long for the bar
-    if (width < estimatedTextWidth + (padding * 2)) {
-      return (
-         <g>
-            <text x={x + padding} y={y + height / 2} fill={textColor} textAnchor="start" dominantBaseline="middle" fontSize={12} fontWeight="bold">
-                {modelName}
-            </text>
-        </g>
-      )
-    }
-
     return (
         <g>
             <text x={x + padding} y={y + height / 2} fill={textColor} textAnchor="start" dominantBaseline="middle" fontSize={12} fontWeight="bold">
