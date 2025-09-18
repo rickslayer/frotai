@@ -88,17 +88,13 @@ const DashboardClient: FC = () => {
     city: !filters.state
   }), [filters]);
 
-  // Effect for initial data load (once)
+  // Effect for initial data load (only filter options)
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchInitialOptions = async () => {
       setIsLoading(true);
       try {
-        const [options, data] = await Promise.all([
-            getInitialFilterOptions(),
-            getFleetData({})
-        ]);
+        const options = await getInitialFilterOptions();
         setFilterOptions(options);
-        setDashboardData(data);
       } catch (error) {
         console.error(error);
         const errorMessage = error instanceof Error ? error.message : 'Failed to load initial data.';
@@ -107,28 +103,17 @@ const DashboardClient: FC = () => {
         setIsLoading(false);
       }
     };
-    fetchInitialData();
+    fetchInitialOptions();
   }, [t, toast]);
 
 
   // Effect for fetching DASHBOARD DATA based on DEBOUNCED filters
   useEffect(() => {
-    const hasActiveFilters = Object.values(debouncedFilters).some(value => {
-        if (Array.isArray(value)) return value.length > 0;
-        return !!value;
-    });
-
-    // Skip fetch if filters are empty and it's not the initial load phase
-    if (!hasActiveFilters && !isLoading) {
-        // If we clear filters, we need to refetch the "all" data.
-        // This check prevents an unnecessary re-fetch.
-        const isAlreadyShowingAllData = debouncedFilters === initialFilters;
-        if(isAlreadyShowingAllData) {
-            // To ensure it re-fetches when cleared, we can compare against a "cleared" state.
-            // But for now, let's allow it to refetch.
-        }
+    // Only fetch data if a region is selected.
+    if (!debouncedFilters.region) {
+      setDashboardData(emptyDashboardData);
+      return;
     }
-
 
     const fetchData = async () => {
       startTransition(async () => {
@@ -143,29 +128,27 @@ const DashboardClient: FC = () => {
       });
     };
 
-    if (!isLoading) { // Only fetch if not initial loading
-      fetchData();
-    }
-  }, [debouncedFilters, toast, isLoading]);
+    fetchData();
+  }, [debouncedFilters, toast]);
 
 
   // Effect for fetching FILTER OPTIONS immediately when a filter changes
   useEffect(() => {
+    // Don't run this on initial load
     if (isLoading) return;
 
     const fetchOptions = async () => {
         try {
             const options = await getInitialFilterOptions(filters);
             setFilterOptions(prev => ({
-                // We preserve the previous options for fields that might become empty
-                // to avoid a flickering effect in the UI.
+                // Preserve previous options to avoid flickering
                 manufacturers: options.manufacturers?.length > 0 ? options.manufacturers : prev.manufacturers,
-                models: options.models?.length > 0 ? options.models : prev.models,
-                versions: options.versions?.length > 0 ? options.versions : prev.versions,
+                models: options.models?.length > 0 ? options.models : (key === 'manufacturer' ? [] : prev.models),
+                versions: options.versions?.length > 0 ? options.versions : (key === 'model' ? [] : prev.versions),
                 years: options.years?.length > 0 ? options.years : prev.years,
                 regions: options.regions?.length > 0 ? options.regions : prev.regions,
-                states: options.states?.length > 0 ? options.states : prev.states,
-                cities: options.cities?.length > 0 ? options.cities : prev.cities,
+                states: options.states?.length > 0 ? options.states : (key === 'region' ? [] : prev.states),
+                cities: options.cities?.length > 0 ? options.cities : (key === 'state' ? [] : prev.cities),
             }));
         } catch (error) {
              console.error('Failed to fetch dynamic filter options:', error);
@@ -173,7 +156,10 @@ const DashboardClient: FC = () => {
         }
     };
     
+    // Determine the key that changed to manage cascading resets
+    const key = Object.keys(filters).find(k => filters[k as keyof Filters] !== initialFilters[k as keyof Filters]);
     fetchOptions();
+
   }, [filters, isLoading, toast, t]);
 
 
@@ -182,9 +168,9 @@ const DashboardClient: FC = () => {
         const updated: Filters = { ...prev };
         const finalValue = value === 'all' ? '' : value;
         
-        // --- Cascading Logic ---
         updated[key] = finalValue;
 
+        // --- Cascading Logic ---
         if (key === 'region') {
             updated.state = '';
             updated.city = '';
@@ -205,7 +191,6 @@ const DashboardClient: FC = () => {
             setFilterOptions(opts => ({ ...opts, versions: [] }));
         }
         
-        // Ensure year is a number or empty string
         if (key === 'year' && finalValue !== '') {
             updated.year = Number(finalValue);
         } else if (key === 'year' && finalValue === '') {
@@ -218,21 +203,8 @@ const DashboardClient: FC = () => {
 
   const handleClearFilters = useCallback(() => {
     setFilters(initialFilters);
-    // After clearing, we refetch the "all" data view again.
-    startTransition(async () => {
-        try {
-            const [options, data] = await Promise.all([
-                getInitialFilterOptions(),
-                getFleetData({})
-            ]);
-            setFilterOptions(options);
-            setDashboardData(data);
-        } catch (error) {
-            console.error(error);
-            toast({ variant: 'destructive', title: t('error'), description: 'Failed to reload data.' });
-        }
-    });
-  }, [toast]);
+    setDashboardData(emptyDashboardData);
+  }, []);
   
   const handleExportPDF = async () => {
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -423,9 +395,17 @@ const DashboardClient: FC = () => {
       );
     }
     
-    // Welcome placeholder is only shown if the initial data load results in zero vehicles.
-    if (!isFiltered && dashboardData.totalVehicles === 0 && !isLoading) {
+    // Show placeholder if no region is selected
+    if (!filters.region) {
         return <WelcomePlaceholder />;
+    }
+    
+    if (isPending) {
+        return (
+            <div className="flex h-full w-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
     }
 
     return (
@@ -531,3 +511,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    

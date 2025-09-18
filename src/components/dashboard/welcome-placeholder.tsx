@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Car, Wrench, Truck, Filter, Factory, Store, Package } from 'lucide-react';
+import { Car, Wrench, Truck, Filter, Factory, Store, Package, MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import DynamicWelcomeText from './dynamic-welcome-text';
 import { useEffect, useState } from 'react';
@@ -29,14 +29,15 @@ const MotorcycleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 const icons = [
-    <Car key="car" className="w-12 h-12 text-primary" />,
-    <Truck key="truck" className="w-12 h-12 text-accent" />,
-    <MotorcycleIcon key="motorcycle" className="w-12 h-12 text-primary" />,
-    <Wrench key="wrench" className="w-12 h-12 text-accent" />,
-    <Filter key="filter" className="w-12 h-12 text-primary" />,
-    <Factory key="factory" className="w-12 h-12 text-accent" />,
-    <Store key="store" className="w-12 h-12 text-primary" />,
-    <Package key="package" className="w-12 h-12 text-accent" />,
+    <MapPin key="map" className="w-12 h-12 text-primary" />,
+    <Car key="car" className="w-12 h-12 text-accent" />,
+    <Truck key="truck" className="w-12 h-12 text-primary" />,
+    <MotorcycleIcon key="motorcycle" className="w-12 h-12 text-accent" />,
+    <Wrench key="wrench" className="w-12 h-12 text-primary" />,
+    <Filter key="filter" className="w-12 h-12 text-accent" />,
+    <Factory key="factory" className="w-12 h-12 text-primary" />,
+    <Store key="store" className="w-12 h-12 text-accent" />,
+    <Package key="package" className="w-12 h-12 text-primary" />,
 ];
 
 const WelcomePlaceholder = () => {
@@ -76,7 +77,7 @@ const WelcomePlaceholder = () => {
                 </div>
 
                 <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">
-                    {t('welcome_title')}
+                    {t('welcome_title_region')}
                 </h2>
                 <DynamicWelcomeText />
             </div>
@@ -85,3 +86,5 @@ const WelcomePlaceholder = () => {
 };
 
 export default WelcomePlaceholder;
+
+    

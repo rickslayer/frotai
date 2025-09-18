@@ -85,6 +85,7 @@
   "no_opportunities_found_title": "Nenhuma oportunidade específica encontrada",
   "no_opportunities_found_description": "O Frota.AI não conseguiu identificar peças de alta demanda para esta categoria e combinação de filtros. Tente uma categoria mais ampla ou filtros diferentes.",
   "welcome_title": "Bem-vindo ao Frota.AI",
+  "welcome_title_region": "Selecione uma Região para Começar",
   "welcome_subtitle": "Comece selecionando um filtro ao lado para explorar os dados.",
   "welcome_messages": [
     "Mapeando o mercado de autopeças do Brasil...",
@@ -130,3 +131,5 @@
   "ok_close": "OK, fechar",
   "calculating": "Contabilizando..."
 }
+
+    
