@@ -57,7 +57,7 @@ const WelcomePlaceholder = ({ titleKey }: WelcomePlaceholderProps) => {
     }, []);
 
     return (
-        <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/20 bg-card h-full p-8">
+        <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-muted-foreground/20 bg-card h-full p-8 relative">
             <div className="text-center max-w-md mx-auto">
                 <div className="relative w-64 h-64 mx-auto mb-8 flex items-center justify-center">
                     {/* Pulsating background circles */}
