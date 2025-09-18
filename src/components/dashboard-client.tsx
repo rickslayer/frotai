@@ -515,12 +515,12 @@ const DashboardClient: FC = () => {
           highlightedFilters={highlightedFilters}
         />
       </div>
-      <div className="flex flex-col overflow-auto">
+      <div>
         <DashboardHeader 
           onExport={handleExportPDF} 
           isFiltered={isFiltered && dashboardData.totalVehicles > 0}
         />
-        <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
+        <main className="gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
              <div className="flex justify-between items-center gap-4">
                 <div>
                   {isFiltered && (
@@ -552,7 +552,9 @@ const DashboardClient: FC = () => {
                 </AlertDialogContent>
             </AlertDialog>
             
-            {renderContent()}
+            <div className="flex flex-col gap-4 md:gap-8">
+              {renderContent()}
+            </div>
         </main>
       </div>
     </div>
@@ -560,3 +562,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
