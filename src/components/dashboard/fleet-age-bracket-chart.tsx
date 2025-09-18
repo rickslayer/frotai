@@ -84,9 +84,9 @@ const FleetAgeBracketChart: FC<FleetAgeBracketChartProps> = ({ data, totalVehicl
                         data={chartData}
                         dataKey="quantity"
                         nameKey="name"
-                        innerRadius={60}
+                        innerRadius={50}
+                        outerRadius={100}
                         strokeWidth={5}
-                        outerRadius={80}
                     >
                         {chartData.map((entry) => (
                         <Cell

@@ -22,8 +22,6 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import { Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
-import { cn } from '@/lib/utils';
-import { ScrollArea } from '../ui/scroll-area';
 
 
 interface TopModelsChartProps {
@@ -31,9 +29,34 @@ interface TopModelsChartProps {
   topManufacturer: TopEntity | null;
 }
 
+const CustomLabel = (props: any) => {
+    const { x, y, width, height, value, payload } = props;
+    const radius = 4;
+    const labelX = 10;
+    const labelY = y + height / 2 + 5;
+    const valueX = x + width + 5;
+    
+    // Não renderiza o nome se a barra for muito pequena
+    if (width < 80) {
+        return null;
+    }
+
+    return (
+        <g>
+            <text x={labelX} y={labelY} fill="#fff" textAnchor="start" fontSize={12} fontWeight="bold">
+                {payload.model}
+            </text>
+            <text x={valueX} y={labelY} fill="hsl(var(--foreground))" textAnchor="start" fontSize={12}>
+                {value.toLocaleString()}
+            </text>
+        </g>
+    );
+};
+
+
 const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   const { t } = useTranslation();
-  const [showCount, setShowCount] = useState<5 | 10>(10);
+  const [showCount, setShowCount] = useState<5 | 10>(5);
   
   const chartConfig = {
     quantity: {
@@ -80,7 +103,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
         )}
       </CardHeader>
       <CardContent className="flex-grow">
-        <ChartContainer config={chartConfig} className="w-full h-full min-h-[250px]">
+        <ChartContainer config={chartConfig} className="w-full h-full min-h-[350px]">
             {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -88,21 +111,20 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
                     data={chartData}
                     layout="vertical"
                     margin={{
-                        left: 80,
-                        right: 20,
+                        left: -4,
+                        right: 50, // Espaço para os valores fora da barra
                         top: 10,
                         bottom: 10,
                     }}
                     barCategoryGap="20%"
                 >
-                    <XAxis type="number" />
+                    <XAxis type="number" hide />
                     <YAxis 
                         dataKey="model" 
-                        type="category" 
-                        width={120}
-                        tick={{ fontSize: 12 }}
+                        type="category"
                         tickLine={false}
                         axisLine={false}
+                        tick={false}
                     />
                     <Tooltip
                         cursor={{ fill: 'hsl(var(--muted))' }}
@@ -117,7 +139,9 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
                             />
                         }
                     />
-                    <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={[4, 4, 4, 4]} />
+                    <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={4}>
+                        <LabelList dataKey="quantity" content={<CustomLabel />} />
+                    </Bar>
                 </BarChart>
             </ResponsiveContainer>
             ) : (
