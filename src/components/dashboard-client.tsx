@@ -391,42 +391,38 @@ const DashboardClient: FC = () => {
  const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
     const { region, state, city, manufacturer, model, version, year } = filters;
 
-    // --- Caminho de Veículo ---
-    if (manufacturer && model.length > 0 && version.length > 0) {
-      return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
-    }
-    if (manufacturer && model.length > 0) {
-      return { titleKey: 'welcome_title_start', highlights: ['version', 'region'] };
-    }
-    if (manufacturer && !region) {
-      return { titleKey: 'welcome_title_start', highlights: ['model', 'region'] };
-    }
-
-    // --- Caminho de Localização ---
+    // Caminho 1: Iniciando por Localização
     if (region && state && city && manufacturer) {
-        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
+        return { titleKey: 'welcome_title_start', highlights: ['model', 'year'] };
     }
     if (region && state && city) {
-      return { titleKey: 'welcome_title_start', highlights: ['manufacturer', 'year'] };
+        return { titleKey: 'welcome_title_start', highlights: ['manufacturer', 'year'] };
     }
-    if (region && state) {
-      return { titleKey: 'welcome_title_start', highlights: ['city', 'manufacturer', 'year'] };
+     if (region && state) {
+        return { titleKey: 'welcome_title_start', highlights: ['city', 'manufacturer', 'year'] };
     }
-    if (region && !manufacturer) {
-      return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
+    if (region && !state && !manufacturer) { // Apenas Região
+        return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
     }
-    
-    // --- Caminhos Cruzados ---
+
+    // Caminho 2: Iniciando por Veículo
+    if (manufacturer && model.length > 0 && version.length > 0) {
+        return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
+    }
+    if (manufacturer && model.length > 0) {
+        return { titleKey: 'welcome_title_start', highlights: ['version', 'region'] };
+    }
+    if (manufacturer && model.length === 0) { // Apenas Montadora
+        return { titleKey: 'welcome_title_start', highlights: ['model', 'region'] };
+    }
+
+    // Caminhos Cruzados
     if (region && manufacturer) {
         return { titleKey: 'welcome_title_start', highlights: ['state', 'model'] };
     }
 
-    // --- Ponto de Partida ---
-    if (!region && !manufacturer && !year) {
-        return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
-    }
-    
-    return { titleKey: 'welcome_title_start', highlights: [] };
+    // Ponto de Partida
+    return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
 };
   
   useEffect(() => {
