@@ -10,29 +10,29 @@ O sistema de filtros foi redesenhado para guiar o usuário a fornecer um conjunt
 
 A lógica de busca de dados do dashboard (`getFleetData`) é acionada somente quando uma das seguintes condições é atendida:
 
-1.  **Análise por Localização:** `Região` **E** `Estado` **E** (`Montadora` **OU** `Ano`) estão selecionados.
-2.  **Análise por Veículo:** `Montadora` **E** `Região` estão selecionados.
+1.  **Análise Focada em Localização:** `Região` **E** `Estado` **E** (`Modelo` **OU** `Ano`) estão selecionados.
+2.  **Análise Focada em Veículo:** `Montadora` **E** `Região` **E** `Modelo` estão selecionados.
 
 Isso evita buscas excessivamente amplas e lentas (como consultar uma região inteira sem especificação de veículo) ou buscas muito genéricas (como um estado inteiro sem um tipo de veículo ou ano em foco).
 
 ## 2. Caminhos de Análise e Interação
 
-### Caminho 1: Análise por Localização (Mais Específica)
+### Caminho 1: Análise por Localização (Exige granularidade de veículo/ano)
 
 Este fluxo é ideal para entender a frota de um tipo de veículo em uma área geográfica específica.
 
 1.  **Seleção de Local:** O usuário seleciona uma **Região** e um **Estado**.
-2.  **Seleção de Veículo/Ano:** O usuário seleciona uma **Montadora** ou um **Ano**.
-3.  **BUSCA PRINCIPAL:** A condição (`região` + `estado` + `montadora`/`ano`) é atendida. A função `getFleetData` é chamada, e o dashboard é renderizado com os dados para aquele escopo.
+2.  **Seleção de Veículo/Ano:** O usuário seleciona um ou mais **Modelos** ou um **Ano**.
+3.  **BUSCA PRINCIPAL:** A condição (`região` + `estado` + (`modelo` ou `ano`)) é atendida. A função `getFleetData` é chamada, e o dashboard é renderizado com os dados para aquele escopo.
 
-### Caminho 2: Análise por Veículo (Mais Ampla)
+### Caminho 2: Análise por Veículo (Exige granularidade de modelo)
 
 Este fluxo é ideal para entender a distribuição de uma frota de veículo específica em uma grande área.
 
-1.  **Seleção de Veículo:** O usuário seleciona uma **Montadora**.
+1.  **Seleção de Veículo:** O usuário seleciona uma **Montadora** e um ou mais **Modelos**.
 2.  **Seleção da Região:** O usuário seleciona uma **Região**.
-3.  **BUSCA PRINCIPAL:** A condição (`montadora` + `região`) é atendida. A função `getFleetData` é chamada.
-    *   **Insight:** Isso permite, por exemplo, descobrir em qual **Estado** daquela região a "Fiat" tem a maior frota, uma vez que o card "Principal Estado" refletirá esse resultado sem a necessidade de pré-selecionar o estado.
+3.  **BUSCA PRINCIPAL:** A condição (`montadora` + `região` + `modelo`) é atendida. A função `getFleetData` é chamada.
+    *   **Insight:** Isso permite, por exemplo, descobrir em qual **Estado** daquela região a "Fiat Strada" tem a maior frota, uma vez que o card "Principal Estado" refletirá esse resultado sem a necessidade de pré-selecionar o estado.
 
 ## 3. Lógica de Cascata e Limpeza
 
@@ -80,12 +80,21 @@ Usuário seleciona Região "Sudeste"
        |
        v
 [Frontend]
-  - Condição (manufacturer && region) atendida.
-  - Chama getFleetData({ manufacturer: 'Fiat', region: 'Sudeste' })
+  - Estado do dashboard: { manufacturer: 'Fiat', region: 'Sudeste', ...}
+  - NENHUMA busca de dados principais.
+  - Tela de boas-vindas pede para selecionar um Modelo.
        |
        v
-[API] /api/carros?manufacturer=Fiat&region=Sudeste
-  - Retorna dados agregados para a Fiat no Sudeste.
+Usuário seleciona Modelo "Strada"
+       |
+       v
+[Frontend]
+  - Condição (manufacturer && region && model) atendida.
+  - Chama getFleetData({ manufacturer: 'Fiat', region: 'Sudeste', model: ['Strada'] })
+       |
+       v
+[API] /api/carros?manufacturer=Fiat&region=Sudeste&model=Strada
+  - Retorna dados agregados para a Fiat Strada no Sudeste.
        |
        v
 [Frontend]

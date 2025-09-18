@@ -76,9 +76,9 @@ const DashboardClient: FC = () => {
   
   const isSearchEnabled = useMemo(() => {
     const { region, state, manufacturer, model, year } = debouncedFilters;
-    // Path 1: Location-first
-    const locationPath = region && state && (manufacturer || year);
-    // Path 2: Vehicle-first
+    // Path 1: Location-first (requires year or model)
+    const locationPath = region && state && (model.length > 0 || year);
+    // Path 2: Vehicle-first (requires model)
     const vehiclePath = manufacturer && region && model.length > 0;
     return locationPath || vehiclePath;
   }, [debouncedFilters]);
