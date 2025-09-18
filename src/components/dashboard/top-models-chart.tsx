@@ -24,39 +24,31 @@ const CustomLabel = (props: any) => {
     const { x, y, width, height, value, payload } = props;
     const padding = 10;
     
-    // Não renderiza nada se a barra for muito pequena
+    // Don't render if the bar is too small or no payload
     if (width < 20 || !payload) {
         return null;
     }
 
     const modelName = payload.model;
     const quantity = value.toLocaleString();
-    const labelY = y + height / 2;
 
-    // Estimação simples para ver se ambos cabem com algum espaço
+    // Simple estimation to see if both fit with some space
     const fullText = `${modelName}${quantity}`;
-    const estimatedTextWidth = fullText.length * 6; // Ajuste este multiplicador conforme necessário
+    const estimatedTextWidth = fullText.length * 6.5; 
 
     if (width < estimatedTextWidth + (padding * 2)) {
-      // Se não couber, mostra apenas a quantidade se houver espaço para ela
-       if (width < quantity.length * 8 + padding) {
-         return null;
-       }
-       return (
-         <g>
-           <text x={x + width - padding} y={labelY} fill="#fff" textAnchor="end" dominantBaseline="middle" fontSize={12} fontWeight="bold">
-             {quantity}
-           </text>
-         </g>
-       );
+      // If it doesn't fit, don't render to avoid clutter
+      return null;
     }
     
+    const foregroundColor = 'hsl(var(--foreground))';
+
     return (
         <g>
-            <text x={x + padding} y={labelY} fill="#fff" textAnchor="start" dominantBaseline="middle" fontSize={12} fontWeight="bold">
+            <text x={x + padding} y={y + height / 2} fill={foregroundColor} textAnchor="start" dominantBaseline="middle" fontSize={12} fontWeight="bold">
                 {modelName}
             </text>
-            <text x={x + width - padding} y={labelY} fill="#fff" textAnchor="end" dominantBaseline="middle" fontSize={12} fontWeight="bold">
+            <text x={x + width - padding} y={y + height / 2} fill={foregroundColor} textAnchor="end" dominantBaseline="middle" fontSize={12} fontWeight="bold">
                 {quantity}
             </text>
         </g>
@@ -129,7 +121,7 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                         type="category"
                         tickLine={false}
                         axisLine={false}
-                        tick={false}
+                        hide
                     />
                     <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={4}>
                         <LabelList dataKey="quantity" content={<CustomLabel />} />
