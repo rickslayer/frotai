@@ -26,7 +26,7 @@ const audioCache = new Map<string, string>();
 const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
     const { t } = useTranslation();
     const [messages, setMessages] = useState<string[]>([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [currentIndex, setCurrentIndex] = useState(-1); // Start at -1 for the initial message
     const [isVisible, setIsVisible] = useState(true);
     
     const [isSoundEnabled, setIsSoundEnabled] = useState(false);
@@ -48,8 +48,9 @@ const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
         const messageKey = welcomeMessageKeys[titleKey] || 'welcome_messages_start';
         const loadedMessages = t(messageKey, { returnObjects: true }) as string[];
         if (Array.isArray(loadedMessages) && loadedMessages.length > 0) {
-            setMessages(loadedMessages);
-            setCurrentIndex(Math.floor(Math.random() * loadedMessages.length));
+            // Add the standard welcome message at the beginning
+            setMessages([t('welcome_greeting'), ...loadedMessages]);
+            setCurrentIndex(0); // Start with the greeting
         }
     }, [t, titleKey]);
 
@@ -61,10 +62,13 @@ const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
             setIsVisible(false); // Start fade-out
 
             setTimeout(() => {
-                setCurrentIndex((prevIndex) => (prevIndex + 1) % messages.length);
+                setCurrentIndex((prevIndex) => {
+                    // Cycle through all messages, including the initial greeting
+                    return (prevIndex + 1) % messages.length;
+                });
                 setIsVisible(true); // Start fade-in with new text
             }, 500); // Wait for fade-out animation
-        }, 4000); // Change phrase every 4 seconds
+        }, 7000); // Change phrase every 7 seconds
 
         return () => clearInterval(intervalId);
     }, [messages]);
@@ -97,8 +101,9 @@ const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
     }, [isSoundEnabled]);
     
     useEffect(() => {
-        if (messages[currentIndex]) {
-            generateAndPlayAudio(messages[currentIndex]);
+        const currentMessage = messages[currentIndex];
+        if (currentMessage) {
+            generateAndPlayAudio(currentMessage);
         }
     }, [currentIndex, messages, generateAndPlayAudio]);
 
@@ -124,16 +129,18 @@ const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
         return <p className="text-muted-foreground mt-2 h-6">{t('welcome_subtitle')}</p>;
     }
 
+    const currentMessage = messages[currentIndex];
+
     return (
         <div className="relative">
             <p className={cn(
                 "text-muted-foreground transition-opacity duration-500 ease-in-out h-10 flex items-center justify-center text-center",
                 isVisible ? 'opacity-100' : 'opacity-0'
             )}>
-                {messages[currentIndex]}
+                {currentMessage}
             </p>
-            <div className="absolute top-0 right-0 -mt-8">
-                 <Button onClick={toggleSound} variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+             <div className="flex justify-center mt-4">
+                 <Button onClick={toggleSound} variant="ghost" size="sm" className="h-8 w-auto px-3 text-muted-foreground hover:text-foreground">
                     {isAudioLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                     ) : isSoundEnabled ? (

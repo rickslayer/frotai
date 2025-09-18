@@ -85,6 +85,7 @@
   "part_demand_disabled_description": "Apply manufacturer and a single model filters to enable demand prediction.",
   "no_opportunities_found_title": "No specific opportunities found",
   "no_opportunities_found_description": "Frota.AI could not identify specific high-demand parts for this category and filter combination. Try a broader category or different filters.",
+  "welcome_greeting": "Welcome to Frota.AI!",
   "welcome_title_start": "How do you want to start your analysis?",
   "welcome_title_location_needs_state": "Great! Now select a State to continue",
   "welcome_title_vehicle_needs_region": "Excellent! Now select a Region to see the distribution",

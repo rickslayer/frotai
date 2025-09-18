@@ -85,6 +85,7 @@
   "part_demand_disabled_description": "Aplique filtros de montadora e um único modelo para habilitar a previsão.",
   "no_opportunities_found_title": "Nenhuma oportunidade específica encontrada",
   "no_opportunities_found_description": "O Frota.AI não conseguiu identificar peças de alta demanda para esta categoria e combinação de filtros. Tente uma categoria mais ampla ou filtros diferentes.",
+  "welcome_greeting": "Bem-vindo ao Frota.AI!",
   "welcome_title_start": "Como deseja iniciar sua análise?",
   "welcome_title_location_needs_state": "Ótimo! Agora selecione um Estado para prosseguir",
   "welcome_title_vehicle_needs_region": "Excelente! Agora selecione uma Região para ver a distribuição",
