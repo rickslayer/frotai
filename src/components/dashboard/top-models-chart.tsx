@@ -24,29 +24,19 @@ import { Badge } from '../ui/badge';
 
 
 const CustomLabel = (props: any) => {
-    const { x, y, width, height, value, payload } = props;
+    const { x, y, width, height, payload } = props;
     
-    // Guard clause to prevent runtime error if payload is undefined
-    if (!payload) {
+    if (!payload || width < 50) {
         return null;
     }
 
     const labelX = 10;
     const labelY = y + height / 2 + 5;
-    const valueX = x + width + 5;
-    
-    // Não renderiza o nome se a barra for muito pequena
-    if (width < 80) {
-        return null;
-    }
 
     return (
         <g>
             <text x={labelX} y={labelY} fill="#fff" textAnchor="start" fontSize={12} fontWeight="bold">
                 {payload.model}
-            </text>
-            <text x={valueX} y={labelY} fill="hsl(var(--foreground))" textAnchor="start" fontSize={12}>
-                {value.toLocaleString()}
             </text>
         </g>
     );
@@ -111,7 +101,7 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                     layout="vertical"
                     margin={{
                         left: -4,
-                        right: 50, // Espaço para os valores fora da barra
+                        right: 10,
                         top: 10,
                         bottom: 10,
                     }}
@@ -139,7 +129,7 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                         }
                     />
                     <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={4}>
-                        <LabelList dataKey="quantity" content={<CustomLabel />} />
+                        <LabelList dataKey="model" content={<CustomLabel />} />
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
