@@ -59,8 +59,8 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
         <Separator />
       </SidebarHeader>
       <SidebarContent>
-        <ScrollArea className="flex-1 px-4">
-          <div className='space-y-4 pt-4'>
+        <ScrollArea className="flex-1 p-4">
+          <div className='space-y-4'>
             <div className="space-y-2">
                 <h3 className='font-semibold flex items-center gap-2'><MapPin className="h-4 w-4" />{t('location')}</h3>
                 <div data-testid="region-filter" className={cn("rounded-md", highlightClass('region'))}>

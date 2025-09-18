@@ -391,41 +391,41 @@ const DashboardClient: FC = () => {
  const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
     const { region, state, city, manufacturer, model, version, year } = filters;
 
-    // Path 1: Location first
-    if (region && state && city && manufacturer && model.length === 0) {
-      return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
-    }
-    if (region && state && city && !manufacturer) {
-        return { titleKey: 'welcome_title_start', highlights: ['manufacturer', 'year'] };
-    }
-    if (region && state && !city) {
-      return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['city', 'manufacturer', 'year'] };
-    }
-    if (region && !state) {
-      return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
-    }
-
-    // Path 2: Vehicle first
-    if (manufacturer && model.length > 0 && version.length > 0 && !region) {
+    // --- Caminho de Veículo ---
+    if (manufacturer && model.length > 0 && version.length > 0) {
       return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
     }
-    if (manufacturer && model.length > 0 && !region) {
-        return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['version', 'region'] };
+    if (manufacturer && model.length > 0) {
+      return { titleKey: 'welcome_title_start', highlights: ['version', 'region'] };
     }
     if (manufacturer && !region) {
-        return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model', 'region'] };
+      return { titleKey: 'welcome_title_start', highlights: ['model', 'region'] };
+    }
+
+    // --- Caminho de Localização ---
+    if (region && state && city && manufacturer) {
+        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
+    }
+    if (region && state && city) {
+      return { titleKey: 'welcome_title_start', highlights: ['manufacturer', 'year'] };
+    }
+    if (region && state) {
+      return { titleKey: 'welcome_title_start', highlights: ['city', 'manufacturer', 'year'] };
+    }
+    if (region && !manufacturer) {
+      return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
     }
     
-    // Cross-path
-    if (region && manufacturer && !state && model.length === 0) {
+    // --- Caminhos Cruzados ---
+    if (region && manufacturer) {
         return { titleKey: 'welcome_title_start', highlights: ['state', 'model'] };
     }
 
-    // Default: Start
+    // --- Ponto de Partida ---
     if (!region && !manufacturer && !year) {
         return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
     }
-
+    
     return { titleKey: 'welcome_title_start', highlights: [] };
 };
   
