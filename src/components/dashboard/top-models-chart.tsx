@@ -22,33 +22,37 @@ import { Badge } from '../ui/badge';
 
 const CustomLabel = (props: any) => {
     const { x, y, width, height, value, payload } = props;
-    const padding = 10;
     
-    // Don't render if the bar is too small or no payload
-    if (width < 20 || !payload) {
+    // Safety check: if there's no payload or the bar is too small, render nothing.
+    if (!payload || width < 50) {
         return null;
     }
 
     const modelName = payload.model;
     const quantity = value.toLocaleString();
+    const padding = 10;
+    const textColor = 'hsl(var(--primary-foreground))';
 
-    // Simple estimation to see if both fit with some space
     const fullText = `${modelName}${quantity}`;
-    const estimatedTextWidth = fullText.length * 6.5; 
+    const estimatedTextWidth = fullText.length * 7;
 
+    // A secondary check to avoid clutter if both texts are too long for the bar
     if (width < estimatedTextWidth + (padding * 2)) {
-      // If it doesn't fit, don't render to avoid clutter
-      return null;
+      return (
+         <g>
+            <text x={x + padding} y={y + height / 2} fill={textColor} textAnchor="start" dominantBaseline="middle" fontSize={12} fontWeight="bold">
+                {modelName}
+            </text>
+        </g>
+      )
     }
-    
-    const foregroundColor = 'hsl(var(--foreground))';
 
     return (
         <g>
-            <text x={x + padding} y={y + height / 2} fill={foregroundColor} textAnchor="start" dominantBaseline="middle" fontSize={12} fontWeight="bold">
+            <text x={x + padding} y={y + height / 2} fill={textColor} textAnchor="start" dominantBaseline="middle" fontSize={12} fontWeight="bold">
                 {modelName}
             </text>
-            <text x={x + width - padding} y={y + height / 2} fill={foregroundColor} textAnchor="end" dominantBaseline="middle" fontSize={12} fontWeight="bold">
+            <text x={x + width - padding} y={y + height / 2} fill={textColor} textAnchor="end" dominantBaseline="middle" fontSize={12} fontWeight="bold">
                 {quantity}
             </text>
         </g>
