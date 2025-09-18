@@ -9,11 +9,6 @@ const collectionName = 'carros';
 
 let client: MongoClient | null = null;
 
-const manufacturerAliases: Record<string, string> = {
-    "MMC": "Mitsubishi"
-};
-
-
 async function connectToMongo() {
   if (client && client.topology && client.topology.isConnected()) {
     return client.db(dbName);
@@ -55,22 +50,15 @@ const getDistinctValues = async (collection: import('mongodb').Collection, field
 
   // Handle manufacturer aliases: Replace aliases with the primary name and remove duplicates
   if (field === 'manufacturer') {
-    const primaryNamesToKeep = new Set<string>();
-    const aliasesToMap: Record<string, string> = {};
-    for (const alias in manufacturerAliases) {
-        aliasesToMap[alias] = manufacturerAliases[alias];
-    }
-    
+    const primaryNames = new Set<string>();
     values.forEach(val => {
-        const primaryName = aliasesToMap[val];
-        if (primaryName) {
-            primaryNamesToKeep.add(primaryName);
-        } else {
-            primaryNamesToKeep.add(val);
-        }
+      if (typeof val === 'string' && val.startsWith('MMC')) {
+        primaryNames.add('Mitsubishi');
+      } else if (val) {
+        primaryNames.add(val);
+      }
     });
-
-    values = Array.from(primaryNamesToKeep);
+    values = Array.from(primaryNames);
   }
 
   if (field === 'year') {
@@ -98,9 +86,11 @@ export async function GET(request: NextRequest) {
     // Base match query with ALL active filters
     const baseMatch: any = {};
     if (manufacturer) {
-        const allNames = Array.from(new Set([manufacturer, ...(Object.keys(manufacturerAliases).filter(key => manufacturerAliases[key] === manufacturer)), ...((Object.entries(manufacturerAliases).find(([,v]) => v === manufacturer) || [])[0] ? [(Object.entries(manufacturerAliases).find(([,v]) => v === manufacturer) || [])[0]] : []) ]));
-        const finalNames = Array.from(new Set(allNames.flat()));
-        baseMatch.manufacturer = { $in: finalNames };
+        if (manufacturer === 'Mitsubishi') {
+            baseMatch.manufacturer = { $in: [/^Mitsubishi/i, /^MMC/i] };
+        } else {
+            baseMatch.manufacturer = manufacturer;
+        }
     }
     if (modelsParam && modelsParam.length > 0) baseMatch.model = { $in: modelsParam };
     if (versionsParam && versionsParam.length > 0) baseMatch.version = { $in: versionsParam };

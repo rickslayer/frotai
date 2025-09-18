@@ -12,9 +12,8 @@ const cacheCollectionName = 'api_cache';
 let client: MongoClient | null = null;
 let db: import('mongodb').Db;
 
-const manufacturerAliases: Record<string, string[]> = {
-    "Mitsubishi": ["MMC"],
-    "MMC": ["Mitsubishi"]
+const manufacturerAliases: Record<string, RegExp> = {
+    "Mitsubishi": /^MMC/i 
 };
 
 async function connectToMongo() {
@@ -120,8 +119,7 @@ export async function GET(request: NextRequest) {
         const filterValue = filters[filterKey];
         
         if (filterKey === 'manufacturer' && typeof filterValue === 'string' && manufacturerAliases[filterValue]) {
-            const allNames = Array.from(new Set([filterValue, ...manufacturerAliases[filterValue]]));
-            query[filterKey] = { $in: allNames };
+            query[filterKey] = { $in: [filterValue, manufacturerAliases[filterValue]] };
         } else if (Array.isArray(filterValue) && filterValue.length > 0) {
             query[filterKey] = { $in: filterValue };
         } else if (typeof filterValue === 'string' && filterValue !== '') {
@@ -139,10 +137,14 @@ export async function GET(request: NextRequest) {
         {
           $addFields: {
             normalizedManufacturer: {
-              $cond: {
-                if: { $in: ['$manufacturer', manufacturerAliases["MMC"] || []] },
-                then: 'Mitsubishi',
-                else: '$manufacturer'
+              $switch: {
+                branches: [
+                  {
+                    case: { $regexMatch: { input: "$manufacturer", regex: /^MMC/i } },
+                    then: "Mitsubishi"
+                  }
+                ],
+                default: "$manufacturer"
               }
             }
           }
