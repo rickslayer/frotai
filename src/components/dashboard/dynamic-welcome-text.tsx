@@ -13,6 +13,7 @@ const welcomeMessageKeys: Record<string, string> = {
     welcome_title_start: 'welcome_messages_start',
     welcome_title_location_needs_state: 'welcome_messages_location_needs_state',
     welcome_title_vehicle_needs_region: 'welcome_messages_vehicle_needs_region',
+    welcome_title_vehicle_needs_model: 'welcome_messages_vehicle_needs_model',
 };
 
 

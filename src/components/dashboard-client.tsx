@@ -75,11 +75,11 @@ const DashboardClient: FC = () => {
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
   const isSearchEnabled = useMemo(() => {
-    const { region, state, manufacturer, year } = debouncedFilters;
+    const { region, state, manufacturer, model, year } = debouncedFilters;
     // Path 1: Location-first
     const locationPath = region && state && (manufacturer || year);
     // Path 2: Vehicle-first
-    const vehiclePath = manufacturer && region;
+    const vehiclePath = manufacturer && region && model.length > 0;
     return locationPath || vehiclePath;
   }, [debouncedFilters]);
   
@@ -388,7 +388,8 @@ const DashboardClient: FC = () => {
   }
 
   const getWelcomeTitleKey = () => {
-    const { region, state, manufacturer } = filters;
+    const { region, state, manufacturer, model } = filters;
+    if (manufacturer && region && model.length === 0) return 'welcome_title_vehicle_needs_model';
     if (manufacturer && !region) return 'welcome_title_vehicle_needs_region';
     if (region && !state) return 'welcome_title_location_needs_state';
     return 'welcome_title_start';
