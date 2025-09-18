@@ -22,21 +22,41 @@ import { Button } from '../ui/button';
 import { Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
 
-
 const CustomLabel = (props: any) => {
-    const { x, y, width, height, payload } = props;
+    const { x, y, width, height, value, payload } = props;
     
-    if (!payload || width < 50) {
+    if (!payload || width < 10) { // Não renderiza nada se a barra for muito pequena
         return null;
     }
 
-    const labelX = 10;
-    const labelY = y + height / 2 + 5;
+    const modelName = payload.model;
+    const quantity = payload.quantity.toLocaleString();
+    const padding = 10;
+
+    // Posição para o nome do modelo (dentro da barra)
+    const modelLabelX = x + padding;
+    const labelY = y + height / 2;
+
+    // Posição para a quantidade (fora da barra)
+    const quantityLabelX = x + width + padding;
+
+    const textProps = {
+        y: labelY,
+        dominantBaseline: "middle",
+        fontSize: 12,
+    };
 
     return (
         <g>
-            <text x={labelX} y={labelY} fill="#fff" textAnchor="start" fontSize={12} fontWeight="bold">
-                {payload.model}
+            {/* Nome do modelo dentro da barra, se couber */}
+            {width > 50 && (
+                 <text {...textProps} x={modelLabelX} fill="#fff" textAnchor="start" fontWeight="bold">
+                    {modelName}
+                </text>
+            )}
+            {/* Quantidade fora da barra */}
+            <text {...textProps} x={quantityLabelX} fill="hsl(var(--foreground))" textAnchor="start" fontWeight="bold">
+                {quantity}
             </text>
         </g>
     );
@@ -100,12 +120,12 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                     data={chartData}
                     layout="vertical"
                     margin={{
-                        left: -4,
-                        right: 10,
+                        left: 0,
+                        right: 40, // Espaço para os valores à direita
                         top: 10,
                         bottom: 10,
                     }}
-                    barCategoryGap="20%"
+                    barCategoryGap="25%"
                 >
                     <XAxis type="number" hide />
                     <YAxis 
@@ -115,21 +135,8 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                         axisLine={false}
                         tick={false}
                     />
-                    <Tooltip
-                        cursor={{ fill: 'hsl(var(--muted))' }}
-                        content={
-                            <ChartTooltipContent 
-                                formatter={(value, name, props) => (
-                                    <div className="flex flex-col gap-1">
-                                      <div className='font-bold'>{props.payload.model}</div>
-                                      <div>{t('quantity')}: {Number(value).toLocaleString()}</div>
-                                    </div>
-                                )}
-                            />
-                        }
-                    />
                     <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={4}>
-                        <LabelList dataKey="model" content={<CustomLabel />} />
+                        <LabelList dataKey="quantity" content={<CustomLabel />} />
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
