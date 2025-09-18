@@ -1,9 +1,9 @@
 
 'use client';
 
-import type { FC, SVGProps } from 'react';
+import type { FC } from 'react';
 import { useMemo, useState } from 'react';
-import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList, ResponsiveContainer, CartesianGrid, Text } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList, ResponsiveContainer } from 'recharts';
 import {
   Card,
   CardContent,
@@ -19,23 +19,17 @@ import {
 } from '@/components/ui/chart';
 import type { TopModel, TopEntity } from '@/types';
 import { useTranslation } from 'react-i18next';
-import { Car, Factory } from 'lucide-react';
+import { Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ScrollArea } from '../ui/scroll-area';
 
-interface TopModelsChartProps {
-  data: TopModel[];
-  topManufacturer: TopEntity | null;
-}
-
-const CustomTick: FC<any> = ({ x, y, payload }) => {
+const CustomLabel: FC<any> = ({ x, y, width, value }) => {
+  if (width < 40) return null; // Don't render label if the bar is too short
   return (
-    <g transform={`translate(${x},${y})`}>
-      <Text x={0} y={0} dy={16} textAnchor="end" fill="#666" angle={-45}>
-        {payload.value}
-      </Text>
-    </g>
+    <text x={x + width - 10} y={y + 16} fill="#fff" textAnchor="end" className="text-xs font-medium">
+      {value.toLocaleString()}
+    </text>
   );
 };
 
@@ -53,8 +47,6 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   const chartData = useMemo(() => {
     return data.slice(0, Number(topN));
   }, [data, topN]);
-  
-  const chartMinWidth = Math.max(600, chartData.length * 60);
 
   return (
     <Card className="h-full flex flex-col">
@@ -85,34 +77,31 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
         )}
       </CardHeader>
       <CardContent className="flex-grow">
-          <ScrollArea className="w-full h-[400px]" type="auto">
-            <ChartContainer config={chartConfig} className="w-full h-full" style={{ minWidth: `${chartMinWidth}px` }}>
+        <ScrollArea className="h-[400px] w-full">
+            <ChartContainer config={chartConfig} className="w-full h-full">
                 {chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={chartData.length * 45}>
                     <BarChart
                         accessibilityLayer
                         data={chartData}
+                        layout="vertical"
                         margin={{
-                            left: 10,
-                            right: 10,
-                            top: 20,
-                            bottom: 80,
+                            left: 120,
+                            right: 30,
+                            top: 10,
+                            bottom: 10,
                         }}
                     >
-                        <CartesianGrid vertical={false} />
-                        <XAxis 
-                            dataKey="model" 
-                            tickLine={false}
-                            axisLine={false}
-                            tick={<CustomTick />}
-                            interval={0}
-                        />
+                        <XAxis type="number" hide />
                         <YAxis 
-                            stroke="#888888" 
-                            fontSize={12} 
+                            dataKey="model" 
+                            type="category" 
                             tickLine={false} 
                             axisLine={false}
-                            tickFormatter={(value) => `${Number(value) / 1000}k`}
+                            stroke="#888888" 
+                            fontSize={12}
+                            interval={0}
+                            width={120}
                         />
                         <Tooltip
                             cursor={{ fill: 'hsl(var(--muted))' }}
@@ -127,13 +116,10 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
                                 />
                             }
                         />
-                        <Bar dataKey="quantity" fill="var(--color-quantity)" radius={[4, 4, 0, 0]}>
+                        <Bar dataKey="quantity" fill="var(--color-quantity)" radius={[0, 4, 4, 0]}>
                             <LabelList
                                 dataKey="quantity"
-                                position="top"
-                                formatter={(value: number) => value.toLocaleString()}
-                                className="fill-foreground"
-                                fontSize={12}
+                                content={<CustomLabel />}
                             />
                         </Bar>
                     </BarChart>
@@ -151,3 +137,5 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
 };
 
 export default TopModelsChart;
+
+    
