@@ -408,7 +408,7 @@ const DashboardClient: FC = () => {
         return { titleKey: 'welcome_title_start', highlights: ['version', 'region'] };
     }
     if (manufacturer && !region) {
-        return { titleKey: 'welcome_title_start', highlights: ['model', 'region'] };
+        return { titleKey: 'welcome_title_start', highlights: ['model', 'region', 'year'] };
     }
 
     // Caminhos Cruzados
@@ -515,12 +515,12 @@ const DashboardClient: FC = () => {
           highlightedFilters={highlightedFilters}
         />
       </div>
-      <div className="flex flex-col">
+      <div className="flex flex-col overflow-auto">
         <DashboardHeader 
           onExport={handleExportPDF} 
           isFiltered={isFiltered && dashboardData.totalVehicles > 0}
         />
-        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
+        <main className="flex flex-col gap-4 p-4 md:gap-8 md:p-8 bg-muted/20">
              <div className="flex justify-between items-center gap-4">
                 <div>
                   {isFiltered && (
@@ -560,5 +560,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
