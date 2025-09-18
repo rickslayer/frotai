@@ -16,7 +16,7 @@ import {
   Sidebar,
   SidebarInset,
 } from '@/components/ui/sidebar';
-import TopCitiesChart from './dashboard/top-cities-chart';
+import RegionalFleetAnalysis from './dashboard/regional-fleet-analysis';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
@@ -39,7 +39,6 @@ const emptyDashboardData: DashboardData = {
   topState: undefined,
   topCity: undefined,
   regionalData: [],
-  topCitiesChart: [],
   topModelsChart: [],
   fleetByYearChart: [],
   fleetAgeBrackets: [],
@@ -330,7 +329,7 @@ const DashboardClient: FC = () => {
       return y;
     };
 
-    y = await addBase64ImageToPdf(doc, 'top-cities-chart', y, t('top_cities_chart_title'));
+    y = await addBase64ImageToPdf(doc, 'regional-analysis-chart', y, t('regional_fleet_analysis'));
     y = await addBase64ImageToPdf(doc, 'top-models-chart', y, t('top_models_by_volume', { count: 5 }));
     y = await addBase64ImageToPdf(doc, 'fleet-by-year-chart', y, t('fleet_by_year'));
     y = await addBase64ImageToPdf(doc, 'fleet-age-chart', y, t('fleet_by_age_bracket'));
@@ -422,8 +421,12 @@ const DashboardClient: FC = () => {
         <StatCards data={dashboardData} isLoading={isPending} />
         
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-8">
-            <div id="top-cities-chart" className="lg:col-span-3">
-                <TopCitiesChart data={dashboardData.topCitiesChart} total={dashboardData.totalVehicles} />
+            <div id="regional-analysis-chart" className="lg:col-span-3">
+                <RegionalFleetAnalysis 
+                    data={dashboardData.regionalData} 
+                    total={dashboardData.totalVehicles} 
+                    selectedRegion={filters.region}
+                />
             </div>
             <div id="top-models-chart" className="lg:col-span-2">
                 <TopModelsChart data={dashboardData.topModelsChart} topManufacturer={dashboardData.topManufacturer} />

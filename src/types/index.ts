@@ -52,8 +52,8 @@ export type FleetAgeBracket = z.infer<typeof FleetAgeBracketSchema>;
 
 // Schema for regional data
 export const RegionDataSchema = z.object({
-    name: z.string().describe('The name of the region.'),
-    quantity: z.number().describe('The total number of vehicles in this region.'),
+    name: z.string().describe('The name of the region or state.'),
+    quantity: z.number().describe('The total number of vehicles in this region/state.'),
 });
 export type RegionData = z.infer<typeof RegionDataSchema>;
 
@@ -122,7 +122,6 @@ export type DashboardData = {
   topState?: TopEntity | null;
   topCity?: TopEntity | null;
   regionalData: RegionData[];
-  topCitiesChart: TopEntity[];
   topModelsChart: TopModel[];
   fleetByYearChart: FleetByYear[];
   fleetAgeBrackets: Omit<FleetAgeBracket, 'label'>[];
