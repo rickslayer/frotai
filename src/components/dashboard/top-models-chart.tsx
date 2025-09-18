@@ -33,6 +33,7 @@ interface TopModelsChartProps {
 
 const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   const { t } = useTranslation();
+  const [showCount, setShowCount] = useState<5 | 10>(10);
   
   const chartConfig = {
     quantity: {
@@ -42,16 +43,32 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   } satisfies ChartConfig;
 
   const chartData = useMemo(() => {
-    return data.slice(0, 10).sort((a,b) => a.quantity - b.quantity);
-  }, [data]);
+    return data.slice(0, showCount).sort((a,b) => a.quantity - b.quantity);
+  }, [data, showCount]);
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
         <div className="flex items-center justify-between gap-4">
             <div>
-              <CardTitle>{t('top_models_by_volume', { count: 10 })}</CardTitle>
+              <CardTitle>{t('top_models_by_volume', { count: showCount })}</CardTitle>
               <CardDescription>{t('top_models_by_volume_description_short')}</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                <Button
+                    size="sm"
+                    variant={showCount === 5 ? 'default' : 'outline'}
+                    onClick={() => setShowCount(5)}
+                >
+                    Top 5
+                </Button>
+                <Button
+                    size="sm"
+                    variant={showCount === 10 ? 'default' : 'outline'}
+                    onClick={() => setShowCount(10)}
+                >
+                    Top 10
+                </Button>
             </div>
         </div>
          {topManufacturer && topManufacturer.name !== '-' && (
@@ -63,7 +80,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
         )}
       </CardHeader>
       <CardContent className="flex-grow">
-        <ChartContainer config={chartConfig} className="w-full h-full min-h-[400px]">
+        <ChartContainer config={chartConfig} className="w-full h-full min-h-[250px]">
             {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart

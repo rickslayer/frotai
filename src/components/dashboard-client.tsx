@@ -464,18 +464,15 @@ const DashboardClient: FC = () => {
                     selectedRegion={filters.region}
                 />
             </div>
-             <div id="fleet-age-chart">
-                <FleetAgeBracketChart data={dashboardData.fleetAgeBrackets} />
-            </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:gap-8">
              <div id="top-models-chart">
                 <TopModelsChart data={dashboardData.topModelsChart} topManufacturer={dashboardData.topManufacturer} />
             </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
+            <div id="fleet-age-chart">
+                <FleetAgeBracketChart data={fleetAgeBracketsWithLabels} totalVehicles={dashboardData.totalVehicles} />
+            </div>
             <div id="fleet-by-year-chart">
                 <FleetByYearChart data={dashboardData.fleetByYearChart} />
             </div>
