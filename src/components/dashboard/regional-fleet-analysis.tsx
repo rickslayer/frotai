@@ -11,12 +11,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
-import { Progress } from '../ui/progress';
-import { Badge } from '../ui/badge';
-import { Map, Pin } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 import type { RegionData } from '@/types';
-import { brazilRegions, regionColors, regionToStatesMap } from '@/lib/regions';
+import { regionToStatesMap } from '@/lib/regions';
+import { Map } from 'lucide-react';
 
 interface RegionalFleetAnalysisProps {
   data: RegionData[];
@@ -24,45 +28,23 @@ interface RegionalFleetAnalysisProps {
   selectedRegion?: string;
 }
 
-const BrazilMap: FC<{ data: RegionData[] }> = ({ data }) => {
-  const activeRegions = useMemo(() => new Set(data.map(d => d.name)), [data]);
-
-  return (
-    <div className="relative w-full aspect-square max-w-[400px] mx-auto">
-        <svg viewBox="0 0 700 600" className="w-full h-full">
-            <g id="brazil-map">
-                {brazilRegions.map(region => (
-                    <g key={region.name} id={region.name}>
-                        {region.states.map(state => (
-                            <path
-                                key={state.id}
-                                d={state.d}
-                                className={cn(
-                                    'stroke-background stroke-[1.5]',
-                                    activeRegions.has(region.name)
-                                    ? 'fill-[var(--region-color)] opacity-100'
-                                    : 'fill-muted/70 opacity-50',
-                                )}
-                                style={{ '--region-color': regionColors[region.name] } as React.CSSProperties}
-                            >
-                                <title>{state.id}</title>
-                            </path>
-                        ))}
-                    </g>
-                ))}
-            </g>
-        </svg>
-    </div>
-  );
-};
-
-
 const RegionalFleetAnalysis: FC<RegionalFleetAnalysisProps> = ({ data, total, selectedRegion }) => {
   const { t } = useTranslation();
 
+  const chartConfig = useMemo(() => {
+    const config: ChartConfig = {};
+    data.forEach((item, index) => {
+        config[item.name] = {
+            label: selectedRegion ? item.name : t(item.name as any),
+            color: `hsl(var(--chart-${index + 1}))`,
+        };
+    });
+    return config;
+  }, [data, selectedRegion, t]);
+
+
   const chartData = useMemo(() => {
     let sourceData = data;
-    // If a region is selected, filter data to show only states of that region
     if (selectedRegion && regionToStatesMap[selectedRegion]) {
         const statesInRegion = new Set(regionToStatesMap[selectedRegion]);
         sourceData = data.filter(item => statesInRegion.has(item.name));
@@ -72,13 +54,13 @@ const RegionalFleetAnalysis: FC<RegionalFleetAnalysisProps> = ({ data, total, se
     
     return sourceData
       .map(item => ({
-        ...item,
-        percentage: (item.quantity / total) * 100,
-        fill: regionColors[item.name] || 'hsl(var(--primary))'
+        name: selectedRegion ? item.name : t(item.name as any),
+        quantity: item.quantity,
+        percentage: ((item.quantity / total) * 100).toFixed(1) + '%',
       }))
       .filter(item => item.quantity > 0)
       .sort((a,b) => b.quantity - a.quantity);
-  }, [data, total, selectedRegion]);
+  }, [data, total, selectedRegion, t]);
 
   const title = selectedRegion ? t('state_fleet_analysis') : t('regional_fleet_analysis');
   const description = selectedRegion ? t('state_fleet_analysis_description') : t('regional_fleet_analysis_description');
@@ -90,31 +72,65 @@ const RegionalFleetAnalysis: FC<RegionalFleetAnalysisProps> = ({ data, total, se
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow flex flex-col justify-center gap-4">
+      <CardContent className="flex-grow flex items-center justify-center">
         {chartData.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div className="order-2 md:order-1 space-y-4">
-              {chartData.map((item, index) => (
-                <div key={item.name} className="grid grid-cols-[1fr_auto_auto] items-center gap-4">
-                  <div className='flex items-center gap-3'>
-                    <Pin style={{ color: item.fill }} className="h-5 w-5 flex-shrink-0" />
-                    <span className="font-medium truncate text-sm">{selectedRegion ? item.name : t(item.name as any)}</span>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant={index === 0 ? "default" : "secondary"}>
-                      {item.quantity.toLocaleString()}
-                    </Badge>
-                  </div>
-                  <div className="w-20 text-right">
-                     <Progress value={item.percentage} className="h-2" indicatorClassName={cn(index === 0 && 'bg-primary')} style={{'--indicator-color': item.fill} as any} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="order-1 md:order-2">
-                 <BrazilMap data={data} />
-            </div>
-          </div>
+           <ChartContainer
+            config={chartConfig}
+            className="mx-auto aspect-square h-[300px]"
+          >
+            <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Tooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel 
+                        formatter={(value, name, props) => (
+                            <div className="flex flex-col gap-1">
+                              <div className='font-bold'>{props.payload.name}</div>
+                              <div>{t('quantity')}: {Number(value).toLocaleString()}</div>
+                              <div>({props.payload.percentage})</div>
+                            </div>
+                        )}
+                    />}
+                  />
+                  <Pie
+                    data={chartData}
+                    dataKey="quantity"
+                    nameKey="name"
+                    innerRadius={60}
+                    strokeWidth={5}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={chartConfig[data[index].name]?.color}
+                        className="focus:outline-none"
+                      />
+                    ))}
+                  </Pie>
+                  <Legend
+                    content={({ payload }) => {
+                      return (
+                        <ul className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                          {payload?.map((entry, index) => (
+                            <li key={`item-${index}`} className="flex items-center gap-2 truncate">
+                              <span
+                                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                style={{ backgroundColor: entry.color }}
+                              />
+                              <span>{entry.value}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )
+                    }}
+                    wrapperStyle={{
+                        paddingLeft: '60px',
+                        paddingRight: '60px',
+                    }}
+                  />
+                </PieChart>
+            </ResponsiveContainer>
+          </ChartContainer>
         ) : (
           <div className="flex h-full w-full items-center justify-center text-muted-foreground text-center p-8">
             <div className='flex flex-col items-center gap-2'>
