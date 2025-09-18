@@ -68,7 +68,7 @@ const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
                 });
                 setIsVisible(true); // Start fade-in with new text
             }, 500); // Wait for fade-out animation
-        }, 10000); // Change phrase every 10 seconds
+        }, 15000); // Change phrase every 15 seconds
 
         return () => clearInterval(intervalId);
     }, [messages]);
