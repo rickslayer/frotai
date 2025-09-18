@@ -73,6 +73,7 @@ const DashboardClient: FC = () => {
   
   const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
+  const [highlightedFilter, setHighlightedFilter] = useState<keyof Filters | null>(null);
   
   const isSearchEnabled = useMemo(() => {
     const { region, state, manufacturer, model, year } = debouncedFilters;
@@ -128,7 +129,7 @@ const DashboardClient: FC = () => {
         try {
           const data = await getFleetData(debouncedFilters);
           setDashboardData(data);
-        } catch (error) {
+        } catch (error) => {
           console.error(error);
           toast({ variant: 'destructive', title: t('error'), description: 'Failed to load dashboard data.' });
           setDashboardData(emptyDashboardData);
@@ -394,6 +395,18 @@ const DashboardClient: FC = () => {
     if (region && !state) return 'welcome_title_location_needs_state';
     return 'welcome_title_start';
   }
+  
+  useEffect(() => {
+    const { region, state, manufacturer, model } = filters;
+    if (!isSearchEnabled) {
+      if (manufacturer && region && model.length === 0) setHighlightedFilter('model');
+      else if (manufacturer && !region) setHighlightedFilter('region');
+      else if (region && !state) setHighlightedFilter('state');
+      else setHighlightedFilter(null);
+    } else {
+      setHighlightedFilter(null);
+    }
+  }, [filters, isSearchEnabled]);
 
   const renderContent = () => {
     if (isLoading && !isPending) {
@@ -476,6 +489,7 @@ const DashboardClient: FC = () => {
           onClearFilters={handleClearFilters}
           filterOptions={filterOptions}
           disabledFilters={disabledFilters}
+          highlightedFilter={highlightedFilter}
         />
       </Sidebar>
       <SidebarInset>
