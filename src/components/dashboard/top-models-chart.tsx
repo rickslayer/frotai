@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { FC } from 'react';
+import type { FC, SVGProps } from 'react';
 import { useMemo, useState } from 'react';
 import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList, ResponsiveContainer } from 'recharts';
 import {
@@ -24,24 +24,52 @@ import { Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
 
-interface TopModelsChartProps {
-  data: TopModel[];
-  topManufacturer: TopEntity | null;
+interface CustomLabelProps {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  value?: string | number;
+  dataKey?: string;
+  index?: number;
+  payload?: any;
 }
 
-const CustomLabel: FC<any> = ({ x, y, width, value }) => {
-  if (width < 40) return null; // Don't render label if the bar is too short
+const CustomLabel: FC<CustomLabelProps> = (props) => {
+  const { x, y, width, height, payload } = props;
+
+  // Type guards to ensure all properties are numbers
+  if (typeof x !== 'number' || typeof y !== 'number' || typeof width !== 'number' || typeof height !== 'number' || !payload) {
+    return null;
+  }
+
+  const modelName = payload.model;
+  const quantity = payload.quantity;
+  const quantityText = quantity.toLocaleString();
+  const textPadding = 5;
+  
+  const quantityTextWidth = quantityText.length * 6;
+
+  // Don't render if bar is too short
+  if (width < quantityTextWidth + 20) {
+    return null;
+  }
+
   return (
-    <text x={x + width - 10} y={y + 16} fill="#fff" textAnchor="end" className="text-xs font-medium">
-      {value.toLocaleString()}
-    </text>
+    <g>
+      <text x={x + textPadding} y={y + height / 2} dy={4} fill="#fff" textAnchor="start" className="text-xs font-medium truncate">
+        {modelName}
+      </text>
+      <text x={x + width + textPadding} y={y + height / 2} dy={4} fill="hsl(var(--foreground))" textAnchor="start" className="text-xs font-medium">
+        {quantityText}
+      </text>
+    </g>
   );
 };
 
 
 const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   const { t } = useTranslation();
-  const [topN, setTopN] = useState<5 | 10>(10);
 
   const chartConfig = {
     quantity: {
@@ -52,7 +80,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
 
   const chartData = useMemo(() => {
     return data;
-  }, [data, topN]);
+  }, [data]);
 
   return (
     <Card className="h-full flex flex-col">
@@ -60,11 +88,7 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
         <div className="flex items-center justify-between">
             <div>
               <CardTitle>{t('top_models_by_volume', { count: 10 })}</CardTitle>
-              <CardDescription>{t('top_models_by_volume_description')}</CardDescription>
-            </div>
-            <div className='flex gap-2'>
-                <Button variant={topN === 5 ? 'default' : 'outline'} size="sm" onClick={() => setTopN(5)}>{t('top_5')}</Button>
-                <Button variant={topN === 10 ? 'default' : 'outline'} size="sm" onClick={() => setTopN(10)}>{t('top_10')}</Button>
+              <CardDescription>{t('top_models_by_volume_description_short')}</CardDescription>
             </div>
         </div>
          {topManufacturer && topManufacturer.name !== '-' && (
@@ -82,11 +106,11 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
                 <ResponsiveContainer width="100%" height={chartData.length * 40}>
                     <BarChart
                         accessibilityLayer
-                        data={chartData.slice(0, topN)}
+                        data={chartData}
                         layout="vertical"
                         margin={{
-                            left: 120,
-                            right: 30,
+                            left: 10,
+                            right: 60, // Space for the quantity label
                             top: 10,
                             bottom: 10,
                         }}
@@ -95,12 +119,8 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
                         <YAxis 
                             dataKey="model" 
                             type="category" 
-                            tickLine={false} 
-                            axisLine={false}
-                            stroke="#888888" 
-                            fontSize={12}
+                            hide={true}
                             interval={0}
-                            width={120}
                         />
                         <Tooltip
                             cursor={{ fill: 'hsl(var(--muted))' }}
@@ -115,10 +135,11 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
                                 />
                             }
                         />
-                        <Bar dataKey="quantity" fill="var(--color-quantity)" radius={[0, 4, 4, 0]} barSize={20}>
-                            <LabelList
-                                dataKey="quantity"
+                        <Bar dataKey="quantity" fill="var(--color-quantity)" radius={[4, 4, 4, 4]} barSize={20}>
+                           <LabelList 
+                                dataKey="model"
                                 content={<CustomLabel />}
+                                position="insideLeft" 
                             />
                         </Bar>
                     </BarChart>
