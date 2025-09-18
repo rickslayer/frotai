@@ -393,7 +393,7 @@ const DashboardClient: FC = () => {
     if (region && state && city) {
         return { titleKey: 'welcome_title_start', highlights: ['manufacturer', 'year'] };
     }
-    if (region && state) {
+     if (region && state) {
         return { titleKey: 'welcome_title_start', highlights: ['city', 'manufacturer', 'year'] };
     }
     if (region && !state && !manufacturer) {
@@ -505,7 +505,7 @@ const DashboardClient: FC = () => {
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-card md:block">
+      <div className="sticky top-0 h-screen hidden border-r bg-card md:block">
         <DashboardSidebar
           filters={filters}
           onFilterChange={handleFilterChange}
