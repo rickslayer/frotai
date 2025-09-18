@@ -24,6 +24,10 @@ import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ScrollArea } from '../ui/scroll-area';
 
+interface TopModelsChartProps {
+  data: TopModel[];
+  topManufacturer: TopEntity | null;
+}
 
 const CustomLabel: FC<any> = (props) => {
   const { x, y, width, value } = props;
