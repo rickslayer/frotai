@@ -30,7 +30,7 @@ export type GenerateInitialSearchFiltersInput = z.infer<typeof GenerateInitialSe
 
 const GenerateInitialSearchFiltersOutputSchema = z.array(InitialSearchFiltersSchema);
 
-export type GenerateInitialSearchFiltersOutput = z-infer<typeof GenerateInitialSearchFiltersOutputSchema>;
+export type GenerateInitialSearchFiltersOutput = z.infer<typeof GenerateInitialSearchFiltersOutputSchema>;
 
 export async function generateInitialSearchFilters(
   input: GenerateInitialSearchFiltersInput
