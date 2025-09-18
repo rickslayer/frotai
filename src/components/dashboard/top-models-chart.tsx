@@ -1,9 +1,9 @@
 
 'use client';
 
-import type { FC } from 'react';
+import type { FC, SVGProps } from 'react';
 import { useMemo, useState } from 'react';
-import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, Tooltip, LabelList, ResponsiveContainer, CartesianGrid } from 'recharts';
 import {
   Card,
   CardContent,
@@ -19,14 +19,29 @@ import {
 } from '@/components/ui/chart';
 import type { TopModel, TopEntity } from '@/types';
 import { useTranslation } from 'react-i18next';
-import { Factory } from 'lucide-react';
+import { Car, Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { ScrollArea } from '../ui/scroll-area';
 
-interface TopModelsChartProps {
-  data: TopModel[];
-  topManufacturer: TopEntity | null;
-}
+
+const CustomLabel: FC<any> = (props) => {
+  const { x, y, width, value } = props;
+  if (!value) return null;
+
+  return (
+    <g>
+      <Car 
+        x={x + width / 2 - 8} // Center the icon
+        y={y - 20} // Position above the bar
+        width={16} 
+        height={16} 
+        className="text-muted-foreground"
+      />
+    </g>
+  );
+};
+
 
 const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   const { t } = useTranslation();
@@ -40,8 +55,15 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
   } satisfies ChartConfig;
 
   const chartData = useMemo(() => {
-    return data.slice(0, Number(topN));
+    return data.slice(0, Number(topN)).map(item => ({
+      ...item,
+      // Truncate long model names for better display on X-axis
+      shortModel: item.model.length > 15 ? `${item.model.substring(0, 15)}...` : item.model,
+    }));
   }, [data, topN]);
+  
+  // Calculate width based on number of items
+  const chartWidth = Math.max(800, chartData.length * 80);
 
   return (
     <Card className="h-full flex flex-col">
@@ -72,50 +94,57 @@ const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
         )}
       </CardHeader>
       <CardContent className="flex-grow">
-        <ChartContainer config={chartConfig} className="h-full min-h-[300px] w-full">
-            {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={chartData.length * 40}>
-                <BarChart
-                accessibilityLayer
-                data={chartData}
-                layout="vertical"
-                margin={{
-                    left: 10,
-                    right: 40,
-                    top: 0,
-                    bottom: 0,
-                }}
-                >
-                <YAxis dataKey="model" type="category" width={0} tick={false} />
-                <XAxis dataKey="quantity" type="number" hide />
-                <Tooltip
-                    cursor={{ fill: 'hsl(var(--muted))' }}
-                    content={<ChartTooltipContent />}
-                />
-                <Bar dataKey="quantity" layout="vertical" radius={5} barSize={30} fill="var(--color-quantity)">
-                    <LabelList
-                    dataKey="model"
-                    position="insideLeft"
-                    offset={8}
-                    className="fill-primary-foreground text-sm font-medium truncate"
-                    formatter={(value: string) => value}
-                    />
-                    <LabelList 
-                        dataKey="quantity" 
-                        position="right"
-                        offset={8}
-                        className="fill-foreground font-semibold"
-                        formatter={(value: number) => value.toLocaleString()}
-                    />
-                </Bar>
-                </BarChart>
-            </ResponsiveContainer>
-            ) : (
-            <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
-                {t('no_data_available')}
-            </div>
-            )}
-        </ChartContainer>
+          <ScrollArea className="w-full h-[400px]" type="auto">
+            <ChartContainer config={chartConfig} className="w-full" style={{ height: '380px', width: `${chartWidth}px` }}>
+                {chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                        accessibilityLayer
+                        data={chartData}
+                        margin={{
+                            left: 10,
+                            right: 10,
+                            top: 30, // Make space for icons
+                            bottom: 20,
+                        }}
+                    >
+                        <CartesianGrid vertical={false} />
+                        <XAxis 
+                            dataKey="shortModel" 
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={10}
+                            angle={-45}
+                            textAnchor="end"
+                            height={60} // increase height to fit rotated labels
+                            interval={0} // show all labels
+                        />
+                        <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                        <Tooltip
+                            cursor={{ fill: 'hsl(var(--muted))' }}
+                            content={
+                                <ChartTooltipContent 
+                                    formatter={(value, name, props) => (
+                                        <div className="flex flex-col gap-1">
+                                          <div className='font-bold'>{props.payload.model}</div>
+                                          <div>{t('quantity')}: {Number(value).toLocaleString()}</div>
+                                        </div>
+                                    )}
+                                />
+                            }
+                        />
+                        <Bar dataKey="quantity" fill="var(--color-quantity)" radius={[4, 4, 0, 0]}>
+                            <LabelList dataKey="quantity" content={<CustomLabel />} />
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+                ) : (
+                <div className="flex h-[300px] w-full items-center justify-center text-muted-foreground">
+                    {t('no_data_available')}
+                </div>
+                )}
+            </ChartContainer>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
