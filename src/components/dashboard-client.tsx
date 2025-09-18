@@ -469,10 +469,8 @@ const DashboardClient: FC = () => {
             </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
-            <div id="top-models-chart" className="lg:col-span-2">
-                <TopModelsChart data={dashboardData.topModelsChart} topManufacturer={dashboardData.topManufacturer} />
-            </div>
+        <div id="top-models-chart">
+            <TopModelsChart data={dashboardData.topModelsChart} topManufacturer={dashboardData.topManufacturer} />
         </div>
         
         <div className="grid grid-cols-1 gap-4 md:gap-8">
@@ -538,7 +536,9 @@ const DashboardClient: FC = () => {
             </div>
 
             {isComparing && (
-                <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
+                <div className="mt-4">
+                    <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
+                </div>
             )}
             
             <AlertDialog open={isVersionLimitModalOpen} onOpenChange={setIsVersionLimitModalOpen}>
@@ -557,7 +557,7 @@ const DashboardClient: FC = () => {
                 </AlertDialogContent>
             </AlertDialog>
             
-            <div className="flex flex-col gap-4 md:gap-8">
+            <div className="flex flex-col gap-4 md:gap-8 mt-4">
               {renderContent()}
             </div>
         </main>
@@ -568,4 +568,5 @@ const DashboardClient: FC = () => {
 
 export default DashboardClient;
 
+    
     
