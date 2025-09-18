@@ -74,9 +74,13 @@ const DashboardClient: FC = () => {
   const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
-  // A search is considered valid if the user provides one of the two main analysis paths.
   const isSearchEnabled = useMemo(() => {
-    return (debouncedFilters.region && debouncedFilters.state) || (debouncedFilters.manufacturer && debouncedFilters.region);
+    const { region, state, manufacturer, year } = debouncedFilters;
+    // Path 1: Location-first
+    const locationPath = region && state && (manufacturer || year);
+    // Path 2: Vehicle-first
+    const vehiclePath = manufacturer && region;
+    return locationPath || vehiclePath;
   }, [debouncedFilters]);
   
   const isFiltered = useMemo(() => {
@@ -114,7 +118,6 @@ const DashboardClient: FC = () => {
 
   // Effect for fetching DASHBOARD DATA based on DEBOUNCED filters
   useEffect(() => {
-    // Only fetch data if one of the valid search paths is fulfilled.
     if (!isSearchEnabled) {
       setDashboardData(emptyDashboardData);
       return;
@@ -139,7 +142,6 @@ const DashboardClient: FC = () => {
 
   // Effect for fetching FILTER OPTIONS immediately when a filter changes
   useEffect(() => {
-    // Don't run this on initial load
     if (isLoading) return;
 
     const fetchOptions = async () => {
@@ -385,6 +387,13 @@ const DashboardClient: FC = () => {
       setIsComparing(false);
   }
 
+  const getWelcomeTitleKey = () => {
+    const { region, state, manufacturer } = filters;
+    if (manufacturer && !region) return 'welcome_title_vehicle_needs_region';
+    if (region && !state) return 'welcome_title_location_needs_state';
+    return 'welcome_title_start';
+  }
+
   const renderContent = () => {
     if (isLoading && !isPending) {
       return (
@@ -394,10 +403,8 @@ const DashboardClient: FC = () => {
       );
     }
     
-    // Show placeholder if the search is not enabled yet
     if (!isSearchEnabled) {
-        const welcomeMessageKey = !filters.region ? 'welcome_title_region' : 'welcome_title_state';
-        return <WelcomePlaceholder titleKey={welcomeMessageKey} />;
+        return <WelcomePlaceholder titleKey={getWelcomeTitleKey()} />;
     }
     
     if (isPending) {

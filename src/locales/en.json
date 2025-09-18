@@ -24,6 +24,7 @@
   "all_versions": "All Versions",
   "select_all": "Select All",
   "clear_selection": "Clear Selection",
+  "base_model": "Base Model",
   "base_model_version": "Base Model (no version)",
   "manufacturing_year": "Manufacturing Year",
   "select_year": "Select Year",
@@ -84,21 +85,27 @@
   "part_demand_disabled_description": "Apply manufacturer and a single model filters to enable demand prediction.",
   "no_opportunities_found_title": "No specific opportunities found",
   "no_opportunities_found_description": "Frota.AI could not identify specific high-demand parts for this category and filter combination. Try a broader category or different filters.",
-  "welcome_title": "Welcome to Frota.AI",
-  "welcome_title_region": "Select a Region to Start",
-  "welcome_title_state": "Now, Select a State",
+  "welcome_title_start": "How do you want to start your analysis?",
+  "welcome_title_location_needs_state": "Great! Now select a State to continue",
+  "welcome_title_vehicle_needs_region": "Excellent! Now select a Region to see the distribution",
   "welcome_subtitle": "Start by selecting a filter on the side to explore the data.",
-  "welcome_messages_region": [
-    "Mapping the Brazilian auto parts market...",
+  "welcome_messages_start": [
+    "Start by Location to see the fleet in an area, or by Vehicle to see its distribution.",
     "Analyzing millions of records for you...",
     "Where are your next sales opportunities?",
     "Turning data into profitable decisions."
   ],
-  "welcome_messages_state": [
-    "Refining the analysis for you...",
+  "welcome_messages_location_needs_state": [
+    "Refining the analysis for the selected region...",
+    "Which state holds the most potential in this area?",
     "Let's focus on a specific market.",
-    "Which state holds the most potential?",
     "Drill down to find your niche."
+  ],
+  "welcome_messages_vehicle_needs_region": [
+    "Now, where is this vehicle's fleet concentrated?",
+    "Select a region to see the market size.",
+    "Let's find the main states for this vehicle.",
+    "Understanding the geographic potential."
   ],
   "search_model_placeholder": "Search model...",
   "no_model_found": "No model found.",

@@ -24,6 +24,7 @@
   "all_versions": "Todas as Versões",
   "select_all": "Selecionar Todos",
   "clear_selection": "Limpar Seleção",
+  "base_model": "Modelo Base",
   "base_model_version": "Modelo Base (sem versão)",
   "manufacturing_year": "Ano de Fabricação",
   "select_year": "Selecione o Ano",
@@ -84,21 +85,27 @@
   "part_demand_disabled_description": "Aplique filtros de montadora e um único modelo para habilitar a previsão.",
   "no_opportunities_found_title": "Nenhuma oportunidade específica encontrada",
   "no_opportunities_found_description": "O Frota.AI não conseguiu identificar peças de alta demanda para esta categoria e combinação de filtros. Tente uma categoria mais ampla ou filtros diferentes.",
-  "welcome_title": "Bem-vindo ao Frota.AI",
-  "welcome_title_region": "Selecione uma Região para Começar",
-  "welcome_title_state": "Agora, Selecione um Estado",
+  "welcome_title_start": "Como deseja iniciar sua análise?",
+  "welcome_title_location_needs_state": "Ótimo! Agora selecione um Estado para prosseguir",
+  "welcome_title_vehicle_needs_region": "Excelente! Agora selecione uma Região para ver a distribuição",
   "welcome_subtitle": "Comece selecionando um filtro ao lado para explorar os dados.",
-  "welcome_messages_region": [
-    "Mapeando o mercado de autopeças do Brasil...",
+  "welcome_messages_start": [
+    "Comece por Localização para ver a frota em uma área, ou por Veículo para ver sua distribuição.",
     "Analisando milhões de registros para você...",
     "Onde estão suas próximas oportunidades de venda?",
     "Transformando dados em decisões lucrativas."
   ],
-  "welcome_messages_state": [
-    "Refinando a análise para você...",
+  "welcome_messages_location_needs_state": [
+    "Refinando a análise para a região escolhida...",
+    "Qual estado tem o maior potencial nesta área?",
     "Vamos focar em um mercado específico.",
-    "Qual estado tem o maior potencial?",
     "Aproxime para encontrar seu nicho."
+  ],
+  "welcome_messages_vehicle_needs_region": [
+    "Agora, onde a frota deste veículo está concentrada?",
+    "Selecione uma região para ver o tamanho do mercado.",
+    "Vamos encontrar os principais estados para este veículo.",
+    "Entendendo o potencial geográfico."
   ],
   "search_model_placeholder": "Buscar modelo...",
   "no_model_found": "Nenhum modelo encontrado.",

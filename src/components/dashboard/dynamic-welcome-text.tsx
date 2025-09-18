@@ -9,6 +9,13 @@ interface DynamicWelcomeTextProps {
     titleKey: string;
 }
 
+const welcomeMessageKeys: Record<string, string> = {
+    welcome_title_start: 'welcome_messages_start',
+    welcome_title_location_needs_state: 'welcome_messages_location_needs_state',
+    welcome_title_vehicle_needs_region: 'welcome_messages_vehicle_needs_region',
+};
+
+
 const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
     const { t } = useTranslation();
     const [messages, setMessages] = useState<string[]>([]);
@@ -16,11 +23,10 @@ const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
     const [isVisible, setIsVisible] = useState(true);
 
     useEffect(() => {
-        // Acessa o array de mensagens da tradução.
-        const loadedMessages = t(titleKey === 'welcome_title_region' ? 'welcome_messages_region' : 'welcome_messages_state', { returnObjects: true }) as string[];
+        const messageKey = welcomeMessageKeys[titleKey] || 'welcome_messages_start';
+        const loadedMessages = t(messageKey, { returnObjects: true }) as string[];
         if (Array.isArray(loadedMessages) && loadedMessages.length > 0) {
             setMessages(loadedMessages);
-            // Inicia com um índice aleatório
             setCurrentIndex(Math.floor(Math.random() * loadedMessages.length));
         }
     }, [t, titleKey]);
@@ -46,7 +52,7 @@ const DynamicWelcomeText = ({ titleKey }: DynamicWelcomeTextProps) => {
 
     return (
         <p className={cn(
-            "text-muted-foreground transition-opacity duration-500 ease-in-out h-6",
+            "text-muted-foreground transition-opacity duration-500 ease-in-out h-10 flex items-center justify-center",
             isVisible ? 'opacity-100' : 'opacity-0'
         )}>
             {messages[currentIndex]}

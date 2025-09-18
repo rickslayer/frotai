@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { Car, SlidersHorizontal, FilterX, Map } from 'lucide-react';
+import { Car, FilterX, MapPin, Package } from 'lucide-react';
 import type { FilterOptions, Filters } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,6 @@ import { useTranslation } from 'react-i18next';
 import { SidebarHeader, SidebarContent, SidebarFooter } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
 import { MultiSelectDropdown } from '../ui/multi-select-dropdown';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
 
 interface DashboardSidebarProps {
   filters: Filters;
@@ -43,7 +41,6 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
 
   const hasActiveFilters = Object.values(filters).some(f => (Array.isArray(f) ? f.length > 0 : f && f !== ''));
 
-
   return (
     <>
       <SidebarHeader>
@@ -57,13 +54,9 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
       </SidebarHeader>
       <SidebarContent>
         <ScrollArea className="flex-1 px-4">
-          <Tabs defaultValue="location" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="location">{t('location')}</TabsTrigger>
-              <TabsTrigger value="vehicle">{t('vehicle')}</TabsTrigger>
-            </TabsList>
-            <TabsContent value="location" className='space-y-4 pt-4'>
-                <h3 className='font-semibold'>{t('location')}</h3>
+          <div className='space-y-4 pt-4'>
+            <div className="space-y-2">
+                <h3 className='font-semibold flex items-center gap-2'><MapPin className="h-4 w-4" />{t('location')}</h3>
                 <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value as string)}>
                   <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
                   <SelectContent>
@@ -85,9 +78,10 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                     {(filterOptions.cities || []).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
-            </TabsContent>
-            <TabsContent value="vehicle" className='space-y-4 pt-4'>
-               <h3 className='font-semibold'>{t('vehicle')}</h3>
+            </div>
+             <Separator />
+             <div className="space-y-2">
+                <h3 className='font-semibold flex items-center gap-2'><Package className="h-4 w-4" />{t('vehicle')}</h3>
                 <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
                   <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
                   <SelectContent>
@@ -116,8 +110,8 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                     {(filterOptions.years || []).map(y => <SelectItem key={y} value={String(y)}>{y === 0 ? t('Indefinido') : y}</SelectItem>)}
                   </SelectContent>
                 </Select>
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
         </ScrollArea>
       </SidebarContent>
       <SidebarFooter>
