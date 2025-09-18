@@ -41,12 +41,7 @@ const generateCacheKey = (filters: Partial<Filters>): string => {
     filterKeys.forEach(key => {
         const value = filters[key];
         if (value && value !== 'all' && (Array.isArray(value) ? value.length > 0 : value !== '')) {
-            // Se o filtro for uma montadora com alias, use o nome principal para consistência do cache
-            if (key === 'manufacturer' && typeof value === 'string' && manufacturerAliases[value]) {
-                sortedFilters[key] = value;
-            } else {
-                sortedFilters[key] = Array.isArray(value) ? [...value].sort() : value;
-            }
+            sortedFilters[key] = Array.isArray(value) ? [...value].sort() : value;
         }
     });
     return JSON.stringify(sortedFilters);
@@ -66,47 +61,11 @@ const findTopEntity = async (
     try {
         const pipeline: Document[] = [
           { $match: query },
-          // Adiciona um estágio para normalizar os aliases de fabricante, se o campo for 'manufacturer'
-        ];
-        
-        if (field === 'manufacturer') {
-            const caseConditions: any = [];
-            const seenPrimaryNames = new Set<string>();
-
-            for (const primary in manufacturerAliases) {
-                if(seenPrimaryNames.has(primary)) continue;
-                
-                const allNames = [primary, ...(manufacturerAliases[primary] || [])];
-                const primaryName = allNames.sort()[0]; // Use a consistent primary name (e.g., alphabetically first)
-                seenPrimaryNames.add(primaryName);
-
-                caseConditions.push({
-                    case: { $in: [`$${field}`, allNames] },
-                    then: primaryName
-                });
-            }
-
-            pipeline.push({
-              $addFields: {
-                normalizedManufacturer: {
-                  $switch: {
-                    branches: caseConditions,
-                    default: `$${field}`
-                  }
-                }
-              }
-            });
-        }
-        
-        const groupField = field === 'manufacturer' ? '$normalizedManufacturer' : `$${field}`;
-
-        pipeline.push(
-          { $match: { [field === 'manufacturer' ? 'normalizedManufacturer' : field]: { $ne: null, $ne: "" } } },
-          { $group: { _id: groupField, total: { $sum: '$quantity' } } },
+          { $match: { [field]: { $ne: null, $ne: "" } } },
+          { $group: { _id: `$${field}`, total: { $sum: '$quantity' } } },
           { $sort: { total: -1 } },
           { $limit: 1 }
-        );
-
+        ];
 
         const topResult = await aggregateData(collection, pipeline);
 
@@ -174,12 +133,30 @@ export async function GET(request: NextRequest) {
     
     const currentYear = new Date().getFullYear();
     const matchStage = { $match: query };
+    
+    const manufacturerPipeline: Document[] = [
+        matchStage,
+        {
+          $addFields: {
+            normalizedManufacturer: {
+              $cond: {
+                if: { $in: ['$manufacturer', manufacturerAliases["MMC"] || []] },
+                then: 'Mitsubishi',
+                else: '$manufacturer'
+              }
+            }
+          }
+        },
+        { $group: { _id: '$normalizedManufacturer', total: { $sum: '$quantity' } } },
+        { $sort: { total: -1 } },
+        { $limit: 1 }
+    ];
 
     // Run all aggregations in parallel
     const [
         totalVehiclesResult,
         topModel,
-        topManufacturer,
+        topManufacturerResult,
         topRegion,
         topState,
         topCity,
@@ -190,7 +167,7 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
         aggregateData(collection, [matchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]).catch(() => [{ total: 0 }]),
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]).catch(() => [null]),
-        findTopEntity(collection, query, 'manufacturer'),
+        aggregateData(collection, manufacturerPipeline).catch(() => [null]),
         findTopEntity(collection, query, 'region'),
         findTopEntity(collection, query, 'state'),
         findTopEntity(collection, query, 'city'),
@@ -212,6 +189,8 @@ export async function GET(request: NextRequest) {
     ]);
     
     const totalVehicles = totalVehiclesResult[0]?.total || 0;
+    const topManufacturer = topManufacturerResult[0] ? { name: topManufacturerResult[0]._id, quantity: topManufacturerResult[0].total } : null;
+
 
     const dashboardData: DashboardData = {
         totalVehicles,

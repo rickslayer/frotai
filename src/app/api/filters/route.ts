@@ -55,16 +55,22 @@ const getDistinctValues = async (collection: import('mongodb').Collection, field
 
   // Handle manufacturer aliases: Replace aliases with the primary name and remove duplicates
   if (field === 'manufacturer') {
-    const normalizedValues = new Set<string>();
+    const primaryNamesToKeep = new Set<string>();
+    const aliasesToMap: Record<string, string> = {};
+    for (const alias in manufacturerAliases) {
+        aliasesToMap[alias] = manufacturerAliases[alias];
+    }
+    
     values.forEach(val => {
-        const primaryName = manufacturerAliases[val];
+        const primaryName = aliasesToMap[val];
         if (primaryName) {
-            normalizedValues.add(primaryName);
+            primaryNamesToKeep.add(primaryName);
         } else {
-            normalizedValues.add(val);
+            primaryNamesToKeep.add(val);
         }
     });
-    values = Array.from(normalizedValues);
+
+    values = Array.from(primaryNamesToKeep);
   }
 
   if (field === 'year') {
@@ -92,8 +98,9 @@ export async function GET(request: NextRequest) {
     // Base match query with ALL active filters
     const baseMatch: any = {};
     if (manufacturer) {
-        const allNames = Array.from(new Set([manufacturer, ...(Object.keys(manufacturerAliases).filter(key => manufacturerAliases[key] === manufacturer)), ...(manufacturerAliases[manufacturer] || [])]));
-        baseMatch.manufacturer = { $in: allNames };
+        const allNames = Array.from(new Set([manufacturer, ...(Object.keys(manufacturerAliases).filter(key => manufacturerAliases[key] === manufacturer)), ...((Object.entries(manufacturerAliases).find(([,v]) => v === manufacturer) || [])[0] ? [(Object.entries(manufacturerAliases).find(([,v]) => v === manufacturer) || [])[0]] : []) ]));
+        const finalNames = Array.from(new Set(allNames.flat()));
+        baseMatch.manufacturer = { $in: finalNames };
     }
     if (modelsParam && modelsParam.length > 0) baseMatch.model = { $in: modelsParam };
     if (versionsParam && versionsParam.length > 0) baseMatch.version = { $in: versionsParam };
