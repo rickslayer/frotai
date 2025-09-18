@@ -12,7 +12,6 @@ let client: MongoClient | null = null;
 const manufacturerAliases: Record<string, string> = {
     "MMC": "Mitsubishi"
 };
-const primaryManufacturerNames = Object.values(manufacturerAliases);
 
 
 async function connectToMongo() {
@@ -54,7 +53,7 @@ const getDistinctValues = async (collection: import('mongodb').Collection, field
   
   let values = await collection.distinct(field, query);
 
-  // Handle manufacturer aliases
+  // Handle manufacturer aliases: Replace aliases with the primary name and remove duplicates
   if (field === 'manufacturer') {
     const normalizedValues = new Set<string>();
     values.forEach(val => {
@@ -93,10 +92,8 @@ export async function GET(request: NextRequest) {
     // Base match query with ALL active filters
     const baseMatch: any = {};
     if (manufacturer) {
-        const aliases = Object.keys(manufacturerAliases).filter(
-            key => manufacturerAliases[key] === manufacturer
-        );
-        baseMatch.manufacturer = { $in: [manufacturer, ...aliases] };
+        const allNames = Array.from(new Set([manufacturer, ...(Object.keys(manufacturerAliases).filter(key => manufacturerAliases[key] === manufacturer)), ...(manufacturerAliases[manufacturer] || [])]));
+        baseMatch.manufacturer = { $in: allNames };
     }
     if (modelsParam && modelsParam.length > 0) baseMatch.model = { $in: modelsParam };
     if (versionsParam && versionsParam.length > 0) baseMatch.version = { $in: versionsParam };

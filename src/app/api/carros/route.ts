@@ -41,7 +41,12 @@ const generateCacheKey = (filters: Partial<Filters>): string => {
     filterKeys.forEach(key => {
         const value = filters[key];
         if (value && value !== 'all' && (Array.isArray(value) ? value.length > 0 : value !== '')) {
-            sortedFilters[key] = Array.isArray(value) ? [...value].sort() : value;
+            // Se o filtro for uma montadora com alias, use o nome principal para consistência do cache
+            if (key === 'manufacturer' && typeof value === 'string' && manufacturerAliases[value]) {
+                sortedFilters[key] = value;
+            } else {
+                sortedFilters[key] = Array.isArray(value) ? [...value].sort() : value;
+            }
         }
     });
     return JSON.stringify(sortedFilters);
@@ -59,17 +64,49 @@ const findTopEntity = async (
     field: string
 ): Promise<TopEntity | null> => {
     try {
-        const pipeline = [
-          {
-            $match: {
-              ...query,
-              [field]: { $ne: null, $ne: "" }
+        const pipeline: Document[] = [
+          { $match: query },
+          // Adiciona um estágio para normalizar os aliases de fabricante, se o campo for 'manufacturer'
+        ];
+        
+        if (field === 'manufacturer') {
+            const caseConditions: any = [];
+            const seenPrimaryNames = new Set<string>();
+
+            for (const primary in manufacturerAliases) {
+                if(seenPrimaryNames.has(primary)) continue;
+                
+                const allNames = [primary, ...(manufacturerAliases[primary] || [])];
+                const primaryName = allNames.sort()[0]; // Use a consistent primary name (e.g., alphabetically first)
+                seenPrimaryNames.add(primaryName);
+
+                caseConditions.push({
+                    case: { $in: [`$${field}`, allNames] },
+                    then: primaryName
+                });
             }
-          },
-          { $group: { _id: `$${field}`, total: { $sum: '$quantity' } } },
+
+            pipeline.push({
+              $addFields: {
+                normalizedManufacturer: {
+                  $switch: {
+                    branches: caseConditions,
+                    default: `$${field}`
+                  }
+                }
+              }
+            });
+        }
+        
+        const groupField = field === 'manufacturer' ? '$normalizedManufacturer' : `$${field}`;
+
+        pipeline.push(
+          { $match: { [field === 'manufacturer' ? 'normalizedManufacturer' : field]: { $ne: null, $ne: "" } } },
+          { $group: { _id: groupField, total: { $sum: '$quantity' } } },
           { $sort: { total: -1 } },
           { $limit: 1 }
-        ];
+        );
+
 
         const topResult = await aggregateData(collection, pipeline);
 
@@ -124,7 +161,8 @@ export async function GET(request: NextRequest) {
         const filterValue = filters[filterKey];
         
         if (filterKey === 'manufacturer' && typeof filterValue === 'string' && manufacturerAliases[filterValue]) {
-            query[filterKey] = { $in: [filterValue, ...manufacturerAliases[filterValue]] };
+            const allNames = Array.from(new Set([filterValue, ...manufacturerAliases[filterValue]]));
+            query[filterKey] = { $in: allNames };
         } else if (Array.isArray(filterValue) && filterValue.length > 0) {
             query[filterKey] = { $in: filterValue };
         } else if (typeof filterValue === 'string' && filterValue !== '') {
