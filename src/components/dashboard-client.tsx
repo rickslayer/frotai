@@ -456,26 +456,31 @@ const DashboardClient: FC = () => {
        <>
         <StatCards data={dashboardData} isLoading={isPending} />
         
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-8">
-            <div id="regional-analysis-chart" className="lg:col-span-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+            <div id="regional-analysis-chart">
                 <RegionalFleetAnalysis 
                     data={dashboardData.regionalData} 
                     total={dashboardData.totalVehicles} 
                     selectedRegion={filters.region}
                 />
             </div>
+            <div id="fleet-age-chart">
+                <FleetAgeBracketChart data={dashboardData.fleetAgeBrackets} />
+            </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
             <div id="top-models-chart" className="lg:col-span-2">
                 <TopModelsChart data={dashboardData.topModelsChart} topManufacturer={dashboardData.topManufacturer} />
             </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-          <div id="fleet-by-year-chart">
-            <FleetByYearChart data={dashboardData.fleetByYearChart} />
-          </div>
-          <div id="fleet-age-chart">
-            <FleetAgeBracketChart data={dashboardData.fleetAgeBrackets} />
-          </div>
+        
+        <div className="grid grid-cols-1 gap-4 md:gap-8">
+            <div id="fleet-by-year-chart">
+                <FleetByYearChart data={dashboardData.fleetByYearChart} />
+            </div>
         </div>
+
         <div className="grid grid-cols-1 gap-4 md:gap-8">
           <div id="final-analysis-card">
               <FinalAnalysis
@@ -515,7 +520,7 @@ const DashboardClient: FC = () => {
           highlightedFilters={highlightedFilters}
         />
       </div>
-      <div>
+      <div className="overflow-auto">
         <DashboardHeader 
           onExport={handleExportPDF} 
           isFiltered={isFiltered && dashboardData.totalVehicles > 0}
