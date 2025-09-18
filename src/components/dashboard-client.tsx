@@ -11,11 +11,6 @@ import TopModelsChart from './dashboard/top-models-chart';
 import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import WelcomePlaceholder from './dashboard/welcome-placeholder';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarInset,
-} from '@/components/ui/sidebar';
 import RegionalFleetAnalysis from './dashboard/regional-fleet-analysis';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
@@ -393,18 +388,18 @@ const DashboardClient: FC = () => {
 
     // Caminho 1: Iniciando por Localização
     if (region && state && city && manufacturer) {
-        return { titleKey: 'welcome_title_start', highlights: ['model', 'year'] };
+        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
     }
     if (region && state && city) {
         return { titleKey: 'welcome_title_start', highlights: ['manufacturer', 'year'] };
     }
-     if (region && state) {
+    if (region && state) {
         return { titleKey: 'welcome_title_start', highlights: ['city', 'manufacturer', 'year'] };
     }
-    if (region && !state && !manufacturer) { // Apenas Região
+    if (region && !state && !manufacturer) {
         return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
     }
-
+    
     // Caminho 2: Iniciando por Veículo
     if (manufacturer && model.length > 0 && version.length > 0) {
         return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
@@ -412,7 +407,7 @@ const DashboardClient: FC = () => {
     if (manufacturer && model.length > 0) {
         return { titleKey: 'welcome_title_start', highlights: ['version', 'region'] };
     }
-    if (manufacturer && model.length === 0) { // Apenas Montadora
+    if (manufacturer && !region) {
         return { titleKey: 'welcome_title_start', highlights: ['model', 'region'] };
     }
 
@@ -509,8 +504,8 @@ const DashboardClient: FC = () => {
 
 
   return (
-    <SidebarProvider>
-      <Sidebar collapsible="none">
+    <div className="grid min-h-screen w-full md:grid-cols-[280px_1fr]">
+      <div className="hidden border-r bg-card md:block">
         <DashboardSidebar
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -519,8 +514,8 @@ const DashboardClient: FC = () => {
           disabledFilters={disabledFilters}
           highlightedFilters={highlightedFilters}
         />
-      </Sidebar>
-      <SidebarInset>
+      </div>
+      <div className="flex flex-col">
         <DashboardHeader 
           onExport={handleExportPDF} 
           isFiltered={isFiltered && dashboardData.totalVehicles > 0}
@@ -559,9 +554,11 @@ const DashboardClient: FC = () => {
             
             {renderContent()}
         </main>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
+    </div>
   );
 };
 
 export default DashboardClient;
+
+    
