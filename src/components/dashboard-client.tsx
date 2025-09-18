@@ -456,7 +456,7 @@ const DashboardClient: FC = () => {
        <>
         <StatCards data={dashboardData} isLoading={isPending} />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
             <div id="regional-analysis-chart">
                 <RegionalFleetAnalysis 
                     data={dashboardData.regionalData} 
@@ -469,8 +469,10 @@ const DashboardClient: FC = () => {
             </div>
         </div>
 
-        <div id="top-models-chart">
-            <TopModelsChart data={dashboardData.topModelsChart} topManufacturer={dashboardData.topManufacturer} />
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 md:gap-8">
+            <div id="top-models-chart" className="lg:col-span-1">
+                <TopModelsChart data={dashboardData.topModelsChart} topManufacturer={dashboardData.topManufacturer} />
+            </div>
         </div>
         
         <div className="grid grid-cols-1 gap-4 md:gap-8">
@@ -567,6 +569,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
-    
