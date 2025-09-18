@@ -59,77 +59,79 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
         <Separator />
       </SidebarHeader>
       <SidebarContent>
-        <ScrollArea className="flex-1 p-4 scrollbar-blue">
-          <div className='space-y-4'>
-            <div className="space-y-2">
-                <h3 className='font-semibold flex items-center gap-2'><MapPin className="h-4 w-4" />{t('location')}</h3>
-                <div data-testid="region-filter" className={cn("rounded-md", highlightClass('region'))}>
-                  <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value as string)}>
-                    <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">{t('all_regions')}</SelectItem>
-                      {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div data-testid="state-filter" className={cn("rounded-md", highlightClass('state'))}>
-                  <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value as string)} disabled={disabledFilters.state}>
-                    <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('all_states')}</SelectItem>
-                      {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div data-testid="city-filter" className={cn("rounded-md", highlightClass('city'))}>
-                    <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value as string)} disabled={disabledFilters.city}>
-                    <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('all_cities')}</SelectItem>
-                      {(filterOptions.cities || []).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-            </div>
-             <Separator />
-             <div className="space-y-2">
-                <h3 className='font-semibold flex items-center gap-2'><Car className="h-4 w-4" />{t('vehicle')}</h3>
-                 <div data-testid="manufacturer-filter" className={cn("rounded-md", highlightClass('manufacturer'))}>
-                    <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
-                      <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
+        <ScrollArea className="flex-1 scrollbar-blue">
+          <div className="p-4">
+            <div className='space-y-4'>
+              <div className="space-y-2">
+                  <h3 className='font-semibold flex items-center gap-2'><MapPin className="h-4 w-4" />{t('location')}</h3>
+                  <div data-testid="region-filter" className={cn("rounded-md", highlightClass('region'))}>
+                    <Select value={filters.region} onValueChange={(value) => handleFilterValueChange('region', value as string)}>
+                      <SelectTrigger><SelectValue placeholder={t('select_region')} /></SelectTrigger>
                       <SelectContent>
-                          <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
-                        {(filterOptions.manufacturers || []).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                          <SelectItem value="all">{t('all_regions')}</SelectItem>
+                        {(filterOptions.regions || []).map(r => <SelectItem key={r} value={r}>{t(r as any)}</SelectItem>)}
                       </SelectContent>
                     </Select>
-                 </div>
-                 <div data-testid="model-filter" className={cn("rounded-md", highlightClass('model'))}>
-                    <MultiSelectDropdown
-                        options={(filterOptions.models || []).map(m => ({ value: m || 'null_model', label: m || t('base_model')}))}
-                        selectedValues={filters.model}
-                        onChange={(selected) => handleFilterValueChange('model', selected)}
-                        placeholder={t('select_model')}
-                        disabled={disabledFilters.model}
-                      />
                   </div>
-                  <div data-testid="version-filter" className={cn("rounded-md", highlightClass('version'))}>
+                  <div data-testid="state-filter" className={cn("rounded-md", highlightClass('state'))}>
+                    <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value as string)} disabled={disabledFilters.state}>
+                      <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t('all_states')}</SelectItem>
+                        {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div data-testid="city-filter" className={cn("rounded-md", highlightClass('city'))}>
+                      <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value as string)} disabled={disabledFilters.city}>
+                      <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t('all_cities')}</SelectItem>
+                        {(filterOptions.cities || []).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+              </div>
+               <Separator />
+               <div className="space-y-2">
+                  <h3 className='font-semibold flex items-center gap-2'><Car className="h-4 w-4" />{t('vehicle')}</h3>
+                   <div data-testid="manufacturer-filter" className={cn("rounded-md", highlightClass('manufacturer'))}>
+                      <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
+                        <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">{t('all_manufacturers')}</SelectItem>
+                          {(filterOptions.manufacturers || []).map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                   </div>
+                   <div data-testid="model-filter" className={cn("rounded-md", highlightClass('model'))}>
                       <MultiSelectDropdown
-                        options={(filterOptions.versions || []).map(v => ({ value: v || 'null_version', label: v || t('base_model_version')}))}
-                        selectedValues={filters.version}
-                        onChange={(selected) => handleFilterValueChange('version', selected)}
-                        placeholder={t('select_version_multi')}
-                        disabled={disabledFilters.version}
-                      />
-                  </div>
-                  <div data-testid="year-filter" className={cn("rounded-md", highlightClass('year'))}>
-                      <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
-                      <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t('all_years')}</SelectItem>
-                        {(filterOptions.years || []).map(y => <SelectItem key={y} value={String(y)}>{y === 0 ? t('Indefinido') : y}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                          options={(filterOptions.models || []).map(m => ({ value: m || 'null_model', label: m || t('base_model')}))}
+                          selectedValues={filters.model}
+                          onChange={(selected) => handleFilterValueChange('model', selected)}
+                          placeholder={t('select_model')}
+                          disabled={disabledFilters.model}
+                        />
+                    </div>
+                    <div data-testid="version-filter" className={cn("rounded-md", highlightClass('version'))}>
+                        <MultiSelectDropdown
+                          options={(filterOptions.versions || []).map(v => ({ value: v || 'null_version', label: v || t('base_model_version')}))}
+                          selectedValues={filters.version}
+                          onChange={(selected) => handleFilterValueChange('version', selected)}
+                          placeholder={t('select_version_multi')}
+                          disabled={disabledFilters.version}
+                        />
+                    </div>
+                    <div data-testid="year-filter" className={cn("rounded-md", highlightClass('year'))}>
+                        <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
+                        <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t('all_years')}</SelectItem>
+                          {(filterOptions.years || []).map(y => <SelectItem key={y} value={String(y)}>{y === 0 ? t('Indefinido') : y}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+              </div>
             </div>
           </div>
         </ScrollArea>
