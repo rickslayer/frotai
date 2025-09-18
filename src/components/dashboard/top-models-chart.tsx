@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FC, SVGProps } from 'react';
@@ -24,14 +23,14 @@ import { Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
 
 
-interface TopModelsChartProps {
-  data: TopModel[];
-  topManufacturer: TopEntity | null;
-}
-
 const CustomLabel = (props: any) => {
     const { x, y, width, height, value, payload } = props;
-    const radius = 4;
+    
+    // Guard clause to prevent runtime error if payload is undefined
+    if (!payload) {
+        return null;
+    }
+
     const labelX = 10;
     const labelY = y + height / 2 + 5;
     const valueX = x + width + 5;
@@ -54,7 +53,7 @@ const CustomLabel = (props: any) => {
 };
 
 
-const TopModelsChart: FC<TopModelsChartProps> = ({ data, topManufacturer }) => {
+const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }> = ({ data, topManufacturer }) => {
   const { t } = useTranslation();
   const [showCount, setShowCount] = useState<5 | 10>(5);
   
