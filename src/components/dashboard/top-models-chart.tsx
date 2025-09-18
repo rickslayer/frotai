@@ -23,22 +23,25 @@ import { Badge } from '../ui/badge';
 const CustomLabel = (props: any) => {
     const { x, y, width, height, value, payload } = props;
     const padding = 10;
-    const labelY = y + height / 2;
-
-    if (!payload || width < 20) {
+    
+    // Não renderiza nada se a barra for muito pequena
+    if (width < 20 || !payload) {
         return null;
     }
 
     const modelName = payload.model;
     const quantity = value.toLocaleString();
-    
-    // Check if both labels would fit
+    const labelY = y + height / 2;
+
+    // Estimação simples para ver se ambos cabem com algum espaço
     const fullText = `${modelName}${quantity}`;
-    // Simple estimation, might need adjustment
-    const estimatedTextWidth = fullText.length * 6; 
+    const estimatedTextWidth = fullText.length * 6; // Ajuste este multiplicador conforme necessário
 
     if (width < estimatedTextWidth + (padding * 2)) {
-      // Just show quantity if it's too small for both
+      // Se não couber, mostra apenas a quantidade se houver espaço para ela
+       if (width < quantity.length * 8 + padding) {
+         return null;
+       }
        return (
          <g>
            <text x={x + width - padding} y={labelY} fill="#fff" textAnchor="end" dominantBaseline="middle" fontSize={12} fontWeight="bold">
