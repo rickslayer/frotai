@@ -122,6 +122,7 @@ export type DashboardData = {
   topState?: TopEntity | null;
   topCity?: TopEntity | null;
   regionalData: RegionData[];
+  topCitiesChart: TopEntity[];
   topModelsChart: TopModel[];
   fleetByYearChart: FleetByYear[];
   fleetAgeBrackets: Omit<FleetAgeBracket, 'label'>[];

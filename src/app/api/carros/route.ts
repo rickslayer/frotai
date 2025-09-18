@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
         const filterValue = filters[filterKey];
         
         if (filterKey === 'manufacturer' && typeof filterValue === 'string' && manufacturerAliases[filterValue]) {
-            query[filterKey] = { $in: [filterValue, manufacturerAliases[filterValue]] };
+            query[filterKey] = manufacturerAliases[filterValue];
         } else if (Array.isArray(filterValue) && filterValue.length > 0) {
             query[filterKey] = { $in: filterValue };
         } else if (typeof filterValue === 'string' && filterValue !== '') {
@@ -162,6 +162,7 @@ export async function GET(request: NextRequest) {
         topRegion,
         topState,
         topCity,
+        topCitiesChart,
         regionalData,
         topModelsChart,
         fleetByYearChart,
@@ -173,6 +174,7 @@ export async function GET(request: NextRequest) {
         findTopEntity(collection, query, 'region'),
         findTopEntity(collection, query, 'state'),
         findTopEntity(collection, query, 'city'),
+        aggregateData(collection, [matchStage, { $group: { _id: '$city', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]).catch(() => []),
         aggregateData(collection, [matchStage, { $group: { _id: '$region', total: { $sum: '$quantity' } } }]).catch(() => []),
         aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]).catch(() => []),
         aggregateData(collection, [matchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]).catch(() => []),
@@ -201,6 +203,7 @@ export async function GET(request: NextRequest) {
         topRegion,
         topState,
         topCity,
+        topCitiesChart: topCitiesChart.map((d: any) => ({ name: d._id, quantity: d.total })),
         regionalData: allRegions.map(region => {
             const found = regionalData.find((r: any) => r._id === region);
             return { name: region, quantity: found?.total || 0 };
