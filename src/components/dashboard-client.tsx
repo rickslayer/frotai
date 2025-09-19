@@ -72,11 +72,11 @@ const DashboardClient: FC = () => {
   
   const isSearchEnabled = useMemo(() => {
     const { region, state, manufacturer, model, year } = debouncedFilters;
-    // Path 1: Focused on Location
-    const locationPath = region && state;
-    // Path 2: Focused on Vehicle
-    const vehiclePath = manufacturer && region;
-    return locationPath || vehiclePath;
+    // Path 1: Vehicle-focused analysis
+    const vehiclePath = manufacturer && region && model.length > 0;
+    // Path 2: Location-focused analysis (requires vehicle detail)
+    const locationPath = region && state && (model.length > 0 || !!year);
+    return vehiclePath || locationPath;
   }, [debouncedFilters]);
   
   const isFiltered = useMemo(() => {
@@ -383,13 +383,19 @@ const DashboardClient: FC = () => {
   }
 
  const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
-    const { region, state, city, manufacturer, model, version, year } = filters;
+    const { region, state, manufacturer, model } = filters;
 
+    if (manufacturer && region) {
+      return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model'] };
+    }
     if (manufacturer) {
       return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
     }
+    if (region && state) {
+      return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
+    }
     if (region) {
-      return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
+      return { titleKey: 'welcome_title_location_needs_state', highlights: ['state'] };
     }
     
     return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };
@@ -541,3 +547,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    

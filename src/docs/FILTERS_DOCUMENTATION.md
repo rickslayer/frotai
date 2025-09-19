@@ -11,7 +11,7 @@ O sistema de filtros foi redesenhado para guiar o usuário a fornecer um conjunt
 A lógica de busca de dados do dashboard (`getFleetData`) é acionada somente quando uma das seguintes condições é atendida:
 
 1.  **Análise Focada em Localização:** `Região` **E** `Estado` **E** (`Modelo` **OU** `Ano`) estão selecionados.
-2.  **Análise Focada em Veículo:** `Montadora` **E** `Região` **E** `Modelo` estão selecionados.
+2.  **Análise Focada em Veículo:** `Montadora` **E** `Região` **E** `Modelo` (pelo menos um) estão selecionados.
 
 Isso evita buscas excessivamente amplas e lentas (como consultar uma região inteira sem especificação de veículo) ou buscas muito genéricas (como um estado inteiro sem um tipo de veículo ou ano em foco).
 
@@ -102,3 +102,5 @@ Usuário seleciona Modelo "Strada"
 ```
 
 Esta arquitetura de duplo funil oferece um equilíbrio ideal entre flexibilidade, performance e experiência do usuário.
+
+    
