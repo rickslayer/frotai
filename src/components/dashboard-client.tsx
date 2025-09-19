@@ -70,11 +70,11 @@ const DashboardClient: FC = () => {
   const [highlightedFilters, setHighlightedFilters] = useState<Array<keyof Filters>>([]);
   
   const isSearchEnabled = useMemo(() => {
-    const { region, state, manufacturer } = debouncedFilters;
-    // Condition 1: Manufacturer and region are selected
-    if (manufacturer && region) return true;
-    // Condition 2: Region and state are selected
-    if (region && state) return true;
+    const { region, state, manufacturer, model, year } = debouncedFilters;
+    // Path 1: Vehicle analysis - requires manufacturer, region, and at least one model
+    if (manufacturer && region && model.length > 0) return true;
+    // Path 2: Location analysis - requires region, state, and either a model or a year
+    if (region && state && (model.length > 0 || year)) return true;
     return false;
   }, [debouncedFilters]);
   
@@ -383,16 +383,24 @@ const DashboardClient: FC = () => {
   }
 
  const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
-    const { region, state, manufacturer } = filters;
+    const { region, state, manufacturer, model } = filters;
 
+    if (!region && !manufacturer) {
+        return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };
+    }
     if (manufacturer) {
-      return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
+      if (!region) {
+        return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
+      }
+      if (model.length === 0) {
+        return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model'] };
+      }
     }
     if (region && !state) {
       return { titleKey: 'welcome_title_location_needs_state', highlights: ['state'] };
     }
     if (region && state) {
-      return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['manufacturer', 'model', 'year'] };
+      return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
     }
     
     return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };
