@@ -29,7 +29,9 @@ import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 const emptyDashboardData: DashboardData = {
   totalVehicles: 0,
   topOverallModel: { name: '-', quantity: 0 },
-  topOverallManufacturer: { name: '-', quantity: 0 },
+  topRegion: { name: '-', quantity: 0 },
+  topState: { name: '-', quantity: 0 },
+  topCity: { name: '-', quantity: 0 },
   regionalData: [],
   topModelsChart: [],
   fleetByYearChart: [],
@@ -67,20 +69,11 @@ const DashboardClient: FC = () => {
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   const [highlightedFilters, setHighlightedFilters] = useState<Array<keyof Filters>>([]);
   
-  const isSearchEnabled = useMemo(() => {
-    const { region, state, manufacturer, model, year, city } = debouncedFilters;
-
-    // Flow 1 (Location -> Vehicle/Year)
-    const isFlow1Ready = region && state && manufacturer && (model.length > 0 || !!year);
-
-    // Flow 2 (Vehicle -> Location)
-    const isFlow2Ready = manufacturer && region && model.length > 0;
-
-    // Flow 3 (Year -> Location/Vehicle)
-    const isFlow3Ready = year && region && state && manufacturer && model.length > 0;
-
-    return !!(isFlow1Ready || isFlow2Ready || isFlow3Ready);
-}, [debouncedFilters]);
+    const isSearchEnabled = useMemo(() => {
+        const { region, state, manufacturer, model, year } = debouncedFilters;
+        // Rule: Enable search if Region and State are selected, OR Manufacturer and Model are selected, OR Year and Region are selected.
+        return (region && state) || (manufacturer && model.length > 0) || (!!year && region);
+    }, [debouncedFilters]);
   
   const isFiltered = useMemo(() => {
     return Object.values(filters).some(value => {
@@ -219,18 +212,19 @@ const DashboardClient: FC = () => {
     doc.text(new Date().toLocaleDateString('pt-BR', { dateStyle: 'full' }), 14, y);
     y += 15;
 
-    const addSection = (title: string, value: string) => {
+    const addSection = (title: string, value: string | undefined | null) => {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.text(title, 14, y);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      doc.text(value, 80, y);
+      doc.text(value || '-', 80, y);
       y += 8;
     };
     
     addSection(t('total_vehicles'), dashboardData.totalVehicles.toLocaleString());
-    addSection(t('main_overall_manufacturer'), dashboardData.topOverallManufacturer.name);
+    addSection(t('main_region'), dashboardData.topRegion?.name);
+    addSection(t('main_state'), dashboardData.topState?.name);
     addSection(t('main_overall_model'), dashboardData.topOverallModel.name);
     y += 5;
 
@@ -386,67 +380,17 @@ const DashboardClient: FC = () => {
       setIsComparing(false);
   }
 
-  const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
-    const { region, state, city, manufacturer, model, year } = filters;
-    const noFilters = !region && !state && !city && !manufacturer && model.length === 0 && !year;
-
-    if (noFilters) {
-        return { titleKey: 'welcome_title_start', highlights: ['year', 'region', 'manufacturer'] };
-    }
-
-    // Fluxo 01: Iniciado por Região
-    if (region && !state && !manufacturer) {
-        return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer', 'year'] };
-    }
-    if (region && state && !manufacturer) {
-        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['city', 'manufacturer', 'year'] };
-    }
-    if (region && state && manufacturer) {
-        return { titleKey: 'welcome_title_vehicle_model_needs_year_version_city', highlights: ['model', 'year'] };
-    }
-
-
-    // Fluxo 02: Iniciado por Montadora
-    if (manufacturer && !region && !year && model.length === 0) {
-        return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['year', 'model', 'region'] };
-    }
-    if (manufacturer && year && !region && model.length === 0) {
-        return { titleKey: 'welcome_title_vehicle_model_needs_year_version_city', highlights: ['region', 'model'] };
-    }
-    if (manufacturer && region && !year) {
-        return { titleKey: 'welcome_title_vehicle_state_needs_model_city_year', highlights: ['model', 'city'] };
-    }
-
-    // Fluxo 03: Iniciado por Ano
-    if (year && !region && !manufacturer) {
-        return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['region', 'manufacturer'] };
-    }
-    if (year && region && !state) {
-        return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
-    }
-    if (year && region && state && !city && !manufacturer) {
-        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['manufacturer', 'city'] };
-    }
-    if (year && region && state && manufacturer && !city) {
-        return { titleKey: 'welcome_title_vehicle_model_needs_year_version_city', highlights: ['model', 'city'] };
-    }
-     if (year && region && state && manufacturer && city) {
-        return { titleKey: 'welcome_title_vehicle_model_needs_year_version_city', highlights: ['model'] };
-    }
-
-
-    // Default State (fallback)
-    return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
-};
+    const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
+        if (!isSearchEnabled) {
+            return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
+        }
+        return { titleKey: 'welcome_title_start', highlights: [] };
+    };
 
   
   useEffect(() => {
-    if (!isSearchEnabled) {
-      const { highlights } = getWelcomeTitleAndHighlights();
-      setHighlightedFilters(highlights);
-    } else {
-      setHighlightedFilters([]);
-    }
+    const { highlights } = getWelcomeTitleAndHighlights();
+    setHighlightedFilters(highlights);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, isSearchEnabled]);
 
@@ -587,5 +531,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
