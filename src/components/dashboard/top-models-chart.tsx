@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FC } from 'react';
@@ -24,7 +25,7 @@ const CustomLabel = (props: any) => {
     const { x, y, width, height, value, name } = props;
 
     // Safety check: if there's no payload or the bar is too small, render nothing.
-    if (!name || width < 150) { // Safety margin for visibility
+    if (!props.payload || !name || width < 150) {
         return null;
     }
 
@@ -147,7 +148,10 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                     <Bar dataKey="quantity" fill="var(--color-quantity)" radius={[4, 4, 4, 4]}>
                        <LabelList 
                           dataKey="model" 
-                          content={(props: any) => <CustomLabel {...props} name={props.value} value={props.payload.quantity} />}
+                          content={(props: any) => {
+                            if (!props.payload) return null;
+                            return <CustomLabel {...props} name={props.value} value={props.payload.quantity} />
+                          }}
                        />
                     </Bar>
                 </BarChart>
