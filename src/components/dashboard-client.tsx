@@ -71,11 +71,12 @@ const DashboardClient: FC = () => {
   
   const isSearchEnabled = useMemo(() => {
     const { region, state, manufacturer, model, year } = debouncedFilters;
-    if (region && state) return true;
-    if (manufacturer && model.length > 0) return true;
-    if (year && region) return true;
 
-    return false;
+    const locationPath = region && state && (model.length > 0 || year);
+    const vehiclePath = manufacturer && region && model.length > 0;
+    
+    return locationPath || vehiclePath;
+
   }, [debouncedFilters]);
   
   const isFiltered = useMemo(() => {
@@ -383,44 +384,27 @@ const DashboardClient: FC = () => {
   }
 
  const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
-    const { region, state, city, manufacturer, model, year } = filters;
+    const { region, state, manufacturer, model, year } = filters;
 
-    // Path 1: Started with Location
-    if (region && !state && !manufacturer && !year) {
-      return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer', 'year'] };
+    // Path 1: Location
+    if (region && !state) {
+      return { titleKey: 'welcome_title_location_needs_state', highlights: ['state'] };
     }
-    if (region && state && !city && !manufacturer && !year) {
-      return { titleKey: 'welcome_title_location_needs_city_or_vehicle', highlights: ['city', 'manufacturer', 'year'] };
-    }
-
-    // Path 2: Started with Vehicle
-    if (manufacturer && !region && !year && model.length === 0) {
-      return { titleKey: 'welcome_title_vehicle_needs_model_or_region', highlights: ['region', 'year', 'model'] };
-    }
-     if (manufacturer && model.length > 0 && !region && !year) {
-      return { titleKey: 'welcome_title_vehicle_needs_region_or_year', highlights: ['region', 'year'] };
-    }
-    if (manufacturer && region && !year && model.length === 0) {
-        return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model', 'year'] };
-    }
-    if (manufacturer && year && !region && model.length === 0) {
-        return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model', 'region'] };
+    if (region && state) {
+      return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
     }
 
-    // Path 3: Started with Year
-    if (year && !region && !manufacturer) {
-        return { titleKey: 'welcome_title_year_needs_region_or_manufacturer', highlights: ['region', 'manufacturer'] };
+    // Path 2: Vehicle
+    if (manufacturer && !region) {
+      return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
     }
-    if (year && region && !state && !manufacturer) {
-        return { titleKey: 'welcome_title_year_location_needs_state_or_manufacturer', highlights: ['state', 'manufacturer'] };
+    if (manufacturer && region && model.length === 0) {
+        return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model'] };
     }
-     if (year && manufacturer && !region && model.length === 0) {
-        return { titleKey: 'welcome_title_year_vehicle_needs_region_or_model', highlights: ['region', 'model'] };
-    }
-
+    
     // Fallback to initial state
-    return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
-};
+    return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };
+  };
   
   useEffect(() => {
     if (!isSearchEnabled) {
@@ -568,5 +552,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
