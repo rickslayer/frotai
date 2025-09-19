@@ -24,6 +24,11 @@ import { Badge } from '../ui/badge';
 // A simple, robust custom label component.
 const CustomizedLabel: FC<any> = (props) => {
     const { x, y, width, height, payload } = props;
+
+    if (!payload) {
+        return null;
+    }
+    
     const { model, quantity } = payload;
     const padding = 10;
     
@@ -36,7 +41,7 @@ const CustomizedLabel: FC<any> = (props) => {
         <g>
             <text 
                 x={x + padding} 
-                y={y + height / 2 + 1} 
+                y={y + height / 2} 
                 dy=".35em"
                 fill="hsl(var(--primary-foreground))"
                 fontWeight="bold"
@@ -47,7 +52,7 @@ const CustomizedLabel: FC<any> = (props) => {
             </text>
             <text
                 x={x + width - padding}
-                y={y + height / 2 + 1}
+                y={y + height / 2}
                 dy=".35em"
                 fill="hsl(var(--primary-foreground))"
                 fontWeight="bold"
@@ -73,7 +78,7 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
   } satisfies ChartConfig;
 
   const chartData = useMemo(() => {
-    // Sort descending for correct order, then reverse because recharts renders vertical charts from bottom-to-top
+    // Sort descending for correct order
     return data.slice(0, showCount).sort((a,b) => b.quantity - a.quantity);
   }, [data, showCount]);
 
