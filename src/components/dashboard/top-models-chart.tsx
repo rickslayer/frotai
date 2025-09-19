@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import { useMemo, useState } from 'react';
-import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, LabelList } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, LabelList, Label } from 'recharts';
 import {
   Card,
   CardContent,
@@ -21,57 +21,36 @@ import { Button } from '../ui/button';
 import { Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
 
-const CustomLabel = (props: any) => {
-    const { x, y, width, height, value, name } = props;
 
-    // Safety check: if there's no payload or the bar is too small, render nothing.
-    if (!props.payload || !name || width < 150) {
-        return null;
-    }
+const CustomLabel: FC<any> = ({ x, y, width, height, value, name, quantity }) => {
+    if (width < 10) return null; // Não renderiza nada se a barra for muito pequena
 
-    const valueText = Number(value).toLocaleString();
-    const valuePadding = 8;
-    const textPadding = 10;
+    const formattedQuantity = Number(quantity).toLocaleString();
+    const padding = 10;
     
-    // Estimate width of the value box
-    const valueBoxWidth = valueText.length * 7 + (valuePadding * 2); // Approximation
-
     return (
-        <g transform={`translate(${x},${y})`}>
-            {/* Model Name */}
-            <text 
-                x={textPadding} 
-                y={height / 2} 
+        <g>
+            <text
+                x={x + padding}
+                y={y + height / 2}
+                dy=".35em"
                 fill="hsl(var(--primary-foreground))"
-                textAnchor="start" 
-                dominantBaseline="middle" 
-                fontSize={12} 
+                fontSize="12"
                 fontWeight="bold"
+                textAnchor="start"
             >
                 {name}
             </text>
-            
-            {/* Value Box */}
-            <rect 
-                x={width - valueBoxWidth - 5} 
-                y={5}
-                width={valueBoxWidth}
-                height={height - 10}
-                fill="hsl(var(--primary))"
-                rx={4} // Rounded corners
-            />
-            
-            {/* Value Text */}
-            <text 
-                x={width - (valueBoxWidth / 2) - 5}
-                y={height / 2} 
+            <text
+                x={x + width - padding}
+                y={y + height / 2}
+                dy=".35em"
                 fill="hsl(var(--primary-foreground))"
-                textAnchor="middle" 
-                dominantBaseline="middle" 
-                fontSize={12} 
+                fontSize="12"
                 fontWeight="bold"
+                textAnchor="end"
             >
-                {valueText}
+                {formattedQuantity}
             </text>
         </g>
     );
@@ -90,7 +69,7 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
   } satisfies ChartConfig;
 
   const chartData = useMemo(() => {
-    // Sort descending to have the largest bar at the top
+    // Sort descending to have the largest bar at the top, then reverse for recharts vertical layout
     return data.slice(0, showCount).sort((a,b) => a.quantity - b.quantity);
   }, [data, showCount]);
 
@@ -150,7 +129,7 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                           dataKey="model" 
                           content={(props: any) => {
                             if (!props.payload) return null;
-                            return <CustomLabel {...props} name={props.value} value={props.payload.quantity} />
+                            return <CustomLabel {...props} name={props.value} quantity={props.payload.quantity} />
                           }}
                        />
                     </Bar>
