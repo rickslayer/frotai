@@ -7,7 +7,6 @@ import type { FilterOptions, Filters, DashboardData, AnalysisSnapshot, PredictPa
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
-import TopModelsChart from './dashboard/top-models-chart';
 import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import WelcomePlaceholder from './dashboard/welcome-placeholder';
@@ -326,7 +325,6 @@ const DashboardClient: FC = () => {
     };
 
     y = await addBase64ImageToPdf(doc, 'regional-analysis-chart', y, t('regional_fleet_analysis'));
-    y = await addBase64ImageToPdf(doc, 'top-models-chart', y, t('top_models_by_volume', { count: 10 }));
     y = await addBase64ImageToPdf(doc, 'fleet-by-year-chart', y, t('fleet_by_year'));
     y = await addBase64ImageToPdf(doc, 'fleet-age-chart', y, t('fleet_by_age_bracket'));
 
@@ -463,9 +461,6 @@ const DashboardClient: FC = () => {
                     total={dashboardData.totalVehicles} 
                     selectedRegion={filters.region}
                 />
-            </div>
-             <div id="top-models-chart">
-                <TopModelsChart data={dashboardData.topModelsChart} topManufacturer={dashboardData.topManufacturer} />
             </div>
         </div>
 
