@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import { useMemo, useState } from 'react';
-import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, LabelList, Label } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import {
   Card,
   CardContent,
@@ -21,36 +21,40 @@ import { Button } from '../ui/button';
 import { Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
 
-
-const CustomLabel: FC<any> = ({ x, y, width, height, value, name, quantity }) => {
-    if (width < 10) return null; // Não renderiza nada se a barra for muito pequena
-
-    const formattedQuantity = Number(quantity).toLocaleString();
+// A simple, robust custom label component.
+const CustomizedLabel: FC<any> = (props) => {
+    const { x, y, width, height, payload } = props;
+    const { model, quantity } = payload;
     const padding = 10;
     
+    // Don't render label if the bar is too small
+    if (width < 80) {
+        return null;
+    }
+
     return (
         <g>
-            <text
-                x={x + padding}
-                y={y + height / 2}
+            <text 
+                x={x + padding} 
+                y={y + height / 2 + 1} 
                 dy=".35em"
                 fill="hsl(var(--primary-foreground))"
-                fontSize="12"
                 fontWeight="bold"
+                fontSize="12" 
                 textAnchor="start"
             >
-                {name}
+                {model}
             </text>
             <text
                 x={x + width - padding}
-                y={y + height / 2}
+                y={y + height / 2 + 1}
                 dy=".35em"
                 fill="hsl(var(--primary-foreground))"
-                fontSize="12"
                 fontWeight="bold"
+                fontSize="12" 
                 textAnchor="end"
             >
-                {formattedQuantity}
+                {quantity.toLocaleString()}
             </text>
         </g>
     );
@@ -69,8 +73,8 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
   } satisfies ChartConfig;
 
   const chartData = useMemo(() => {
-    // Sort descending to have the largest bar at the top, then reverse for recharts vertical layout
-    return data.slice(0, showCount).sort((a,b) => a.quantity - b.quantity);
+    // Sort descending for correct order, then reverse because recharts renders vertical charts from bottom-to-top
+    return data.slice(0, showCount).sort((a,b) => b.quantity - a.quantity);
   }, [data, showCount]);
 
   return (
@@ -111,7 +115,7 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
             {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                    data={chartData}
+                    data={chartData.slice().reverse()} // Reverse for top-to-bottom rendering
                     layout="vertical"
                     margin={{ left: 0, right: 0, top: 10, bottom: 10 }}
                     barCategoryGap="25%"
@@ -124,15 +128,12 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                         axisLine={false}
                         hide
                     />
-                    <Bar dataKey="quantity" fill="var(--color-quantity)" radius={[4, 4, 4, 4]}>
-                       <LabelList 
-                          dataKey="model" 
-                          content={(props: any) => {
-                            if (!props.payload) return null;
-                            return <CustomLabel {...props} name={props.value} quantity={props.payload.quantity} />
-                          }}
-                       />
-                    </Bar>
+                    <Bar 
+                      dataKey="quantity" 
+                      fill="var(--color-quantity)" 
+                      radius={[4, 4, 4, 4]}
+                      label={<CustomizedLabel />}
+                    />
                 </BarChart>
             </ResponsiveContainer>
             ) : (
