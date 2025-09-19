@@ -85,16 +85,14 @@
   "no_opportunities_found_description": "O Frota.AI não conseguiu identificar peças de alta demanda para esta categoria e combinação de filtros. Tente uma categoria mais ampla ou filtros diferentes.",
   "welcome_greeting": "Bem-Vindo ao Frota . A I",
   "welcome_title_start": "Como deseja iniciar sua análise?",
-  "welcome_title_location_needs_state": "Ótimo! Agora selecione um Estado, Montadora ou Ano",
-  "welcome_title_location_needs_details": "Excelente! Agora selecione uma Cidade, Montadora ou Ano.",
-  "welcome_title_vehicle_needs_region_year_model": "Excelente! Agora selecione uma Região, Ano ou Modelo",
-  "welcome_title_vehicle_needs_model": "Perfeito! Agora selecione um Modelo ou Ano para prosseguir",
-  "welcome_title_vehicle_needs_region_year": "Perfeito! Agora selecione uma Região ou um Ano",
-  "welcome_title_vehicle_needs_region_model": "Perfeito! Agora selecione uma Região ou um Modelo",
-  "welcome_title_year_needs_region_manufacturer": "Ótimo! Agora selecione uma Região ou Montadora",
-  "welcome_title_year_region_needs_state_manufacturer": "Excelente! Agora selecione um Estado ou uma Montadora",
-  "welcome_title_year_location_needs_manufacturer": "Perfeito! Agora selecione uma Montadora",
-  "welcome_title_year_manufacturer_needs_region_model": "Excelente! Agora selecione uma Região ou um Modelo",
+  "welcome_title_location_needs_state": "Ótimo! Agora selecione um Estado, Montadora ou Ano.",
+  "welcome_title_location_needs_vehicle_details": "Excelente! Agora selecione um Modelo ou Ano para destravar a análise.",
+  "welcome_title_vehicle_needs_model_region_year": "Excelente! Agora selecione um Modelo, Região ou Ano.",
+  "welcome_title_vehicle_region_needs_model_state_year": "Perfeito! Agora selecione um Modelo, Estado ou Ano.",
+  "welcome_title_vehicle_state_needs_model_city_year": "Ótimo! Agora selecione um Modelo, Cidade ou Ano para continuar.",
+  "welcome_title_vehicle_model_needs_year_version_city": "Quase lá! Selecione Ano, Versão ou Cidade para refinar.",
+  "welcome_title_vehicle_city_needs_year_version": "Pronto! Agora selecione um Ano ou Versão para ver os dados.",
+  "welcome_title_year_needs_region_manufacturer": "Ótimo! Agora selecione uma Região ou Montadora.",
   "welcome_subtitle": "Comece selecionando um filtro ao lado para explorar os dados.",
   "welcome_messages_start": [
     "Comece por Local, Veículo ou Ano para descobrir oportunidades de mercado.",
@@ -108,59 +106,43 @@
     "Vamos focar em um mercado específico.",
     "Aproxime para encontrar seu nicho."
   ],
-  "welcome_messages_location_needs_details": [
+  "welcome_messages_location_needs_vehicle_details": [
     "Você está a um passo de distância!",
-    "Selecione uma Cidade para uma visão local, ou uma Montadora/Ano para uma visão temática.",
+    "Selecione um Modelo ou um Ano para visualizar o dashboard.",
     "Vamos cruzar esta localização com dados de veículos.",
     "Este último filtro destravará o dashboard."
   ],
-  "welcome_messages_vehicle_needs_region_year_model": [
+  "welcome_messages_vehicle_needs_model_region_year": [
     "Agora, onde a frota deste veículo está concentrada?",
     "Selecione uma região para ver o tamanho do mercado.",
     "Ou filtre por um Modelo ou Ano específico.",
     "Vamos encontrar as principais oportunidades para esta montadora."
   ],
-  "welcome_messages_vehicle_needs_model": [
-    "Você está quase lá! Qual modelo quer analisar?",
-    "Vamos checar os números para um veículo específico.",
-    "Selecione um ou mais modelos ou um Ano para continuar.",
-    "Quanto mais específico o filtro, mais rica a análise."
+  "welcome_messages_vehicle_region_needs_model_state_year": [
+    "Perfeito! Agora, qual o Modelo mais relevante?",
+    "Ou detalhe para um Estado ou Ano específico.",
+    "Vamos refinar a análise para esta marca e região."
   ],
-  "welcome_messages_vehicle_needs_region_year": [
-    "Ótimo, você selecionou o(s) modelo(s).",
-    "Agora, selecione uma Região para ver a distribuição geográfica.",
-    "Ou escolha um Ano para analisar uma safra específica.",
-    "Vamos detalhar o mercado para estes modelos."
+  "welcome_messages_vehicle_state_needs_model_city_year": [
+    "Excelente! Agora selecione um Modelo para ver a participação dele.",
+    "Ou detalhe para uma Cidade ou Ano específico.",
+    "Vamos ser ainda mais específicos."
   ],
-  "welcome_messages_vehicle_needs_region_model": [
-    "Ótimo, você selecionou o ano.",
-    "Agora, selecione uma Região para ver a distribuição geográfica.",
-    "Ou escolha um ou mais Modelos para analisar.",
-    "Vamos encontrar o mercado para esta safra."
+  "welcome_messages_vehicle_model_needs_year_version_city": [
+    "Selecionou o modelo. Ótimo!",
+    "Agora, refine por Ano ou Versão.",
+    "Ou foque em uma Cidade específica."
+  ],
+  "welcome_messages_vehicle_city_needs_year_version": [
+    "Este é o último passo!",
+    "Selecione um Ano ou ao menos uma Versão para habilitar a análise.",
+    "Vamos ver os dados para esta seleção específica."
   ],
   "welcome_messages_year_needs_region_manufacturer": [
     "Você selecionou o ano. Um ótimo ponto de partida para análise de safra!",
     "Agora, selecione uma Região para ver a distribuição geográfica.",
     "Ou escolha uma Montadora para focar.",
     "Vamos explorar o mercado para veículos deste ano."
-  ],
-  "welcome_messages_year_region_needs_state_manufacturer": [
-    "Ano e Região selecionados!",
-    "Agora, selecione um Estado para uma visão mais granular.",
-    "Ou escolha uma Montadora para analisar dentro desta região.",
-    "Vamos encontrar as oportunidades neste mercado específico."
-  ],
-  "welcome_messages_year_location_needs_manufacturer": [
-    "Você está quase lá!",
-    "Agora, selecione uma Montadora para ver a frota dela daquele ano neste local.",
-    "Este último filtro destravará o dashboard.",
-    "Vamos cruzar os dados."
-  ],
-  "welcome_messages_year_manufacturer_needs_region_model": [
-    "Ano e Montadora selecionados!",
-    "Agora, selecione uma Região para ver a distribuição geográfica.",
-    "Ou escolha um ou mais Modelos para analisar.",
-    "Vamos encontrar o mercado para esta safra e marca."
   ],
   "search_model_placeholder": "Buscar modelo...",
   "no_model_found": "Nenhum modelo encontrado.",
@@ -201,3 +183,5 @@
   "ok_close": "OK, fechar",
   "calculating": "Contabilizando..."
 }
+
+    

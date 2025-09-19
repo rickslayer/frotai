@@ -10,10 +10,9 @@ O sistema de filtros foi redesenhado para guiar o usuário por múltiplos fluxos
 
 A lógica de busca de dados do dashboard (`isSearchEnabled`) é acionada somente quando uma das seguintes condições é atendida:
 1.  **Análise por Localização:** `Região` + `Estado` + (`Modelo` ou `Ano`).
-2.  **Análise por Veículo:** `Montadora` + `Região` + `Modelo`.
-3.  **Análise por Safra:** `Ano` + `Região` + `Modelo`.
+2.  **Análise por Veículo (Geral):** `Montadora` + `Região` + `Modelo`.
+3.  **Análise por Veículo (Detalhada):** `Montadora` + `Região` + `Estado` + `Modelo` + (`Ano` ou `Versão`).
 
-Isso evita buscas excessivamente amplas e lentas, como consultar a frota de um estado inteiro sem especificar um veículo ou ano.
 
 ## 2. Caminhos de Análise e Destaques (`getWelcomeTitleAndHighlights`)
 
@@ -29,20 +28,27 @@ Isso evita buscas excessivamente amplas e lentas, como consultar a frota de um e
     *   O dashboard aguarda a próxima seleção.
 
 2.  **Usuário seleciona `Região` -> `Estado`:**
-    *   **Destaques:** `Cidade`, `Montadora`, `Ano`.
-    *   O dashboard aguarda a próxima seleção.
+    *   **Destaques:** `Modelo`, `Ano`.
+    *   O dashboard aguarda um detalhe de veículo para refinar a busca.
 
 ---
 
 ### Caminho 2: Análise por Veículo (Iniciado com `Montadora`)
 
 1.  **Usuário seleciona `Montadora`:**
-    *   **Destaques:** `Região`, `Ano`, `Modelo`.
+    *   **Destaques:** `Modelo`, `Região`, `Ano`.
 
-2.  **Caminhos secundários a partir daqui:**
-    *   **Seleciona `Modelo`:** Destaques -> `Região`, `Ano`.
-    *   **Seleciona `Região`:** Destaques -> `Modelo`, `Ano`.
-    *   **Seleciona `Ano`:** Destaques -> `Região`, `Modelo`.
+2.  **Seleciona `Região`:**
+    *   **Destaques:** `Modelo`, `Estado`, `Ano`.
+
+3.  **Seleciona `Estado`:**
+    *   **Destaques:** `Modelo`, `Cidade`, `Ano`.
+
+4.  **Seleciona `Modelo`:**
+    *   **Destaques:** `Ano`, `Versão`, `Cidade`.
+
+5.  **Seleciona `Cidade`:**
+    *   **Destaques:** `Ano`, `Versão`.
 
 ---
 
@@ -51,9 +57,7 @@ Isso evita buscas excessivamente amplas e lentas, como consultar a frota de um e
 1.  **Usuário seleciona `Ano`:**
     *   **Destaques:** `Região`, `Montadora`.
 
-2.  **Caminhos secundários a partir daqui:**
-    *   **Seleciona `Região`:** Destaques -> `Estado`, `Montadora`.
-    *   **Seleciona `Montadora`:** Destaques -> `Região`, `Modelo`.
+---
 
 ## 3. Condições para Liberação da Dashboard (`isSearchEnabled`)
 
@@ -61,6 +65,8 @@ A busca principal que renderiza o dashboard só é disparada quando uma das segu
 
 1.  **`Região` E `Estado` E (`Modelo` > 0 OU `Ano`)**
 2.  **`Montadora` E `Região` E `Modelo` > 0**
-3.  **`Ano` E `Região` E `Modelo` > 0**
+3.  **`Montadora` E `Região` E `Estado` E `Modelo` > 0 E (`Ano` OU `Versão` > 0)**
 
 Esta arquitetura de múltiplos funis guiados oferece um equilíbrio ideal entre flexibilidade, performance e experiência do usuário.
+
+    
