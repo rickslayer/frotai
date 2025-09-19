@@ -1,113 +1,66 @@
 # Documentação da Lógica de Filtros - Frota.AI
 
-Este documento descreve o funcionamento detalhado do sistema de filtros, que é baseado em dois caminhos de análise principais: **por Localização** e **por Veículo**.
+Este documento descreve o funcionamento detalhado do sistema de filtros e destaques, que é baseado em três caminhos de análise principais: **por Localização**, **por Veículo** e **por Ano/Safra**.
 
 **Data do Ponto de Restauração:** 2024-10-28
 
 ## 1. Visão Geral e Objetivo
 
-O sistema de filtros foi redesenhado para guiar o usuário por dois fluxos de análise distintos, garantindo performance e clareza nos resultados. A interface agora apresenta abas ("Local" e "Veículo") para tornar essa escolha explícita.
+O sistema de filtros foi redesenhado para guiar o usuário por múltiplos fluxos de análise, garantindo performance e clareza nos resultados. A interface agora destaca as próximas seleções mais lógicas para o usuário, evitando buscas excessivamente amplas.
 
-A lógica de busca de dados do dashboard (`getFleetData`) é acionada somente quando uma das seguintes condições é atendida:
-1.  **Análise por Localização:** `Região` **E** `Estado` **E** (`Modelo` **ou** `Ano`) estão selecionados.
-2.  **Análise por Veículo:** `Montadora` **E** `Região` **E** `Modelo` (pelo menos um) estão selecionados.
+A lógica de busca de dados do dashboard (`isSearchEnabled`) é acionada somente quando uma das seguintes condições é atendida:
+1.  **Análise por Localização:** `Região` + `Estado` + (`Modelo` ou `Ano`).
+2.  **Análise por Veículo:** `Montadora` + `Região` + `Modelo`.
+3.  **Análise por Safra:** `Ano` + `Região` + `Modelo`.
 
-Isso evita buscas excessivamente amplas e lentas, como consultar a frota de uma região inteira sem mais especificações.
+Isso evita buscas excessivamente amplas e lentas, como consultar a frota de um estado inteiro sem especificar um veículo ou ano.
 
-## 2. Caminhos de Análise e Interação
+## 2. Caminhos de Análise e Destaques (`getWelcomeTitleAndHighlights`)
 
-### Caminho 1: Análise por Localização
+### Tela Principal (Nenhum Filtro)
+-   **Destaques:** `Região`, `Montadora`, `Ano`.
 
-Este é o fluxo ideal para entender a frota de uma área geográfica específica.
+---
 
-1.  **Seleção da Região:**
-    *   O usuário seleciona uma **Região**.
-    *   **Ação:** O dashboard aguarda a seleção de um estado.
+### Caminho 1: Análise por Localização (Iniciado com `Região`)
 
-2.  **Seleção do Estado:**
-    *   O usuário seleciona um **Estado**.
-    *   **Ação:** O dashboard agora aguarda a seleção de um `Modelo` ou `Ano` para iniciar a busca.
+1.  **Usuário seleciona `Região`:**
+    *   **Destaques:** `Estado`, `Montadora`, `Ano`.
+    *   O dashboard aguarda a próxima seleção.
 
-3.  **Seleção do Modelo ou Ano:**
-    *   O usuário seleciona um **Modelo** ou um **Ano**.
-    *   **BUSCA PRINCIPAL:** A condição (`região` + `estado` + `modelo`/`ano`) é atendida. A função `getFleetData` é chamada, e o dashboard é renderizado.
+2.  **Usuário seleciona `Região` -> `Estado`:**
+    *   **Destaques:** `Cidade`, `Montadora`, `Ano`.
+    *   O dashboard aguarda a próxima seleção.
 
-### Caminho 2: Análise por Veículo
+---
 
-Este fluxo é ideal para entender a distribuição e as características de uma frota de veículos específica em uma grande área.
+### Caminho 2: Análise por Veículo (Iniciado com `Montadora`)
 
-1.  **Seleção da Montadora:**
-    *   O usuário seleciona uma **Montadora**.
-    *   **Ação:** O dashboard aguarda a seleção de uma região.
+1.  **Usuário seleciona `Montadora`:**
+    *   **Destaques:** `Região`, `Ano`, `Modelo`.
 
-2.  **Seleção da Região:**
-    *   O usuário seleciona uma **Região**.
-    *   **Ação:** O dashboard aguarda a seleção de um modelo.
+2.  **Caminhos secundários a partir daqui:**
+    *   **Seleciona `Modelo`:** Destaques -> `Região`, `Ano`.
+    *   **Seleciona `Região`:** Destaques -> `Modelo`, `Ano`.
+    *   **Seleciona `Ano`:** Destaques -> `Região`, `Modelo`.
 
-3.  **Seleção do Modelo:**
-    *   O usuário seleciona um ou mais **Modelos**.
-    *   **BUSCA PRINCIPAL:** A condição (`montadora` + `região` + `modelo`) é atendida. A função `getFleetData` é chamada.
+---
 
-## 3. Lógica de Cascata e Limpeza
+### Caminho 3: Análise por Safra (Iniciado com `Ano`)
 
-A lógica de cascata hierárquica continua funcionando dentro de cada caminho para garantir que apenas combinações válidas sejam exibidas.
+1.  **Usuário seleciona `Ano`:**
+    *   **Destaques:** `Região`, `Montadora`.
 
--   **`handleFilterChange`**: Orquestra a limpeza dos filtros "filhos" quando um "pai" é alterado.
-    -   Mudar `Região` -> Limpa `Estado` e `Cidade`.
-    -   Mudar `Estado` -> Limpa `Cidade`.
-    -   Mudar `Montadora` -> Limpa `Modelo` e `Versão`.
-    -   Mudar `Modelo` -> Limpa `Versão`.
+2.  **Caminhos secundários a partir daqui:**
+    *   **Seleciona `Região`:** Destaques -> `Estado`, `Montadora`.
+    *   **Seleciona `Montadora`:** Destaques -> `Região`, `Modelo`.
 
--   **`useEffect` (para buscar opções dinâmicas)**: Monitora mudanças nos filtros e chama a API `/api/filters` para buscar as novas listas de opções (`models`, `versions`, `years`, `cities`, etc.) e atualizar o estado `filterOptions`.
+## 3. Condições para Liberação da Dashboard (`isSearchEnabled`)
 
-## 4. Componentes e API
+A busca principal que renderiza o dashboard só é disparada quando uma das seguintes combinações é satisfeita:
 
-### Frontend: `src/components/dashboard-client.tsx`
+1.  **`Região` E `Estado` E (`Modelo` > 0 OU `Ano`)**
+2.  **`Montadora` E `Região` E `Modelo` > 0**
+3.  **`Ano` E `Região` E `Modelo` > 0**
 
--   **`isSearchEnabled`**: Contém a lógica condicional principal: `(region && state && (model.length > 0 || year)) || (manufacturer && region && model.length > 0)`.
--   **`getWelcomeTitleAndHighlights`**: Determina qual texto e quais filtros destacar na tela de boas-vindas para guiar o usuário na próxima seleção.
--   **Renderização Condicional:** Exibe o `WelcomePlaceholder` se nenhuma das condições de busca for atendida, guiando o usuário sobre qual filtro selecionar a seguir.
-
-### API: `src/app/api/filters/route.ts` e `src/app/api/carros/route.ts`
-
--   As APIs continuam a funcionar como antes, respondendo às consultas com base nos filtros fornecidos. A mudança principal está no *quando* o frontend decide chamar a API de dados principais.
-
-## 5. Fluxo de Dados (Exemplo)
-
-**Cenário: Análise por Localização**
-```
-Usuário seleciona Região "Sudeste"
-       |
-       v
-[Frontend]
-  - Estado do dashboard: { region: 'Sudeste', ... }
-  - NENHUMA busca de dados.
-  - Tela de boas-vindas pede para selecionar um Estado.
-       |
-       v
-Usuário seleciona Estado "São Paulo"
-       |
-       v
-[Frontend]
-  - Estado do dashboard: { region: 'Sudeste', state: 'SP', ... }
-  - NENHUMA busca de dados.
-  - Tela de boas-vindas pede para selecionar um Modelo ou Ano.
-       |
-       v
-Usuário seleciona Ano "2020"
-       |
-       v
-[Frontend]
-  - Condição (region && state && year) atendida.
-  - Chama getFleetData({ region: 'Sudeste', state: 'SP', year: 2020 })
-       |
-       v
-[API] /api/carros?region=Sudeste&state=SP&year=2020
-  - Retorna dados agregados para SP no ano de 2020.
-       |
-       v
-[Frontend]
-  - Renderiza o dashboard completo.
-```
-
-Esta arquitetura de duplo funil oferece um equilíbrio ideal entre flexibilidade, performance e experiência do usuário.
+Esta arquitetura de múltiplos funis guiados oferece um equilíbrio ideal entre flexibilidade, performance e experiência do usuário.

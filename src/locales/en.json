@@ -86,12 +86,18 @@
   "welcome_greeting": "Welcome to Frota.AI!",
   "welcome_title_start": "How do you want to start your analysis?",
   "welcome_title_location_needs_state": "Great! Now select a State to continue",
-  "welcome_title_vehicle_needs_region": "Excellent! Now select a Region to see the distribution",
+  "welcome_title_location_needs_details": "Excellent! Now select a City, a Manufacturer, or a Year.",
+  "welcome_title_vehicle_needs_region_year_model": "Excellent! Now select a Region, Year, or Model",
   "welcome_title_vehicle_needs_model": "Perfect! Now select a Model to start the analysis",
-  "welcome_title_location_needs_vehicle_details": "Getting there! Select a Model or a Year to see the data",
+  "welcome_title_vehicle_needs_region_year": "Perfect! Now select a Region or a Year",
+  "welcome_title_vehicle_needs_region_model": "Perfect! Now select a Region or a Model",
+  "welcome_title_year_needs_region_manufacturer": "Great! Now select a Region or a Manufacturer",
+  "welcome_title_year_region_needs_state_manufacturer": "Excellent! Now select a State or a Manufacturer",
+  "welcome_title_year_location_needs_manufacturer": "Perfect! Now select a Manufacturer",
+  "welcome_title_year_manufacturer_needs_region_model": "Excellent! Now select a Region or a Model",
   "welcome_subtitle": "Start by selecting a filter on the side to explore the data.",
   "welcome_messages_start": [
-    "Start by Location to see the fleet in an area, or by Vehicle to see its distribution.",
+    "Start by Location, Vehicle, or Year to discover market opportunities.",
     "Analyzing millions of records for you...",
     "Where are your next sales opportunities?",
     "Turning data into profitable decisions."
@@ -102,11 +108,17 @@
     "Let's focus on a specific market.",
     "Drill down to find your niche."
   ],
-  "welcome_messages_vehicle_needs_region": [
+  "welcome_messages_location_needs_details": [
+    "You are one step away!",
+    "Select a City for a local view, or a Manufacturer/Year for a thematic one.",
+    "Let's cross-reference this location with vehicle data.",
+    "This last filter will unlock the dashboard."
+  ],
+  "welcome_messages_vehicle_needs_region_year_model": [
     "Now, where is this vehicle's fleet concentrated?",
     "Select a region to see the market size.",
-    "Let's find the main states for this vehicle.",
-    "Understanding the geographic potential."
+    "Or filter by a specific Model or Year.",
+    "Let's find the main opportunities for this manufacturer."
   ],
   "welcome_messages_vehicle_needs_model": [
     "You're almost there! Which model do you want to analyze?",
@@ -114,11 +126,41 @@
     "Select one or more models to continue.",
     "The more specific the filter, the richer the analysis."
   ],
-  "welcome_messages_location_needs_vehicle_details": [
-    "You are one step away!",
-    "Select a vehicle model to see its relevance in this location.",
-    "Or choose a manufacturing year to see the fleet's age profile.",
-    "This last filter will unlock the dashboard."
+  "welcome_messages_vehicle_needs_region_year": [
+    "Great, you have selected the model(s).",
+    "Now, select a Region to see the geographic distribution.",
+    "Or choose a Year to analyze a specific vintage.",
+    "Let's pinpoint the market for these models."
+  ],
+  "welcome_messages_vehicle_needs_region_model": [
+    "Great, you have selected the year.",
+    "Now, select a Region to see the geographic distribution.",
+    "Or choose one or more Models to analyze.",
+    "Let's find the market for this vintage."
+  ],
+  "welcome_messages_year_needs_region_manufacturer": [
+    "You've selected the year. A great starting point for vintage analysis!",
+    "Now, select a Region to see the geographic distribution.",
+    "Or choose a Manufacturer to focus on.",
+    "Let's explore the market for vehicles from this year."
+  ],
+  "welcome_messages_year_region_needs_state_manufacturer": [
+    "Year and Region selected!",
+    "Now, select a State for a more granular view.",
+    "Or choose a Manufacturer to analyze within this region.",
+    "Let's find the opportunities in this specific market."
+  ],
+  "welcome_messages_year_location_needs_manufacturer": [
+    "You're almost there!",
+    "Now, select a Manufacturer to see their fleet from that year in this location.",
+    "This last filter will unlock the dashboard.",
+    "Let's cross-reference the data."
+  ],
+  "welcome_messages_year_manufacturer_needs_region_model": [
+    "Year and Manufacturer selected!",
+    "Now, select a Region to see the geographic distribution.",
+    "Or choose one or more Models to analyze.",
+    "Let's find the market for this vintage and brand."
   ],
   "search_model_placeholder": "Search model...",
   "no_model_found": "No model found.",
@@ -159,5 +201,3 @@
   "ok_close": "OK, close",
   "calculating": "Calculating..."
 }
-
-    
