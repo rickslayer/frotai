@@ -8,7 +8,6 @@ import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
 import { useTranslation } from 'react-i18next';
-import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import WelcomePlaceholder from './dashboard/welcome-placeholder';
 import RegionalFleetAnalysis from './dashboard/regional-fleet-analysis';
 import TopModelsChart from './dashboard/top-models-chart';
@@ -24,6 +23,7 @@ import html2canvas from 'html2canvas';
 import { getFleetData, getInitialFilterOptions } from '@/lib/api-logic';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
+import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 
 
 const emptyDashboardData: DashboardData = {
@@ -76,7 +76,7 @@ const DashboardClient: FC = () => {
     const vehiclePath = manufacturer && region && model.length > 0;
     // Path 2: Location-focused analysis (requires vehicle detail)
     const locationPath = region && state && (model.length > 0 || !!year);
-    return vehiclePath || locationPath;
+    return !!(vehiclePath || locationPath);
   }, [debouncedFilters]);
   
   const isFiltered = useMemo(() => {
@@ -547,6 +547,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
-    

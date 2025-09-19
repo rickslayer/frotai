@@ -102,5 +102,3 @@ Usuário seleciona Modelo "Strada"
 ```
 
 Esta arquitetura de duplo funil oferece um equilíbrio ideal entre flexibilidade, performance e experiência do usuário.
-
-    
