@@ -71,8 +71,19 @@ const DashboardClient: FC = () => {
   
     const isSearchEnabled = useMemo(() => {
         const { region, state, manufacturer, model, year } = debouncedFilters;
-        // Rule: Enable search if Region and State are selected, OR Manufacturer and Model are selected, OR Year and Region are selected.
-        return (region && state) || (manufacturer && model.length > 0) || (!!year && region);
+        // FLUXO 01: Inicia por Localização. Libera com (Região + Estado) E (Modelo ou Ano)
+        if (region && state && (model.length > 0 || year)) {
+            return true;
+        }
+        // FLUXO 02: Inicia por Veículo. Libera com (Montadora + Região) E (Modelo)
+        if (manufacturer && region && model.length > 0) {
+            return true;
+        }
+        // FLUXO 03: Inicia por Ano. Libera com (Ano + Região + Montadora) E (Modelo)
+        if (year && region && manufacturer && model.length > 0) {
+            return true;
+        }
+        return false;
     }, [debouncedFilters]);
   
   const isFiltered = useMemo(() => {
@@ -380,21 +391,66 @@ const DashboardClient: FC = () => {
       setIsComparing(false);
   }
 
-    const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
-        if (!isSearchEnabled) {
+    const welcomeState = useMemo(() => {
+        const { region, state, manufacturer, model, year } = filters;
+        
+        // Fluxo 03: Iniciado por Ano
+        if (year && !region && !manufacturer) {
+            return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['region', 'manufacturer'] };
+        }
+        if (year && region && !state && !manufacturer) {
+            return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['state', 'manufacturer'] };
+        }
+        if (year && region && state && !manufacturer) {
+             return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['manufacturer', 'city'] };
+        }
+        if (year && region && state && manufacturer && model.length === 0) {
+             return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['model', 'city'] };
+        }
+        if (year && region && state && manufacturer && model.length > 0) {
+            return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['city'] };
+        }
+
+
+        // Fluxo 02: Iniciado por Veículo (Montadora)
+        if (manufacturer && !region && !year && model.length === 0) {
+            return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['region', 'year', 'model'] };
+        }
+        if (manufacturer && year && !region && model.length === 0) {
+            return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['region', 'model'] };
+        }
+        if (manufacturer && region && !year && model.length === 0) {
+            return { titleKey: 'welcome_title_vehicle_region_needs_model_state_year', highlights: ['model', 'state', 'year'] };
+        }
+
+
+        // Fluxo 01: Iniciado por Local (Região)
+        if (region && !state) {
+            return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer', 'year'] };
+        }
+        if (region && state && !manufacturer) {
+            return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['city', 'manufacturer', 'year'] };
+        }
+        if (region && state && manufacturer && model.length === 0 && !year) {
+             return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
+        }
+
+        // Tela Principal
+        if (!isFiltered) {
             return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
         }
-        return { titleKey: 'welcome_title_start', highlights: [] };
-    };
 
+        // Condição padrão se nenhuma das anteriores corresponder
+        return { titleKey: 'welcome_title_start', highlights: [] };
+    }, [filters, isFiltered]);
   
   useEffect(() => {
-    const { highlights } = getWelcomeTitleAndHighlights();
-    setHighlightedFilters(highlights);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, isSearchEnabled]);
-
-  const { titleKey: welcomeTitleKey } = getWelcomeTitleAndHighlights();
+    if (!isSearchEnabled) {
+      setHighlightedFilters(welcomeState.highlights);
+    } else {
+      setHighlightedFilters([]);
+    }
+  }, [welcomeState, isSearchEnabled]);
 
   const renderContent = () => {
     if (isLoading && !isPending) {
@@ -406,7 +462,7 @@ const DashboardClient: FC = () => {
     }
     
     if (!isSearchEnabled) {
-        return <WelcomePlaceholder titleKey={welcomeTitleKey} />;
+        return <WelcomePlaceholder titleKey={welcomeState.titleKey} />;
     }
     
     if (isPending) {
@@ -531,3 +587,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
