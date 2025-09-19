@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import WelcomePlaceholder from './dashboard/welcome-placeholder';
 import RegionalFleetAnalysis from './dashboard/regional-fleet-analysis';
+import TopModelsChart from './dashboard/top-models-chart';
 import FleetByYearChart from './dashboard/fleet-by-year-chart';
 import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
@@ -461,6 +462,9 @@ const DashboardClient: FC = () => {
                     total={dashboardData.totalVehicles} 
                     selectedRegion={filters.region}
                 />
+            </div>
+             <div id="top-models-chart">
+                <TopModelsChart data={dashboardData.topModelsChart} />
             </div>
         </div>
 
