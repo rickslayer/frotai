@@ -87,6 +87,8 @@
   "welcome_title_start": "How do you want to start your analysis?",
   "welcome_title_location_needs_state": "Great! Now select a State to continue",
   "welcome_title_vehicle_needs_region": "Excellent! Now select a Region to see the distribution",
+  "welcome_title_vehicle_needs_model": "Perfect! Now select a Model to start the analysis",
+  "welcome_title_location_needs_vehicle_details": "Getting there! Select a Model or a Year to see the data",
   "welcome_subtitle": "Start by selecting a filter on the side to explore the data.",
   "welcome_messages_start": [
     "Start by Location to see the fleet in an area, or by Vehicle to see its distribution.",
@@ -105,6 +107,18 @@
     "Select a region to see the market size.",
     "Let's find the main states for this vehicle.",
     "Understanding the geographic potential."
+  ],
+  "welcome_messages_vehicle_needs_model": [
+    "You're almost there! Which model do you want to analyze?",
+    "Let's check the numbers for a specific vehicle.",
+    "Select one or more models to continue.",
+    "The more specific the filter, the richer the analysis."
+  ],
+  "welcome_messages_location_needs_vehicle_details": [
+    "You are one step away!",
+    "Select a vehicle model to see its relevance in this location.",
+    "Or choose a manufacturing year to see the fleet's age profile.",
+    "This last filter will unlock the dashboard."
   ],
   "search_model_placeholder": "Search model...",
   "no_model_found": "No model found.",
@@ -145,3 +159,5 @@
   "ok_close": "OK, close",
   "calculating": "Calculating..."
 }
+
+    

@@ -70,11 +70,12 @@ const DashboardClient: FC = () => {
   const [highlightedFilters, setHighlightedFilters] = useState<Array<keyof Filters>>([]);
   
   const isSearchEnabled = useMemo(() => {
-    const { region, state, manufacturer, model } = debouncedFilters;
-    // Path 1: Vehicle analysis
-    if (manufacturer && region) return true;
-    // Path 2: Location analysis
-    if (region && state) return true;
+    const { region, state, manufacturer, model, year } = debouncedFilters;
+    // Path 1: Vehicle analysis - manufacturer, region, and at least one model
+    if (manufacturer && region && model.length > 0) return true;
+    // Path 2: Location analysis - region, state, and either a model or a year
+    if (region && state && (model.length > 0 || year)) return true;
+
     return false;
   }, [debouncedFilters]);
   
@@ -383,16 +384,26 @@ const DashboardClient: FC = () => {
   }
 
  const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
-    const { region, state, manufacturer } = filters;
+    const { region, state, manufacturer, model } = filters;
 
+    // Vehicle Path
     if (manufacturer && !region) {
       return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
     }
-    if (region && !state && !manufacturer) {
-      return { titleKey: 'welcome_title_location_needs_state', highlights: ['state'] };
+    if (manufacturer && region && model.length === 0) {
+      return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model'] };
+    }
+
+    // Location Path
+    if (region && !state) {
+        return { titleKey: 'welcome_title_location_needs_state', highlights: ['state'] };
+    }
+    if (region && state && !model.length && !filters.year) {
+        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
     }
     
-    return { titleKey: 'welcome_title_start', highlights: [] };
+    // Initial State
+    return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };
 };
   
   useEffect(() => {
@@ -541,3 +552,5 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
+
+    
