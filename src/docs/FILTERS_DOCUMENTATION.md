@@ -9,9 +9,9 @@ Este documento descreve o funcionamento detalhado do sistema de filtros e destaq
 O sistema de filtros foi redesenhado para guiar o usuário por múltiplos fluxos de análise, garantindo performance e clareza nos resultados. A interface agora destaca as próximas seleções mais lógicas para o usuário, evitando buscas excessivamente amplas.
 
 A lógica de busca de dados do dashboard (`isSearchEnabled`) é acionada somente quando uma das seguintes condições é atendida:
-1.  **Análise por Localização:** `Região` + `Estado` + (`Modelo` ou `Ano`).
-2.  **Análise por Veículo (Geral):** `Montadora` + `Região` + `Modelo`.
-3.  **Análise por Veículo (Detalhada):** `Montadora` + `Região` + `Estado` + `Modelo` + (`Ano` ou `Versão`).
+1.  **Análise por Localização:** `Região` + `Estado`.
+2.  **Análise por Veículo:** `Montadora` + `Modelo`.
+3.  **Análise por Safra:** `Ano` + `Região`.
 
 
 ## 2. Caminhos de Análise e Destaques (`getWelcomeTitleAndHighlights`)
@@ -25,30 +25,25 @@ A lógica de busca de dados do dashboard (`isSearchEnabled`) é acionada somente
 
 1.  **Usuário seleciona `Região`:**
     *   **Destaques:** `Estado`, `Montadora`, `Ano`.
-    *   O dashboard aguarda a próxima seleção.
 
-2.  **Usuário seleciona `Região` -> `Estado`:**
-    *   **Destaques:** `Modelo`, `Ano`.
-    *   O dashboard aguarda um detalhe de veículo para refinar a busca.
+2.  **Usuário seleciona `Estado`:**
+    *   **Destaques:** `Cidade`, `Montadora`, `Ano`.
 
 ---
 
 ### Caminho 2: Análise por Veículo (Iniciado com `Montadora`)
 
 1.  **Usuário seleciona `Montadora`:**
-    *   **Destaques:** `Modelo`, `Região`, `Ano`.
+    *   **Destaques:** `Região`, `Ano`, `Modelo`.
 
-2.  **Seleciona `Região`:**
-    *   **Destaques:** `Modelo`, `Estado`, `Ano`.
+2.  **Seleciona `Modelo`:**
+    *   **Destaques:** `Região`, `Ano`.
 
-3.  **Seleciona `Estado`:**
-    *   **Destaques:** `Modelo`, `Cidade`, `Ano`.
+3.  **Seleciona `Região`:**
+    *   **Destaques:** `Modelo`, `Ano`.
 
-4.  **Seleciona `Modelo`:**
-    *   **Destaques:** `Ano`, `Versão`, `Cidade`.
-
-5.  **Seleciona `Cidade`:**
-    *   **Destaques:** `Ano`, `Versão`.
+4.  **Seleciona `Ano`:**
+    *   **Destaques:** `Região`, `Modelo`.
 
 ---
 
@@ -57,16 +52,9 @@ A lógica de busca de dados do dashboard (`isSearchEnabled`) é acionada somente
 1.  **Usuário seleciona `Ano`:**
     *   **Destaques:** `Região`, `Montadora`.
 
+2.  **Seleciona `Região`:**
+    *   **Destaques:** `Estado`, `Montadora`.
+
+3.  **Seleciona `Montadora`:**
+    *   **Destaques:** `Região`, `Modelo`.
 ---
-
-## 3. Condições para Liberação da Dashboard (`isSearchEnabled`)
-
-A busca principal que renderiza o dashboard só é disparada quando uma das seguintes combinações é satisfeita:
-
-1.  **`Região` E `Estado` E (`Modelo` > 0 OU `Ano`)**
-2.  **`Montadora` E `Região` E `Modelo` > 0**
-3.  **`Montadora` E `Região` E `Estado` E `Modelo` > 0 E (`Ano` OU `Versão` > 0)**
-
-Esta arquitetura de múltiplos funis guiados oferece um equilíbrio ideal entre flexibilidade, performance e experiência do usuário.
-
-    

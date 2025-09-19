@@ -70,20 +70,14 @@ const DashboardClient: FC = () => {
   const [highlightedFilters, setHighlightedFilters] = useState<Array<keyof Filters>>([]);
   
   const isSearchEnabled = useMemo(() => {
-    const { region, state, manufacturer, model, year, version } = debouncedFilters;
-    
-    // Path 1: Location-based search requires Region, State, and either Model or Year.
-    const locationPath = region && state && (model.length > 0 || year);
-    
-    // Path 2: Vehicle-based search requires Manufacturer, Region, and at least one Model.
-    const vehiclePath = manufacturer && region && model.length > 0;
+    const { region, state, manufacturer, model, year } = debouncedFilters;
 
-    // Path 3: Detailed vehicle search requires more specifics
-    const detailedVehiclePath = manufacturer && region && state && model.length > 0 && (year || version.length > 0);
+    const locationPath = region && state;
+    const vehiclePath = manufacturer && model.length > 0;
+    const yearPath = year && region;
 
-    return !!(locationPath || vehiclePath || detailedVehiclePath);
-
-  }, [debouncedFilters]);
+    return !!(locationPath || vehiclePath || yearPath);
+}, [debouncedFilters]);
   
   const isFiltered = useMemo(() => {
     return Object.values(filters).some(value => {
@@ -389,32 +383,29 @@ const DashboardClient: FC = () => {
       setIsComparing(false);
   }
 
- const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
-    const { region, state, city, manufacturer, model, year, version } = filters;
+  const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
+    const { region, state, manufacturer, model, year } = filters;
 
     // Flow 1: Started with Region
-    if (region && !state && !manufacturer) {
+    if (region && !state && !manufacturer && !year) {
         return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer', 'year'] };
     }
-    if (region && state && !manufacturer && model.length === 0 && !year) {
-        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
+    if (region && state) {
+        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['city', 'manufacturer', 'year'] };
     }
-
+    
     // Flow 2: Started with Manufacturer
     if (manufacturer && !region && !year && model.length === 0) {
-        return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['model', 'region', 'year'] };
+        return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['region', 'year', 'model'] };
     }
-    if (manufacturer && region && !state && model.length === 0 && !year) {
-        return { titleKey: 'welcome_title_vehicle_region_needs_model_state_year', highlights: ['model', 'state', 'year'] };
+    if (manufacturer && model.length > 0 && !region && !year) {
+         return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['region', 'year'] };
     }
-    if (manufacturer && region && state && !city && model.length === 0 && !year) {
-        return { titleKey: 'welcome_title_vehicle_state_needs_model_city_year', highlights: ['model', 'city', 'year'] };
+    if (manufacturer && region && !model.length && !year) {
+         return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['model', 'year'] };
     }
-    if (manufacturer && region && state && model.length > 0 && !year && version.length === 0) {
-        return { titleKey: 'welcome_title_vehicle_model_needs_year_version_city', highlights: ['year', 'version', 'city'] };
-    }
-    if (manufacturer && region && state && model.length > 0 && city && !year && version.length === 0) {
-        return { titleKey: 'welcome_title_vehicle_city_needs_year_version', highlights: ['year', 'version'] };
+     if (manufacturer && year && !region && !model.length) {
+         return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['region', 'model'] };
     }
 
 
@@ -425,7 +416,8 @@ const DashboardClient: FC = () => {
 
     // Default State
     return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
-  };
+};
+
   
   useEffect(() => {
     if (!isSearchEnabled) {
