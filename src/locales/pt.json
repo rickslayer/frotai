@@ -87,8 +87,6 @@
   "welcome_title_start": "Como deseja iniciar sua análise?",
   "welcome_title_location_needs_state": "Ótimo! Agora selecione um Estado para prosseguir",
   "welcome_title_vehicle_needs_region": "Excelente! Agora selecione uma Região para ver a distribuição",
-  "welcome_title_vehicle_needs_model": "Ótimo! Agora selecione um modelo para continuar",
-  "welcome_title_location_needs_vehicle_details": "Perfeito! Agora, escolha uma Montadora, Modelo ou Ano para ver os dados",
   "welcome_subtitle": "Comece selecionando um filtro ao lado para explorar os dados.",
   "welcome_messages_start": [
     "Comece por Localização para ver a frota em uma área, ou por Veículo para ver sua distribuição.",
@@ -107,17 +105,6 @@
     "Selecione uma região para ver o tamanho do mercado.",
     "Vamos encontrar os principais estados para este veículo.",
     "Entendendo o potencial geográfico."
-  ],
-  "welcome_messages_vehicle_needs_model": [
-    "Selecione ao menos um modelo para realizar a análise.",
-    "Quais modelos te interessam?",
-    "Vamos focar a análise em um modelo específico."
-  ],
-  "welcome_messages_location_needs_vehicle_details": [
-    "Você está quase lá! Selecione uma Montadora, um ou mais Modelos ou um Ano específico.",
-    "Qual o foco da sua análise neste estado?",
-    "Vamos adicionar detalhes do veículo para obter os resultados.",
-    "Escolha uma montadora, modelo ou ano para destravar os dados."
   ],
   "search_model_placeholder": "Buscar modelo...",
   "no_model_found": "Nenhum modelo encontrado.",
