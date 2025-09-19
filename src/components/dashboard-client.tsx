@@ -28,8 +28,8 @@ import { useDebounce } from '@/hooks/use-debounce';
 
 const emptyDashboardData: DashboardData = {
   totalVehicles: 0,
-  topModel: { name: '-', quantity: 0 },
-  topManufacturer: { name: '-', quantity: 0 },
+  topOverallModel: { name: '-', quantity: 0 },
+  topOverallManufacturer: { name: '-', quantity: 0 },
   topRegion: undefined,
   topState: undefined,
   topCity: undefined,
@@ -73,9 +73,9 @@ const DashboardClient: FC = () => {
   const isSearchEnabled = useMemo(() => {
     const { region, state, manufacturer, model, year } = debouncedFilters;
     // Path 1: Focused on Location
-    const locationPath = region && state && (year || model.length > 0);
+    const locationPath = region && state;
     // Path 2: Focused on Vehicle
-    const vehiclePath = manufacturer && region && model.length > 0;
+    const vehiclePath = manufacturer && region;
     return locationPath || vehiclePath;
   }, [debouncedFilters]);
   
@@ -227,8 +227,8 @@ const DashboardClient: FC = () => {
     };
     
     addSection(t('total_vehicles'), dashboardData.totalVehicles.toLocaleString());
-    addSection(t('main_manufacturer'), dashboardData.topManufacturer?.name || '-');
-    addSection(t('main_model'), dashboardData.topModel.name);
+    addSection(t('main_overall_manufacturer'), dashboardData.topOverallManufacturer?.name || '-');
+    addSection(t('main_overall_model'), dashboardData.topOverallModel.name);
     addSection(t('main_city'), dashboardData.topCity?.name || '-');
     y += 5;
 
@@ -385,38 +385,14 @@ const DashboardClient: FC = () => {
  const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
     const { region, state, city, manufacturer, model, version, year } = filters;
 
-    // Caminho 1: Iniciando por Localização
-    if (region && state && city && manufacturer) {
-        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
+    if (manufacturer) {
+      return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
     }
-    if (region && state && city) {
-        return { titleKey: 'welcome_title_start', highlights: ['manufacturer', 'year'] };
-    }
-     if (region && state) {
-        return { titleKey: 'welcome_title_start', highlights: ['city', 'manufacturer', 'year'] };
-    }
-    if (region && !state && !manufacturer) {
-        return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
+    if (region) {
+      return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer'] };
     }
     
-    // Caminho 2: Iniciando por Veículo
-    if (manufacturer && model.length > 0 && version.length > 0) {
-        return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
-    }
-    if (manufacturer && model.length > 0) {
-        return { titleKey: 'welcome_title_start', highlights: ['version', 'region'] };
-    }
-    if (manufacturer && !region) {
-        return { titleKey: 'welcome_title_start', highlights: ['model', 'region', 'year'] };
-    }
-
-    // Caminhos Cruzados
-    if (region && manufacturer) {
-        return { titleKey: 'welcome_title_start', highlights: ['state', 'model'] };
-    }
-
-    // Ponto de Partida
-    return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
+    return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };
 };
   
   useEffect(() => {

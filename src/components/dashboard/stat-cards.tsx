@@ -4,7 +4,7 @@
 import type { FC } from 'react';
 import type { DashboardData, TopEntity } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users2, Map, Globe, Flag, Star } from 'lucide-react';
+import { Users2, Map, Globe, Flag, Star, Car } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '../ui/skeleton';
 
@@ -44,15 +44,13 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
   const { t } = useTranslation();
   
   const isCardLoading = (entity: TopEntity | null | undefined) => {
-    // If the main data is loading, all cards are loading.
     if (isLoading) return true;
-    // If data has loaded, but a specific entity is undefined, it means it's still being calculated.
     if (entity === undefined) return true;
     return false;
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-3 md:gap-8 lg:grid-cols-5">
       <StatCard
         title={t('total_vehicles')}
         value={isLoading ? null : data.totalVehicles.toLocaleString()}
@@ -61,11 +59,18 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
         isLoading={isLoading}
       />
       <StatCard
-        title={t('main_region')}
-        value={data.topRegion?.name ? t(data.topRegion.name as any) : null}
-        description={t('main_region_description')}
-        icon={<Globe className="h-4 w-4 text-muted-foreground" />}
-        isLoading={isCardLoading(data.topRegion)}
+        title={t('main_overall_manufacturer')}
+        value={data.topOverallManufacturer?.name || null}
+        description={t('main_overall_manufacturer_description')}
+        icon={<Star className="h-4 w-4 text-muted-foreground" />}
+        isLoading={isCardLoading(data.topOverallManufacturer)}
+      />
+      <StatCard
+        title={t('main_overall_model')}
+        value={data.topOverallModel?.name || null}
+        description={t('main_overall_model_description')}
+        icon={<Car className="h-4 w-4 text-muted-foreground" />}
+        isLoading={isCardLoading(data.topOverallModel)}
       />
       <StatCard
         title={t('main_state')}

@@ -98,33 +98,47 @@ export async function POST(request: NextRequest) {
     console.log(`Cache MISS for key: ${cacheKey}. Running aggregation.`);
 
     const query: any = {};
+    const locationQuery: any = {};
+
     for (const key in filters) {
         const filterKey = key as keyof Filters;
         let filterValue = filters[filterKey];
 
         if (filterValue === 'all') filterValue = '';
         
-        if (filterKey === 'manufacturer' && typeof filterValue === 'string' && manufacturerAliases[filterValue]) {
-            query['$or'] = [
-              { [filterKey]: filterValue },
-              { [filterKey]: manufacturerAliases[filterValue] }
-            ];
-        } else if (Array.isArray(filterValue) && filterValue.length > 0) {
-            query[filterKey] = { $in: filterValue };
+        let valueForQuery: any = null;
+
+        if (Array.isArray(filterValue) && filterValue.length > 0) {
+            valueForQuery = { $in: filterValue };
         } else if (typeof filterValue === 'string' && filterValue !== '') {
-            query[key] = filterValue;
+            valueForQuery = filterValue;
         } else if (typeof filterValue === 'number' && filterValue !== 0) {
-            query[key] = filterValue;
+            valueForQuery = filterValue;
+        }
+
+        if (valueForQuery) {
+            // Add to the main query
+            if (filterKey === 'manufacturer' && typeof filterValue === 'string' && manufacturerAliases[filterValue]) {
+                query['$or'] = [
+                  { [filterKey]: filterValue },
+                  { [filterKey]: manufacturerAliases[filterValue] }
+                ];
+            } else {
+                 query[filterKey] = valueForQuery;
+            }
+
+            // Add only location filters to the location-specific query
+            if (['region', 'state', 'city'].includes(filterKey)) {
+                locationQuery[filterKey] = valueForQuery;
+            }
         }
     }
     
     const currentYear = new Date().getFullYear();
-    const matchStage = { $match: query };
-    
-    // Define the grouping field for regional/state analysis
-    const regionalGroupField = filters.region ? '$state' : '$region';
+    const mainMatchStage = { $match: query };
+    const locationMatchStage = { $match: locationQuery };
 
-    const manufacturerPipeline: Document[] = [
+    const manufacturerPipeline = (matchStage: Document) => [
         matchStage,
         {
           $addFields: {
@@ -149,8 +163,8 @@ export async function POST(request: NextRequest) {
     // Run all aggregations in parallel
     const [
         totalVehiclesResult,
-        topModel,
-        topManufacturerResult,
+        topOverallModel,
+        topOverallManufacturerResult,
         topRegion,
         topState,
         topCity,
@@ -159,15 +173,15 @@ export async function POST(request: NextRequest) {
         fleetByYearChart,
         fleetAgeBrackets,
     ] = await Promise.all([
-        aggregateData(collection, [matchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]).catch(() => [{ total: 0 }]),
-        aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]).catch(() => [null]),
-        aggregateData(collection, manufacturerPipeline).catch(() => [null]),
+        aggregateData(collection, [mainMatchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]).catch(() => [{ total: 0 }]),
+        aggregateData(collection, [locationMatchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]).catch(() => [null]),
+        aggregateData(collection, manufacturerPipeline(locationMatchStage)).catch(() => [null]),
         findTopEntity(collection, query, 'region'),
         findTopEntity(collection, query, 'state'),
         findTopEntity(collection, query, 'city'),
-        aggregateData(collection, [matchStage, { $group: { _id: regionalGroupField, total: { $sum: '$quantity' } } }]).catch(() => []),
-        aggregateData(collection, [matchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]).catch(() => []),
-        aggregateData(collection, [matchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]).catch(() => []),
+        aggregateData(collection, [mainMatchStage, { $group: { _id: filters.region ? '$state' : '$region', total: { $sum: '$quantity' } } }]).catch(() => []),
+        aggregateData(collection, [mainMatchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]).catch(() => []),
+        aggregateData(collection, [mainMatchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]).catch(() => []),
         aggregateData(collection, [
             { $match: { ...query, year: { $ne: 0, $ne: null } } },
             { $project: { quantity: '$quantity', age: { $subtract: [currentYear, '$year'] } } },
@@ -183,11 +197,10 @@ export async function POST(request: NextRequest) {
     ]);
     
     const totalVehicles = totalVehiclesResult[0]?.total || 0;
-    const topManufacturer = topManufacturerResult[0] ? { name: topManufacturerResult[0]._id, quantity: topManufacturerResult[0].total } : null;
+    const topOverallManufacturer = topOverallManufacturerResult[0] ? { name: topOverallManufacturerResult[0]._id, quantity: topOverallManufacturerResult[0].total } : null;
 
     let finalRegionalData = regionalData.map((d: any) => ({ name: d._id, quantity: d.total }));
 
-    // If no region is selected, ensure all regions are present in the data (even with 0 quantity)
     if (!filters.region) {
       const regionMap = new Map(finalRegionalData.map(item => [item.name, item.quantity]));
       finalRegionalData = allRegions.map(regionName => ({
@@ -199,8 +212,8 @@ export async function POST(request: NextRequest) {
 
     const dashboardData: DashboardData = {
         totalVehicles,
-        topModel: { name: topModel[0]?._id || '-', quantity: topModel[0]?.total || 0 },
-        topManufacturer,
+        topOverallModel: { name: topOverallModel[0]?._id || '-', quantity: topOverallModel[0]?.total || 0 },
+        topOverallManufacturer,
         topRegion,
         topState,
         topCity,

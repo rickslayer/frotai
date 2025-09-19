@@ -116,8 +116,8 @@ export type FleetByYear = {
 
 export type DashboardData = {
   totalVehicles: number;
-  topModel: TopEntity;
-  topManufacturer: TopEntity | null;
+  topOverallModel: TopEntity;
+  topOverallManufacturer: TopEntity | null;
   topRegion?: TopEntity | null;
   topState?: TopEntity | null;
   topCity?: TopEntity | null;
