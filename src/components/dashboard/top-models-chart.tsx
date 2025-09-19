@@ -2,7 +2,7 @@
 
 import type { FC } from 'react';
 import { useMemo, useState } from 'react';
-import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, LabelList } from 'recharts';
 import {
   Card,
   CardContent,
@@ -21,41 +21,56 @@ import { Factory } from 'lucide-react';
 import { Badge } from '../ui/badge';
 
 const CustomLabel = (props: any) => {
-    const { x, y, width, height, value, payload } = props;
-    
+    const { x, y, width, height, value, name } = props;
+
     // Safety check: if there's no payload or the bar is too small, render nothing.
-    if (!payload || width < 80) { // 80px is a safety margin
+    if (!name || width < 150) { // Safety margin for visibility
         return null;
     }
 
-    const modelName = payload.model;
-    const quantity = value.toLocaleString();
-    const padding = 10;
-    const textColor = 'hsl(var(--primary-foreground))';
+    const valueText = Number(value).toLocaleString();
+    const valuePadding = 8;
+    const textPadding = 10;
+    
+    // Estimate width of the value box
+    const valueBoxWidth = valueText.length * 7 + (valuePadding * 2); // Approximation
 
     return (
-        <g>
+        <g transform={`translate(${x},${y})`}>
+            {/* Model Name */}
             <text 
-                x={x + padding} 
-                y={y + height / 2} 
-                fill={textColor} 
+                x={textPadding} 
+                y={height / 2} 
+                fill="hsl(var(--primary-foreground))"
                 textAnchor="start" 
                 dominantBaseline="middle" 
                 fontSize={12} 
                 fontWeight="bold"
             >
-                {modelName}
+                {name}
             </text>
+            
+            {/* Value Box */}
+            <rect 
+                x={width - valueBoxWidth - 5} 
+                y={5}
+                width={valueBoxWidth}
+                height={height - 10}
+                fill="hsl(var(--primary))"
+                rx={4} // Rounded corners
+            />
+            
+            {/* Value Text */}
             <text 
-                x={x + width - padding} 
-                y={y + height / 2} 
-                fill={textColor} 
-                textAnchor="end" 
+                x={width - (valueBoxWidth / 2) - 5}
+                y={height / 2} 
+                fill="hsl(var(--primary-foreground))"
+                textAnchor="middle" 
                 dominantBaseline="middle" 
                 fontSize={12} 
                 fontWeight="bold"
             >
-                {quantity}
+                {valueText}
             </text>
         </g>
     );
@@ -69,11 +84,12 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
   const chartConfig = {
     quantity: {
       label: t('quantity'),
-      color: 'hsl(var(--chart-1))',
+      color: 'hsl(var(--chart-2))',
     },
   } satisfies ChartConfig;
 
   const chartData = useMemo(() => {
+    // Sort descending to have the largest bar at the top
     return data.slice(0, showCount).sort((a,b) => a.quantity - b.quantity);
   }, [data, showCount]);
 
@@ -115,7 +131,6 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
             {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                    accessibilityLayer
                     data={chartData}
                     layout="vertical"
                     margin={{ left: 0, right: 0, top: 10, bottom: 10 }}
@@ -129,10 +144,11 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                         axisLine={false}
                         hide
                     />
-                    <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={4}>
-                       {chartData.map((entry, index) => (
-                          <CustomLabel key={`custom-label-${index}`} {...entry} />
-                        ))}
+                    <Bar dataKey="quantity" fill="var(--color-quantity)" radius={[4, 4, 4, 4]}>
+                       <LabelList 
+                          dataKey="model" 
+                          content={(props: any) => <CustomLabel {...props} name={props.value} value={props.payload.quantity} />}
+                       />
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
