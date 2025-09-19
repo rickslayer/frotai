@@ -36,14 +36,12 @@
   "total_vehicles_description": "IN FILTERED SELECTION",
   "main_city": "Top City",
   "main_city_description": "CITY WITH LARGEST FLEET",
-  "main_overall_model": "Top Model in Location",
+  "main_overall_model": "Top Model",
   "main_overall_model_description": "MODEL WITH LARGEST FLEET",
   "main_region": "Top Region",
   "main_region_description": "REGION WITH THE LARGEST FLEET",
   "main_state": "Top State",
   "main_state_description": "STATE WITH LARGEST FLEET",
-  "main_overall_manufacturer": "Top Mfr. in Location",
-  "main_overall_manufacturer_description": "TOP MANUFACTURER IN LOCATION",
   "select_a_state": "Select a State",
   "fleet_by_year": "Fleet by Manufacturing Year",
   "fleet_by_year_description": "Total vehicles by manufacturing year, according to the applied filters.",
@@ -90,7 +88,7 @@
   "welcome_title_location_needs_state": "Great! Now select a State to continue",
   "welcome_title_vehicle_needs_region": "Excellent! Now select a Region to see the distribution",
   "welcome_title_vehicle_needs_model": "Great! Now select a model to continue",
-  "welcome_title_location_needs_vehicle_details": "Perfect! Now, choose a Model or Year to see the data",
+  "welcome_title_location_needs_vehicle_details": "Perfect! Now, choose a Manufacturer, Model, or Year to see the data",
   "welcome_subtitle": "Start by selecting a filter on the side to explore the data.",
   "welcome_messages_start": [
     "Start by Location to see the fleet in an area, or by Vehicle to see its distribution.",
@@ -116,10 +114,10 @@
     "Let's focus the analysis on a specific model."
   ],
   "welcome_messages_location_needs_vehicle_details": [
-    "You are almost there! Select one or more Models or a specific Year.",
+    "You are almost there! Select a Manufacturer, Model, or a specific Year.",
     "What is the focus of your analysis in this state?",
     "Let's add vehicle details to get the results.",
-    "Choose a model or year to unlock the data."
+    "Choose a manufacturer, model or year to unlock the data."
   ],
   "search_model_placeholder": "Search model...",
   "no_model_found": "No model found.",

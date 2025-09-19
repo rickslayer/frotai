@@ -29,7 +29,6 @@ import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 const emptyDashboardData: DashboardData = {
   totalVehicles: 0,
   topOverallModel: { name: '-', quantity: 0 },
-  topOverallManufacturer: { name: '-', quantity: 0 },
   topRegion: undefined,
   topState: undefined,
   topCity: undefined,
@@ -71,12 +70,12 @@ const DashboardClient: FC = () => {
   const [highlightedFilters, setHighlightedFilters] = useState<Array<keyof Filters>>([]);
   
   const isSearchEnabled = useMemo(() => {
-    const { region, state, manufacturer, model, year } = debouncedFilters;
-    // Path 1: Vehicle-focused analysis
-    const vehiclePath = manufacturer && region && model.length > 0;
-    // Path 2: Location-focused analysis (requires vehicle detail)
-    const locationPath = region && state && (model.length > 0 || !!year);
-    return !!(vehiclePath || locationPath);
+    const { region, state, manufacturer } = debouncedFilters;
+    // Condition 1: Manufacturer and region are selected
+    if (manufacturer && region) return true;
+    // Condition 2: Region and state are selected
+    if (region && state) return true;
+    return false;
   }, [debouncedFilters]);
   
   const isFiltered = useMemo(() => {
@@ -227,7 +226,6 @@ const DashboardClient: FC = () => {
     };
     
     addSection(t('total_vehicles'), dashboardData.totalVehicles.toLocaleString());
-    addSection(t('main_overall_manufacturer'), dashboardData.topOverallManufacturer?.name || '-');
     addSection(t('main_overall_model'), dashboardData.topOverallModel.name);
     addSection(t('main_city'), dashboardData.topCity?.name || '-');
     y += 5;
@@ -328,6 +326,8 @@ const DashboardClient: FC = () => {
     y = await addBase64ImageToPdf(doc, 'regional-analysis-chart', y, t('regional_fleet_analysis'));
     y = await addBase64ImageToPdf(doc, 'fleet-by-year-chart', y, t('fleet_by_year'));
     y = await addBase64ImageToPdf(doc, 'fleet-age-chart', y, t('fleet_by_age_bracket'));
+    y = await addBase64ImageToPdf(doc, 'top-models-chart', y, t('top_models_by_volume', { count: 10 }));
+
 
     doc.save(`frota-ai-report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
@@ -383,19 +383,16 @@ const DashboardClient: FC = () => {
   }
 
  const getWelcomeTitleAndHighlights = (): { titleKey: string; highlights: (keyof Filters)[] } => {
-    const { region, state, manufacturer, model } = filters;
+    const { region, state, manufacturer } = filters;
 
-    if (manufacturer && region) {
-      return { titleKey: 'welcome_title_vehicle_needs_model', highlights: ['model'] };
-    }
     if (manufacturer) {
       return { titleKey: 'welcome_title_vehicle_needs_region', highlights: ['region'] };
     }
-    if (region && state) {
-      return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
-    }
-    if (region) {
+    if (region && !state) {
       return { titleKey: 'welcome_title_location_needs_state', highlights: ['state'] };
+    }
+    if (region && state) {
+      return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['manufacturer', 'model', 'year'] };
     }
     
     return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer'] };

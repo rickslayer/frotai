@@ -50,20 +50,13 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3 md:gap-8 lg:grid-cols-5">
+    <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
       <StatCard
         title={t('total_vehicles')}
         value={isLoading ? null : data.totalVehicles.toLocaleString()}
         description={t('total_vehicles_description')}
         icon={<Users2 className="h-4 w-4 text-muted-foreground" />}
         isLoading={isLoading}
-      />
-      <StatCard
-        title={t('main_overall_manufacturer')}
-        value={data.topOverallManufacturer?.name || null}
-        description={t('main_overall_manufacturer_description')}
-        icon={<Star className="h-4 w-4 text-muted-foreground" />}
-        isLoading={isCardLoading(data.topOverallManufacturer)}
       />
       <StatCard
         title={t('main_overall_model')}

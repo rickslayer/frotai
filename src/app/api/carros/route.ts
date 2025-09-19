@@ -98,8 +98,7 @@ export async function POST(request: NextRequest) {
     console.log(`Cache MISS for key: ${cacheKey}. Running aggregation.`);
 
     const query: any = {};
-    const locationQuery: any = {};
-
+    
     for (const key in filters) {
         const filterKey = key as keyof Filters;
         let filterValue = filters[filterKey];
@@ -126,45 +125,16 @@ export async function POST(request: NextRequest) {
             } else {
                  query[filterKey] = valueForQuery;
             }
-
-            // Add only location filters to the location-specific query
-            if (['region', 'state', 'city'].includes(filterKey)) {
-                locationQuery[filterKey] = valueForQuery;
-            }
         }
     }
     
     const currentYear = new Date().getFullYear();
     const mainMatchStage = { $match: query };
-    const locationMatchStage = { $match: locationQuery };
-
-    const manufacturerPipeline = (matchStage: Document) => [
-        matchStage,
-        {
-          $addFields: {
-            normalizedManufacturer: {
-              $switch: {
-                branches: [
-                  {
-                    case: { $regexMatch: { input: "$manufacturer", regex: /^MMC/i } },
-                    then: "Mitsubishi"
-                  }
-                ],
-                default: "$manufacturer"
-              }
-            }
-          }
-        },
-        { $group: { _id: '$normalizedManufacturer', total: { $sum: '$quantity' } } },
-        { $sort: { total: -1 } },
-        { $limit: 1 }
-    ];
 
     // Run all aggregations in parallel
     const [
         totalVehiclesResult,
         topOverallModel,
-        topOverallManufacturerResult,
         topRegion,
         topState,
         topCity,
@@ -174,8 +144,7 @@ export async function POST(request: NextRequest) {
         fleetAgeBrackets,
     ] = await Promise.all([
         aggregateData(collection, [mainMatchStage, { $group: { _id: null, total: { $sum: '$quantity' } } }]).catch(() => [{ total: 0 }]),
-        aggregateData(collection, [locationMatchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 1 }]).catch(() => [null]),
-        aggregateData(collection, manufacturerPipeline(locationMatchStage)).catch(() => [null]),
+        findTopEntity(collection, query, 'fullName'),
         findTopEntity(collection, query, 'region'),
         findTopEntity(collection, query, 'state'),
         findTopEntity(collection, query, 'city'),
@@ -197,7 +166,6 @@ export async function POST(request: NextRequest) {
     ]);
     
     const totalVehicles = totalVehiclesResult[0]?.total || 0;
-    const topOverallManufacturer = topOverallManufacturerResult[0] ? { name: topOverallManufacturerResult[0]._id, quantity: topOverallManufacturerResult[0].total } : null;
 
     let finalRegionalData = regionalData.map((d: any) => ({ name: d._id, quantity: d.total }));
 
@@ -212,8 +180,7 @@ export async function POST(request: NextRequest) {
 
     const dashboardData: DashboardData = {
         totalVehicles,
-        topOverallModel: { name: topOverallModel[0]?._id || '-', quantity: topOverallModel[0]?.total || 0 },
-        topOverallManufacturer,
+        topOverallModel: topOverallModel || { name: '-', quantity: 0 },
         topRegion,
         topState,
         topCity,
