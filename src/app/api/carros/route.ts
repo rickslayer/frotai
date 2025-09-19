@@ -2,7 +2,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { MongoClient, WithId, Document } from 'mongodb';
 import type { Filters, DashboardData, TopEntity } from '@/types';
-import { allRegions, regionToStatesMap } from '@/lib/regions';
+import { allRegions, regionToStatesMap, stateToRegionMap } from '@/lib/regions';
 
 const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://frotai:X7Ra8kREnBX6z6SC@frotai.bylfte3.mongodb.net/';
 const dbName = 'frotai';
@@ -131,6 +131,18 @@ export async function POST(request: NextRequest) {
     const currentYear = new Date().getFullYear();
     const mainMatchStage = { $match: query };
 
+    // Regional data query adjustment
+    const regionalQuery = { ...query };
+    const regionalGroupField = filters.region || (filters.state && stateToRegionMap[filters.state]) ? '$state' : '$region';
+    if (filters.state && !filters.region) {
+      // If only state is selected, expand query to the whole region for context
+      const regionOfState = stateToRegionMap[filters.state];
+      if (regionOfState) {
+        regionalQuery.region = regionOfState;
+        delete regionalQuery.state; // Remove state filter to get all states in the region
+      }
+    }
+
     // Run all aggregations in parallel
     const [
         totalVehiclesResult,
@@ -148,7 +160,7 @@ export async function POST(request: NextRequest) {
         findTopEntity(collection, query, 'region'),
         findTopEntity(collection, query, 'state'),
         findTopEntity(collection, query, 'city'),
-        aggregateData(collection, [mainMatchStage, { $group: { _id: filters.region ? '$state' : '$region', total: { $sum: '$quantity' } } }]).catch(() => []),
+        aggregateData(collection, [{ $match: regionalQuery }, { $group: { _id: regionalGroupField, total: { $sum: '$quantity' } } }]).catch(() => []),
         aggregateData(collection, [mainMatchStage, { $group: { _id: '$fullName', total: { $sum: '$quantity' } } }, { $sort: { total: -1 } }, { $limit: 10 }]).catch(() => []),
         aggregateData(collection, [mainMatchStage, { $group: { _id: '$year', total: { $sum: '$quantity' } } }, { $sort: { _id: 1 } }]).catch(() => []),
         aggregateData(collection, [
@@ -169,7 +181,8 @@ export async function POST(request: NextRequest) {
 
     let finalRegionalData = regionalData.map((d: any) => ({ name: d._id, quantity: d.total }));
 
-    if (!filters.region) {
+    // If showing regions, ensure all regions are present, even with 0 quantity
+    if (regionalGroupField === '$region') {
       const regionMap = new Map(finalRegionalData.map(item => [item.name, item.quantity]));
       finalRegionalData = allRegions.map(regionName => ({
         name: regionName,
@@ -209,6 +222,6 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('Error in POST /api/carros:', err);
     const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-    return new NextResponse(JSON.stringify({ error: 'Internal Server Error', details: errorMessage }), { status: 500 });
+    return new NextResponse(JSON.stringify({ error: 'Internal ServerError', details: errorMessage }), { status: 500 });
   }
 }

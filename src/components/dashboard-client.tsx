@@ -48,6 +48,12 @@ const emptyFilterOptions: FilterOptions = {
     manufacturers: [], models: [], versions: [], years: [],
 };
 
+type WelcomeState = {
+    titleKey: string;
+    highlights: (keyof Filters)[];
+};
+
+
 const DashboardClient: FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -69,22 +75,15 @@ const DashboardClient: FC = () => {
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   const [highlightedFilters, setHighlightedFilters] = useState<Array<keyof Filters>>([]);
   
-    const isSearchEnabled = useMemo(() => {
-        const { region, state, manufacturer, model, year } = debouncedFilters;
-        // FLUXO 01: Inicia por Localização. Libera com (Região + Estado) E (Modelo ou Ano)
-        if (region && state && (model.length > 0 || year)) {
-            return true;
-        }
-        // FLUXO 02: Inicia por Veículo. Libera com (Montadora + Região) E (Modelo)
-        if (manufacturer && region && model.length > 0) {
-            return true;
-        }
-        // FLUXO 03: Inicia por Ano. Libera com (Ano + Região + Montadora) E (Modelo)
-        if (year && region && manufacturer && model.length > 0) {
-            return true;
-        }
-        return false;
-    }, [debouncedFilters]);
+  const isSearchEnabled = useMemo(() => {
+    const { region, state, manufacturer, model, year } = debouncedFilters;
+    // Rule 1: Location-based flow requires state and one more key detail
+    if (region && state && (model.length > 0 || year)) return true;
+    // Rule 2: Vehicle-based flow requires manufacturer, region and model
+    if (manufacturer && region && model.length > 0) return true;
+    // This simplifies the logic and makes it more restrictive to avoid broad queries.
+    return false;
+  }, [debouncedFilters]);
   
   const isFiltered = useMemo(() => {
     return Object.values(filters).some(value => {
@@ -391,58 +390,59 @@ const DashboardClient: FC = () => {
       setIsComparing(false);
   }
 
-    const welcomeState = useMemo(() => {
-        const { region, state, manufacturer, model, year } = filters;
-        
-        // Fluxo 03: Iniciado por Ano
-        if (year && !region && !manufacturer) {
-            return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['region', 'manufacturer'] };
-        }
-        if (year && region && !state && !manufacturer) {
-            return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['state', 'manufacturer'] };
-        }
-        if (year && region && state && !manufacturer) {
-             return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['manufacturer', 'city'] };
-        }
-        if (year && region && state && manufacturer && model.length === 0) {
-             return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['model', 'city'] };
-        }
-        if (year && region && state && manufacturer && model.length > 0) {
-            return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['city'] };
-        }
+  const welcomeState = useMemo(() => {
+    const { region, state, manufacturer, model, year, city } = filters;
+
+    // Main screen (no filters)
+    if (!isFiltered) {
+        return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
+    }
+
+    // Flow 1: Started by Region
+    if (region && !state && !manufacturer && !year) {
+        return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer', 'year'] };
+    }
+    if (region && state && !manufacturer && !year) {
+        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['city', 'manufacturer', 'year'] };
+    }
+     if (region && state && manufacturer && model.length === 0 && !year) {
+        return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
+    }
+    
+
+    // Flow 2: Started by Manufacturer
+    if (manufacturer && !region && !year && model.length === 0) {
+        return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['model', 'region', 'year'] };
+    }
+    if (manufacturer && year && !region && model.length === 0) {
+        return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['region', 'model'] };
+    }
+    if (manufacturer && region && !state && model.length === 0) {
+         return { titleKey: 'welcome_title_vehicle_region_needs_model_state_year', highlights: ['model', 'state'] };
+    }
 
 
-        // Fluxo 02: Iniciado por Veículo (Montadora)
-        if (manufacturer && !region && !year && model.length === 0) {
-            return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['region', 'year', 'model'] };
-        }
-        if (manufacturer && year && !region && model.length === 0) {
-            return { titleKey: 'welcome_title_vehicle_needs_model_region_year', highlights: ['region', 'model'] };
-        }
-        if (manufacturer && region && !year && model.length === 0) {
-            return { titleKey: 'welcome_title_vehicle_region_needs_model_state_year', highlights: ['model', 'state', 'year'] };
-        }
+    // Flow 3: Started by Year
+    if (year && !region && !manufacturer) {
+        return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['region', 'manufacturer'] };
+    }
+    if (year && region && !state) {
+        return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['state', 'manufacturer'] };
+    }
+    if (year && region && state && !manufacturer) {
+        return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['manufacturer', 'city'] };
+    }
+    if (year && region && state && manufacturer && model.length === 0) {
+         return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['model', 'city'] };
+    }
+    if (year && region && state && manufacturer && model.length > 0 && !city) {
+         return { titleKey: 'welcome_title_year_needs_region_manufacturer', highlights: ['city'] };
+    }
 
+    // Default state if no specific path is matched
+    return { titleKey: 'welcome_subtitle', highlights: [] };
 
-        // Fluxo 01: Iniciado por Local (Região)
-        if (region && !state) {
-            return { titleKey: 'welcome_title_location_needs_state', highlights: ['state', 'manufacturer', 'year'] };
-        }
-        if (region && state && !manufacturer) {
-            return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['city', 'manufacturer', 'year'] };
-        }
-        if (region && state && manufacturer && model.length === 0 && !year) {
-             return { titleKey: 'welcome_title_location_needs_vehicle_details', highlights: ['model', 'year'] };
-        }
-
-        // Tela Principal
-        if (!isFiltered) {
-            return { titleKey: 'welcome_title_start', highlights: ['region', 'manufacturer', 'year'] };
-        }
-
-        // Condição padrão se nenhuma das anteriores corresponder
-        return { titleKey: 'welcome_title_start', highlights: [] };
-    }, [filters, isFiltered]);
+  }, [filters, isFiltered]);
   
   useEffect(() => {
     if (!isSearchEnabled) {
@@ -481,8 +481,8 @@ const DashboardClient: FC = () => {
             <div id="regional-analysis-chart">
                 <RegionalFleetAnalysis 
                     data={dashboardData.regionalData} 
-                    total={dashboardData.totalVehicles} 
                     selectedRegion={filters.region}
+                    selectedState={filters.state}
                 />
             </div>
              <div id="top-models-chart">
@@ -587,5 +587,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    

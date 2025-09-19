@@ -19,51 +19,48 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import type { RegionData } from '@/types';
-import { regionToStatesMap } from '@/lib/regions';
+import { stateToRegionMap } from '@/lib/regions';
 import { Map } from 'lucide-react';
 
 interface RegionalFleetAnalysisProps {
   data: RegionData[];
-  total: number;
   selectedRegion?: string;
+  selectedState?: string;
 }
 
-const RegionalFleetAnalysis: FC<RegionalFleetAnalysisProps> = ({ data, total, selectedRegion }) => {
+const RegionalFleetAnalysis: FC<RegionalFleetAnalysisProps> = ({ data, selectedRegion, selectedState }) => {
   const { t } = useTranslation();
+
+  const isStateView = !!(selectedRegion || (selectedState && stateToRegionMap[selectedState]));
+  const total = useMemo(() => data.reduce((acc, curr) => acc + curr.quantity, 0), [data]);
 
   const chartConfig = useMemo(() => {
     const config: ChartConfig = {};
     data.forEach((item, index) => {
         config[item.name] = {
-            label: selectedRegion ? item.name : t(item.name as any),
+            label: isStateView ? item.name : t(item.name as any),
             color: `hsl(var(--chart-${index + 1}))`,
         };
     });
     return config;
-  }, [data, selectedRegion, t]);
+  }, [data, isStateView, t]);
 
 
   const chartData = useMemo(() => {
-    let sourceData = data;
-    if (selectedRegion && regionToStatesMap[selectedRegion]) {
-        const statesInRegion = new Set(regionToStatesMap[selectedRegion]);
-        sourceData = data.filter(item => statesInRegion.has(item.name));
-    }
+    if (!data || data.length === 0 || total === 0) return [];
     
-    if (!sourceData || sourceData.length === 0 || total === 0) return [];
-    
-    return sourceData
+    return data
       .map(item => ({
-        name: selectedRegion ? item.name : t(item.name as any),
+        name: isStateView ? item.name : t(item.name as any),
         quantity: item.quantity,
-        percentage: ((item.quantity / total) * 100).toFixed(1) + '%',
+        percentage: total > 0 ? ((item.quantity / total) * 100) : 0,
       }))
       .filter(item => item.quantity > 0)
       .sort((a,b) => b.quantity - a.quantity);
-  }, [data, total, selectedRegion, t]);
+  }, [data, total, isStateView, t]);
 
-  const title = selectedRegion ? t('state_fleet_analysis') : t('regional_fleet_analysis');
-  const description = selectedRegion ? t('state_fleet_analysis_description') : t('regional_fleet_analysis_description');
+  const title = isStateView ? t('state_fleet_analysis') : t('regional_fleet_analysis');
+  const description = isStateView ? t('state_fleet_analysis_description') : t('regional_fleet_analysis_description');
 
 
   return (
@@ -76,7 +73,7 @@ const RegionalFleetAnalysis: FC<RegionalFleetAnalysisProps> = ({ data, total, se
         {chartData.length > 0 ? (
            <ChartContainer
             config={chartConfig}
-            className="mx-auto aspect-square h-[300px]"
+            className="mx-auto w-full aspect-square max-h-[350px]"
           >
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -84,10 +81,10 @@ const RegionalFleetAnalysis: FC<RegionalFleetAnalysisProps> = ({ data, total, se
                     cursor={false}
                     content={<ChartTooltipContent hideLabel 
                         formatter={(value, name, props) => (
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-1 text-sm">
                               <div className='font-bold'>{props.payload.name}</div>
                               <div>{t('quantity')}: {Number(value).toLocaleString()}</div>
-                              <div>({props.payload.percentage})</div>
+                              <div>({props.payload.percentage.toFixed(1)}%)</div>
                             </div>
                         )}
                     />}
@@ -98,36 +95,49 @@ const RegionalFleetAnalysis: FC<RegionalFleetAnalysisProps> = ({ data, total, se
                     nameKey="name"
                     innerRadius={60}
                     strokeWidth={5}
+                    cy="50%"
                   >
-                    {chartData.map((entry, index) => (
+                    {chartData.map((entry) => (
                       <Cell
-                        key={`cell-${index}`}
-                        fill={chartConfig[data[index].name]?.color}
+                        key={`cell-${entry.name}`}
+                        fill={chartConfig[entry.name]?.color}
                         className="focus:outline-none"
                       />
                     ))}
                   </Pie>
                   <Legend
-                    content={({ payload }) => {
-                      return (
-                        <ul className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                          {payload?.map((entry, index) => (
-                            <li key={`item-${index}`} className="flex items-center gap-2 truncate">
-                              <span
-                                className="h-2.5 w-2.5 shrink-0 rounded-full"
-                                style={{ backgroundColor: entry.color }}
-                              />
-                              <span>{entry.value}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )
-                    }}
-                    wrapperStyle={{
-                        paddingLeft: '60px',
-                        paddingRight: '60px',
-                    }}
-                  />
+                      content={({ payload }) => {
+                        return (
+                          <ul className="flex flex-col gap-3 max-w-[200px] text-xs">
+                            {payload?.map((entry) => {
+                              const item = chartData.find(d => d.name === entry.value);
+                              if (!item) return null;
+                              
+                              return (
+                                <li key={item.name} className="flex items-start gap-2 truncate">
+                                  <span className="flex items-center gap-2 mt-0.5">
+                                    <span
+                                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                      style={{ backgroundColor: entry.color }}
+                                    />
+                                  </span>
+                                  <div className="flex flex-col">
+                                    <span className="font-medium text-foreground truncate">{entry.value}</span>
+                                    <span className="text-muted-foreground">
+                                      {item.quantity.toLocaleString()} ({item.percentage.toFixed(1)}%)
+                                    </span>
+                                  </div>
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        )
+                      }}
+                      layout="vertical"
+                      align="right"
+                      verticalAlign="middle"
+                      wrapperStyle={{ paddingLeft: '20px' }}
+                    />
                 </PieChart>
             </ResponsiveContainer>
           </ChartContainer>
