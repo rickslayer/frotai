@@ -65,22 +65,6 @@ export function Combobox({
           <CommandList>
             <CommandEmpty>{noResultsText}</CommandEmpty>
             <CommandGroup>
-              <CommandItem
-                  key="all-items"
-                  value=""
-                  onSelect={() => {
-                    onChange("")
-                    setOpen(false)
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === "" ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {t('all_models')}
-              </CommandItem>
               {items.map((item) => (
                 <CommandItem
                   key={item.value}
