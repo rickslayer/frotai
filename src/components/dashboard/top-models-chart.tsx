@@ -2,7 +2,7 @@
 
 import type { FC } from 'react';
 import { useMemo, useState } from 'react';
-import { Bar, BarChart, XAxis, YAxis, LabelList, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import {
   Card,
   CardContent,
@@ -24,7 +24,7 @@ const CustomLabel = (props: any) => {
     const { x, y, width, height, value, payload } = props;
     
     // Safety check: if there's no payload or the bar is too small, render nothing.
-    if (!payload || width < 50) {
+    if (!payload || width < 80) { // 80px is a safety margin
         return null;
     }
 
@@ -35,10 +35,26 @@ const CustomLabel = (props: any) => {
 
     return (
         <g>
-            <text x={x + padding} y={y + height / 2} fill={textColor} textAnchor="start" dominantBaseline="middle" fontSize={12} fontWeight="bold">
+            <text 
+                x={x + padding} 
+                y={y + height / 2} 
+                fill={textColor} 
+                textAnchor="start" 
+                dominantBaseline="middle" 
+                fontSize={12} 
+                fontWeight="bold"
+            >
                 {modelName}
             </text>
-            <text x={x + width - padding} y={y + height / 2} fill={textColor} textAnchor="end" dominantBaseline="middle" fontSize={12} fontWeight="bold">
+            <text 
+                x={x + width - padding} 
+                y={y + height / 2} 
+                fill={textColor} 
+                textAnchor="end" 
+                dominantBaseline="middle" 
+                fontSize={12} 
+                fontWeight="bold"
+            >
                 {quantity}
             </text>
         </g>
@@ -114,7 +130,9 @@ const TopModelsChart: FC<{ data: TopModel[], topManufacturer: TopEntity | null }
                         hide
                     />
                     <Bar dataKey="quantity" fill="hsl(var(--chart-1))" radius={4}>
-                        <LabelList dataKey="quantity" content={<CustomLabel />} />
+                       {chartData.map((entry, index) => (
+                          <CustomLabel key={`custom-label-${index}`} {...entry} />
+                        ))}
                     </Bar>
                 </BarChart>
             </ResponsiveContainer>
