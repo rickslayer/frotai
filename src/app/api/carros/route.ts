@@ -8,13 +8,47 @@ const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://frotai:X7Ra8kREnBX6z6
 const dbName = 'frotai';
 const collectionName = 'carros';
 const cacheCollectionName = 'api_cache';
+const CACHE_TTL_SECONDS = 3600; // 1 hour
 
 let client: MongoClient | null = null;
 let db: import('mongodb').Db;
+let cacheIndexEnsured = false;
 
 const manufacturerAliases: Record<string, RegExp> = {
     "Mitsubishi": /^MMC/i 
 };
+
+// Function to ensure the TTL index exists on the cache collection
+const ensureCacheIndex = async (db: import('mongodb').Db) => {
+    if (cacheIndexEnsured) return;
+    try {
+        const cacheCollection = db.collection(cacheCollectionName);
+        const indexName = 'createdAt_1';
+        const indexes = await cacheCollection.indexes();
+
+        // Check if an index with the same key but different options exists
+        const existingIndex = indexes.find(idx => idx.name === indexName);
+        if (existingIndex && existingIndex.expireAfterSeconds !== CACHE_TTL_SECONDS) {
+            // Drop the old index if the TTL value is different
+            await cacheCollection.dropIndex(indexName);
+            console.log('Dropped old cache TTL index.');
+        }
+
+        // Create the TTL index if it doesn't exist
+        if (!existingIndex || existingIndex.expireAfterSeconds !== CACHE_TTL_SECONDS) {
+            await cacheCollection.createIndex(
+                { "createdAt": 1 },
+                { expireAfterSeconds: CACHE_TTL_SECONDS }
+            );
+            console.log(`Ensured TTL index on ${cacheCollectionName} with ${CACHE_TTL_SECONDS}s expiration.`);
+        }
+        cacheIndexEnsured = true;
+    } catch (error) {
+        console.error('Error ensuring cache TTL index:', error);
+        // We don't re-throw here to not fail the API request if index creation fails
+    }
+};
+
 
 async function connectToMongo() {
   if (client && client.topology && client.topology.isConnected()) {
@@ -25,6 +59,8 @@ async function connectToMongo() {
     await client.connect();
     console.log('Connected successfully to MongoDB from API Route');
     db = client.db(dbName);
+    // Ensure the cache index is created upon first connection
+    await ensureCacheIndex(db);
     return db;
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
