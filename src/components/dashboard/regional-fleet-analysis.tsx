@@ -43,7 +43,7 @@ const RegionalFleetAnalysis: FC<RegionalFleetAnalysisProps> = ({ data, selectedR
         };
     });
     return config;
-  }, [data, isStateView, t]);
+  }, [data, isStateView]);
 
 
   const chartData = useMemo(() => {
