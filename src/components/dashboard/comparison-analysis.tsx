@@ -113,6 +113,9 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
           fleetByYearData: snapshots[1]!.fleetByYearData,
         }
       });
+      if (!result.comparison) {
+          throw new Error('AI response was empty.');
+      }
       setAnalysis(result.comparison);
     } catch (error) {
       console.error('Error generating comparison analysis:', error);

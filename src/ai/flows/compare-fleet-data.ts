@@ -53,6 +53,9 @@ const prompt = ai.definePrompt({
   name: 'compareFleetDataPrompt',
   input: {schema: CompareFleetDataInputSchema},
   output: {schema: CompareFleetDataOutputSchema},
+  config: {
+    maxOutputTokens: 2048,
+  },
   prompt: `A Frota.AI, apresenta uma análise direta e focada nas oportunidades:
 
 **Cenário A (Filtros: {{{json scenarioA.filters}}})**
@@ -70,7 +73,7 @@ const prompt = ai.definePrompt({
 3.  **Análise Comparativa Regional:** Qual cenário possui uma frota mais concentrada geograficamente? **Gere uma Implicação Estratégica:** Qual a vantagem disso? (Ex: "A concentração de 80% da frota do Cenário B no Sudeste simplifica a logística e permite uma estratégia de distribuição mais agressiva e de menor custo.")
 4.  **Conclusão e Recomendação Final:** Com base nos pontos acima, qual cenário representa a **melhor oportunidade de negócio *agora* para um fabricante de autopeças?** Justifique sua recomendação em uma única frase.
 
-**Formato:** Use Markdown (negrito, listas). A linguagem deve ser profissional, assertiva e extremamente concisa. A resposta deve estar em português.
+**Formato:** Use Markdown (negrito, listas). A linguagem deve ser profissional, assertiva e extremamente concisa. A resposta deve ser completa, não pode ser cortada e deve estar em português.
 `,
 });
 

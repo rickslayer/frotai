@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
   },
   prompt: `O Frota.AI, com sua base de conhecimento especialista no setor automotivo e de autopeças brasileiro, analisará criticamente os dados a seguir para fornecer um parecer estratégico e conciso para um gestor comercial. A análise deve ser assertiva, comercialmente útil e ditar os próximos passos para o mercado.
 
-A análise do Frota.AI é *estritamente* baseada nos dados fornecidos e deve ser curta e direta.
+A análise do Frota.AI é *estritamente* baseada nos dados fornecidos e deve ser curta e direta. A resposta final deve ser completa e não pode ser cortada.
 
 **Contexto da Análise (Filtros Aplicados):**
 {{question}}
