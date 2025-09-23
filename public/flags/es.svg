@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">
+  <rect fill="#c60b1e" width="900" height="600"/>
+  <rect fill="#ffc400" y="150" width="900" height="300"/>
+  <g transform="translate(300,300)">
+    <g transform="translate(16.5,0)">
+      <path d="M-31.5,0 L-31.5,-45 A22.5,22.5,0,0,1,13.5,-45 L13.5,0" fill="#c60b1e"/>
+      <path d="M-13.5,0 L-13.5,-45 A22.5,22.5,0,0,0,31.5,-45 L31.5,0" fill="#c60b1e"/>
+      <path d="M-13.5,-22.5 A18,18,0,0,1,13.5,-22.5 L13.5,-18 A13.5,13.5,0,0,0,-13.5,-18 Z" fill="#ffc400"/>
+      <path d="M-12,-18 H12 V0 H-12 Z" fill="#c60b1e"/>
+      <path d="M-12,-18 H-9 V-45 H-4.5 V-18 H4.5 V-45 H9 V-18 H12 V-45 A22.5,22.5,0,0,1,13.5,-45 L13.5,-22.5 A18,18,0,0,1,-13.5,-22.5 L-13.5,-45 A22.5,22.5,0,0,0,-12,-45 Z" fill="#ad1519"/>
+    </g>
+    <path d="M-45,13.5 V-13.5 H-42 V13.5 Z M-36,13.5 V-13.5 H-33 V13.5 Z M-27,13.5 V-13.5 H-24 V13.5 Z M-18,13.5 V-13.5 H-15 V13.5 Z" fill="#ffc400"/>
+    <path d="M-45,13.5 H45 V9 H-45 Z M-45,4.5 H45 V0 H-45 Z M-45,-4.5 H45 V-9 H-45 Z M-45,-13.5 H45 V-18 H-45 Z" fill="#ffc440"/>
+    <g transform="translate(-30,-30)">
+      <path d="M0,-15 L2,-9 H-2 Z" fill="#003893"/>
+      <circle r="3.5" fill="#fff"/>
+      <circle r="2.5" fill="#003893"/>
+      <path d="M-1.5,-2.5 H1.5 V2.5 H-1.5 Z M-2.5,-1.5 H2.5 V1.5 H-2.5 Z" fill="#fff"/>
+    </g>
+    <g transform="translate(46.5,0)">
+      <path d="M-13.5,0 L-13.5,-45 A22.5,22.5,0,0,1,31.5,-45 L31.5,0" fill="#ffc400"/>
+      <path d="M-13.5,0 L-13.5,-18 H-9 V-45 H-4.5 V-18 H4.5 V-45 H9 V-18 H13.5 V-45 A22.5,22.5,0,0,1,31.5,-45" fill="#c60b1e"/>
+    </g>
+  </g>
+</svg>
