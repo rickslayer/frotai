@@ -48,17 +48,17 @@ A análise do Frota.AI é *estritamente* baseada nos dados fornecidos e deve ser
 
 **Dados Agregados para Análise Crítica:**
 
-1.  **Distribuição da Frota por Idade:**
+1.  **Distribuição da Frota por Idade:** Aqui estão os dados da frota por faixas de idade. O campo 'range' representa a faixa, 'label' é a descrição e 'quantity' é o total de veículos.
     \`\`\`json
     {{{json data.fleetAgeBrackets}}}
     \`\`\`
 
-2.  **Distribuição Regional da Frota:**
+2.  **Distribuição Regional da Frota:** Aqui estão os dados da frota por região ou estado. O campo 'name' é a localidade e 'quantity' é o total de veículos.
     \`\`\`json
     {{{json data.regionalData}}}
     \`\`\`
     
-3.  **Frota por Ano de Fabricação:**
+3.  **Frota por Ano de Fabricação:** Aqui estão os dados da frota por ano de fabricação. O campo 'name' é o ano e 'quantity' é o total de veículos.
     \`\`\`json
     {{{json data.fleetByYearData}}}
     \`\`\`
@@ -84,6 +84,9 @@ const answerFleetQuestionFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error('AI failed to generate a response. The output was null.');
+    }
+    return output;
   }
 );
