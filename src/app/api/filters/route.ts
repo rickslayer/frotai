@@ -27,7 +27,7 @@ async function connectToMongo() {
 
 // Helper to build the match object, excluding certain fields
 const buildMatchExcept = (baseMatch: any, exclude: string[]) => {
-    const match = { ...baseMatch };
+    const match: any = { ...baseMatch };
     for (const key of exclude) {
         delete match[key];
     }
@@ -35,11 +35,11 @@ const buildMatchExcept = (baseMatch: any, exclude: string[]) => {
 };
 
 // This function now uses a single aggregation pipeline to fetch all distinct values, which is more performant.
-const getAllDistinctValues = async (collection: import('mongodb').Collection, baseMatch: any) => {
+const getAllDistinctValues = async (collection: import('mongodb').Collection, baseMatch: any): Promise<FilterOptions> => {
     const pipeline: Document[] = [
         {
             $facet: {
-                manufacturers: [{ $match: buildMatchExcept(baseMatch, ['manufacturer']) }, { $group: { _id: '$manufacturer' } }],
+                manufacturers: [{ $match: buildMatchExcept(baseMatch, ['manufacturer', 'model', 'version']) }, { $group: { _id: '$manufacturer' } }],
                 models: [{ $match: buildMatchExcept(baseMatch, ['model', 'version']) }, { $group: { _id: '$model' } }],
                 versions: [{ $match: buildMatchExcept(baseMatch, ['version']) }, { $group: { _id: '$version' } }],
                 years: [{ $match: buildMatchExcept(baseMatch, ['year']) }, { $group: { _id: '$year' } }],
@@ -54,7 +54,8 @@ const getAllDistinctValues = async (collection: import('mongodb').Collection, ba
     const data = results[0];
 
     // Helper to process and sort the results from the facet stage
-    const processFacet = (facetResult: { _id: any }[], field: string) => {
+    const processFacet = (facetResult: { _id: any }[] | undefined, field: string) => {
+        if (!facetResult) return [];
         let values = facetResult.map(item => item._id).filter(item => item !== null && item !== "");
 
         if (field === 'manufacturer') {
@@ -73,7 +74,7 @@ const getAllDistinctValues = async (collection: import('mongodb').Collection, ba
              return (values as number[]).sort((a, b) => b - a);
         }
         
-        return values.sort();
+        return (values as string[]).sort();
     };
 
     return {

@@ -192,16 +192,8 @@ const DashboardClient: FC = () => {
     const fetchOptions = async () => {
         try {
             const options = await getInitialFilterOptions(filters);
-            setFilterOptions(prev => ({
-                // Preserve previous options to avoid flickering, but clear children when a parent changes.
-                regions: options.regions?.length > 0 ? options.regions : prev.regions,
-                states: filters.region ? (options.states ?? []) : [],
-                cities: filters.state ? (options.cities ?? []) : [],
-                manufacturers: options.manufacturers?.length > 0 ? options.manufacturers : prev.manufacturers,
-                models: filters.manufacturer ? (options.models ?? []) : [],
-                versions: filters.model.length > 0 ? (options.versions ?? []) : [],
-                years: options.years?.length > 0 ? options.years : prev.years,
-            }));
+            // This ensures we only update the options lists, not touch the existing filter selections.
+            setFilterOptions(currentOptions => ({...currentOptions, ...options}));
         } catch (error) {
              console.error('Failed to fetch dynamic filter options:', error);
              toast({ variant: 'destructive', title: t('error'), description: 'Failed to update filter options.' });
@@ -579,5 +571,3 @@ const DashboardClient: FC = () => {
 };
 
 export default DashboardClient;
-
-    
