@@ -1,6 +1,6 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
+import { MongoClient, Document } from 'mongodb';
 import type { FilterOptions } from '@/types';
 
 const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://frotai:X7Ra8kREnBX6z6SC@frotai.bylfte3.mongodb.net/';
@@ -36,38 +36,59 @@ const buildMatchExcept = (baseMatch: any, exclude: string[]) => {
     return match;
 };
 
-const getDistinctValues = async (collection: import('mongodb').Collection, field: string, match: any = {}) => {
-  const query: any = { ...match };
-  
-  if (field !== 'year') {
-    query[field] = { $ne: null, $ne: "" };
-  } else {
-    // Allows year 0 to be included if it exists for the selection
-    query[field] = { $ne: null };
-  }
-  
-  let values = await collection.distinct(field, query);
+// This function now uses a single aggregation pipeline to fetch all distinct values, which is more performant.
+const getAllDistinctValues = async (collection: import('mongodb').Collection, baseMatch: any) => {
+    const pipeline: Document[] = [
+        {
+            $facet: {
+                manufacturers: [{ $match: buildMatchExcept(baseMatch, ['manufacturer']) }, { $group: { _id: '$manufacturer' } }],
+                models: [{ $match: buildMatchExcept(baseMatch, ['model', 'version']) }, { $group: { _id: '$model' } }],
+                versions: [{ $match: buildMatchExcept(baseMatch, ['version']) }, { $group: { _id: '$version' } }],
+                years: [{ $match: buildMatchExcept(baseMatch, ['year']) }, { $group: { _id: '$year' } }],
+                regions: [{ $match: buildMatchExcept(baseMatch, ['region', 'state', 'city']) }, { $group: { _id: '$region' } }],
+                states: [{ $match: buildMatchExcept(baseMatch, ['state', 'city']) }, { $group: { _id: '$state' } }],
+                cities: [{ $match: buildMatchExcept(baseMatch, ['city']) }, { $group: { _id: '$city' } }],
+            },
+        },
+    ];
 
-  // Handle manufacturer aliases: Replace aliases with the primary name and remove duplicates
-  if (field === 'manufacturer') {
-    const primaryNames = new Set<string>();
-    values.forEach(val => {
-      if (typeof val === 'string' && val.startsWith('MMC')) {
-        primaryNames.add('Mitsubishi');
-      } else if (val) {
-        primaryNames.add(val);
-      }
-    });
-    values = Array.from(primaryNames);
-  }
+    const results = await collection.aggregate(pipeline).toArray();
+    const data = results[0];
 
-  if (field === 'year') {
-    // Sort years descending, keeping 0 if it exists
-    return (values as number[]).sort((a, b) => b - a);
-  }
+    // Helper to process and sort the results from the facet stage
+    const processFacet = (facetResult: { _id: any }[], field: string) => {
+        let values = facetResult.map(item => item._id).filter(item => item !== null && item !== "");
 
-  return values.sort();
+        if (field === 'manufacturer') {
+            const primaryNames = new Set<string>();
+            values.forEach(val => {
+                if (typeof val === 'string' && val.startsWith('MMC')) {
+                    primaryNames.add('Mitsubishi');
+                } else if (val) {
+                    primaryNames.add(val);
+                }
+            });
+            values = Array.from(primaryNames);
+        }
+        
+        if (field === 'year') {
+             return (values as number[]).sort((a, b) => b - a);
+        }
+        
+        return values.sort();
+    };
+
+    return {
+        manufacturers: processFacet(data.manufacturers, 'manufacturer'),
+        models: processFacet(data.models, 'model'),
+        versions: processFacet(data.versions, 'version'),
+        years: processFacet(data.years, 'year') as number[],
+        regions: processFacet(data.regions, 'region'),
+        states: processFacet(data.states, 'state'),
+        cities: processFacet(data.cities, 'city'),
+    };
 };
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -99,34 +120,8 @@ export async function POST(request: NextRequest) {
     if (state) baseMatch.state = state;
     if (city) baseMatch.city = city;
     
-    // Each field's options should be filtered by all OTHER active filters
-    const [
-      manufacturers,
-      models,
-      versions,
-      years,
-      regions,
-      states,
-      cities,
-    ] = await Promise.all([
-      getDistinctValues(collection, 'manufacturer', buildMatchExcept(baseMatch, ['manufacturer'])),
-      getDistinctValues(collection, 'model', buildMatchExcept(baseMatch, ['model', 'version'])),
-      getDistinctValues(collection, 'version', buildMatchExcept(baseMatch, ['version'])),
-      getDistinctValues(collection, 'year', buildMatchExcept(baseMatch, ['year'])),
-      getDistinctValues(collection, 'region', buildMatchExcept(baseMatch, ['region', 'state', 'city'])),
-      getDistinctValues(collection, 'state', buildMatchExcept(baseMatch, ['state', 'city'])),
-      getDistinctValues(collection, 'city', buildMatchExcept(baseMatch, ['city'])),
-    ]);
-
-    const filterOptions: FilterOptions = {
-      manufacturers,
-      models,
-      versions,
-      years: years as number[],
-      regions,
-      states,
-      cities,
-    };
+    // Fetch all distinct values in a single, more efficient aggregation
+    const filterOptions = await getAllDistinctValues(collection, baseMatch);
 
     return NextResponse.json(filterOptions);
   } catch (err) {
