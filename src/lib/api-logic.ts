@@ -3,16 +3,28 @@ import { cache } from 'react';
 import type { FilterOptions, Filters, DashboardData } from '@/types';
 
 
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    // Client-side
+    return '';
+  }
+  // Server-side
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+};
+
+
 // Fetches aggregated dashboard data from the API based on the provided filters.
 export const getFleetData = async (filters: Partial<Filters>): Promise<DashboardData> => {
   try {
-    const apiUrl = `/api/carros`;
+    const baseUrl = getBaseUrl();
+    const apiUrl = `${baseUrl}/api/carros`;
     const res = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(filters || {}),
+      cache: 'no-store', // Ensure fresh data for dynamic filters
     });
 
     if (!res.ok) {
@@ -52,7 +64,8 @@ export const getFleetData = async (filters: Partial<Filters>): Promise<Dashboard
 // Fetches the initial distinct options for the filters using a POST request.
 export const getInitialFilterOptions = cache(async (filters?: Partial<Filters>): Promise<FilterOptions> => {
   try {
-    const apiUrl = `/api/filters`;
+    const baseUrl = getBaseUrl();
+    const apiUrl = `${baseUrl}/api/filters`;
     const res = await fetch(apiUrl, {
         method: 'POST',
         headers: {
