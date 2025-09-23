@@ -78,7 +78,7 @@
   "predict_demand_button": "Predict Demand",
   "predicting_demand_loading": "Frota.AI is analyzing the market...",
   "part_demand_error": "Could not predict parts demand. Please try again.",
-  "demand_level": "Demand: {level}",
+  "demand_level": "{level}",
   "part_demand_disabled_title": "Select filters to start",
   "part_demand_disabled_description": "Apply manufacturer and a single model filters to enable demand prediction.",
   "no_opportunities_found_title": "No specific opportunities found",

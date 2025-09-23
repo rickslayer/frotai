@@ -78,7 +78,7 @@
   "predict_demand_button": "Prever Demanda",
   "predicting_demand_loading": "O Frota.AI está analisando o mercado...",
   "part_demand_error": "Não foi possível prever a demanda de peças. Tente novamente.",
-  "demand_level": "Demanda: {level}",
+  "demand_level": "{level}",
   "part_demand_disabled_title": "Selecione filtros para começar",
   "part_demand_disabled_description": "Aplique filtros de montadora e um único modelo para habilitar a previsão.",
   "no_opportunities_found_title": "Nenhuma oportunidade específica encontrada",
