@@ -8,9 +8,10 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { answerFleetQuestion } from '@/ai/flows/answer-fleet-question';
-import type { Filters, Vehicle, RegionData, FleetAgeBracket, ChartData } from '@/types';
+import type { Filters, ChartData, FleetAgeBracket, RegionData } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Download, Loader2, Sparkles, Terminal } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 interface FinalAnalysisProps {
   filters: Filters;
@@ -64,18 +65,34 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
     }
   };
 
-  const handleDownloadText = () => {
+  const handleDownloadPdf = () => {
     if (!analysis) return;
 
-    const blob = new Blob([analysis.replace(/<br \/>/g, '\n').replace(/<\/?[^>]+(>|$)/g, "")], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-a.href = url;
-    a.download = 'frota-ai-analysis.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const doc = new jsPDF();
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text(t('ai_analysis_title'), 14, 22);
+
+    const plainText = analysis
+        .replace(/<br \/>/g, '\n')
+        .replace(/\*\*(.*?)\*\*/g, '$1') 
+        .replace(/<h[1-6]>/g, '\n') 
+        .replace(/<\/h[1-6]>/g, '\n\n')
+        .replace(/<p>/g, '')
+        .replace(/<\/p>/g, '\n\n')
+        .replace(/<li>/g, '  - ') 
+        .replace(/<\/li>/g, '\n')
+        .replace(/<ul>|<\/ul>|<ol>|<\/ol>/g, '\n');
+
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    
+    const splitText = doc.splitTextToSize(plainText, 180);
+    doc.text(splitText, 14, 35);
+    
+    doc.save('frota-ai-analysis.pdf');
   };
 
 
@@ -102,16 +119,13 @@ a.href = url;
           <div className="space-y-4 pt-4">
              <Alert>
               <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center">
-                  <Terminal className="h-4 w-4 mr-2" />
-                  <AlertTitle>{t('ai_analysis_title')}</AlertTitle>
-                </div>
-                 <Button variant="ghost" size="icon" onClick={handleDownloadText} className="h-6 w-6">
-                    <Download className="h-4 w-4" />
-                  </Button>
+                 <AlertTitle className="font-bold">{t('ai_analysis_title')}</AlertTitle>
+                <Button variant="ghost" size="icon" onClick={handleDownloadPdf} className="h-6 w-6">
+                  <Download className="h-4 w-4" />
+                </Button>
               </div>
               <AlertDescription>
-                <div className="prose prose-sm dark:prose-invert" dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br />') }} />
+                <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br />') }} />
               </AlertDescription>
             </Alert>
           </div>
