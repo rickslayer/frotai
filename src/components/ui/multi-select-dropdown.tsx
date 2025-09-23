@@ -12,6 +12,7 @@ import { ScrollArea } from "./scroll-area";
 import { Separator } from "./separator";
 import { Checkbox } from "./checkbox";
 import { Label } from "./label";
+import { Input } from "./input";
 
 
 interface MultiSelectDropdownProps {
@@ -34,6 +35,7 @@ export function MultiSelectDropdown({
   itemType = 'model'
 }: MultiSelectDropdownProps) {
   const { t } = useTranslation();
+  const [search, setSearch] = React.useState('');
 
   const handleSelect = (value: string) => {
     if (selectedValues.includes(value)) {
@@ -43,11 +45,20 @@ export function MultiSelectDropdown({
     }
   };
 
+  const filteredOptions = options.filter(option => 
+    option.label.toLowerCase().includes(search.toLowerCase())
+  );
+
   const handleSelectAll = () => {
-    if (selectedValues.length === options.length) {
-      onChange([]); // Deselect all
+    // Select all from the *filtered* list
+    if (filteredOptions.every(o => selectedValues.includes(o.value))) {
+        // If all filtered are selected, deselect them
+        const newSelectedValues = selectedValues.filter(v => !filteredOptions.some(o => o.value === v));
+        onChange(newSelectedValues);
     } else {
-      onChange(options.map(o => o.value)); // Select all
+        // Otherwise, select all filtered ones that are not already selected
+        const valuesToAdd = filteredOptions.map(o => o.value).filter(v => !selectedValues.includes(v));
+        onChange([...selectedValues, ...valuesToAdd]);
     }
   };
 
@@ -96,24 +107,30 @@ export function MultiSelectDropdown({
       </PopoverTrigger>
        <PopoverContent className="w-80 p-0" align="start">
           <div className="p-2">
-            <div 
-              className="flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer"
+            <Input 
+              placeholder={t('search_model_placeholder')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9"
+            />
+          </div>
+          <div 
+              className="flex items-center space-x-2 px-4 py-2 hover:bg-accent cursor-pointer"
               onClick={handleSelectAll}
             >
                <Checkbox
                 id="select-all"
-                checked={isAllSelected}
+                checked={filteredOptions.length > 0 && filteredOptions.every(o => selectedValues.includes(o.value))}
                 onCheckedChange={handleSelectAll}
               />
               <Label htmlFor="select-all" className="flex-1 cursor-pointer text-sm font-normal">
-                 {isAllSelected ? t('clear_selection') : t('select_all')}
+                 {filteredOptions.length > 0 && filteredOptions.every(o => selectedValues.includes(o.value)) ? t('clear_selection') : t('select_all')}
               </Label>
-            </div>
           </div>
           <Separator />
           <ScrollArea className="h-60">
             <div className="p-1">
-              {options.map((option) => (
+              {filteredOptions.length > 0 ? filteredOptions.map((option) => (
                  <div
                   key={option.value}
                   className="flex items-center space-x-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer"
@@ -128,7 +145,11 @@ export function MultiSelectDropdown({
                     {option.label}
                   </Label>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center text-sm text-muted-foreground py-4">
+                  {t('no_model_found')}
+                </div>
+              )}
             </div>
           </ScrollArea>
        </PopoverContent>
