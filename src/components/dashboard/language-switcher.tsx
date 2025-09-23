@@ -31,16 +31,22 @@ const LanguageSwitcher = () => {
     // Render a placeholder or nothing on the server to avoid hydration mismatch
     return <div className="h-10 w-10" />;
   }
+  
+  const getFlag = () => {
+    if (currentLanguage.startsWith('pt')) {
+      return <Image src="/flags/br.svg" alt="Brasil" width={20} height={20} />;
+    }
+    if (currentLanguage.startsWith('es')) {
+      return <Image src="/flags/es.svg" alt="España" width={20} height={20} />;
+    }
+    return <Image src="/flags/us.svg" alt="United States" width={20} height={20} />;
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="icon">
-          {currentLanguage.startsWith('pt') ? (
-            <Image src="/flags/br.svg" alt="Brasil" width={20} height={20} />
-          ) : (
-            <Image src="/flags/us.svg" alt="United States" width={20} height={20} />
-          )}
+          {getFlag()}
           <span className="sr-only">Change language</span>
         </Button>
       </DropdownMenuTrigger>
@@ -52,6 +58,10 @@ const LanguageSwitcher = () => {
         <DropdownMenuItem onClick={() => changeLanguage('pt')}>
           <Image src="/flags/br.svg" alt="Brasil" width={20} height={20} className="mr-2" />
           <span>Português</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => changeLanguage('es')}>
+          <Image src="/flags/es.svg" alt="España" width={20} height={20} className="mr-2" />
+          <span>Espanhol</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
