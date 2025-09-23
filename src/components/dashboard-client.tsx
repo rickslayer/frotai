@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import React, { useState, useMemo, useCallback, useEffect, useTransition } from 'react';
-import type { FilterOptions, Filters, DashboardData, AnalysisSnapshot, PredictPartsDemandOutput } from '@/types';
+import type { FilterOptions, Filters, DashboardData, AnalysisSnapshot, PredictPartsDemandOutput, AnswerFleetQuestionOutput } from '@/types';
 import DashboardHeader from '@/components/dashboard/header';
 import DashboardSidebar from '@/components/dashboard/sidebar';
 import StatCards from './dashboard/stat-cards';
@@ -43,26 +43,24 @@ const initialFilters: Filters = {
     manufacturer: '', model: [], version: [], year: '',
 };
 
-const emptyFilterOptions: FilterOptions = {
-    regions: [], states: [], cities: [],
-    manufacturers: [], models: [], versions: [], years: [],
-};
-
 type WelcomeState = {
     titleKey: string;
     highlights: (keyof Filters)[];
 };
 
+interface DashboardClientProps {
+  initialFilterOptions: FilterOptions;
+}
 
-const DashboardClient: FC = () => {
+const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
   const [dashboardData, setDashboardData] = useState<DashboardData>(emptyDashboardData);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>(emptyFilterOptions);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>(initialFilterOptions);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const debouncedFilters = useDebounce(filters, 300);
@@ -71,7 +69,7 @@ const DashboardClient: FC = () => {
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
   const [isVersionLimitModalOpen, setIsVersionLimitModalOpen] = useState(false);
   
-  const [generalAnalysis, setGeneralAnalysis] = useState<string | null>(null);
+  const [generalAnalysis, setGeneralAnalysis] = useState<AnswerFleetQuestionOutput | null>(null);
   const [demandAnalysis, setDemandAnalysis] = useState<PredictPartsDemandOutput | null>(null);
   
   const [highlightedFilters, setHighlightedFilters] = useState<(keyof Filters)[]>([]);
@@ -135,65 +133,74 @@ const DashboardClient: FC = () => {
   const isSearchEnabled = useMemo(() => {
     const { region, state, manufacturer, model, year } = debouncedFilters;
     // Rule 1: Location-based flow requires state and one more key detail
-    if (region && state && (model.length > 0 || year)) return true;
-    // Rule 2: Vehicle-based flow requires manufacturer, region and model
-    if (manufacturer && region && model.length > 0) return true;
-    // This simplifies the logic and makes it more restrictive to avoid broad queries.
+    if (region && state) return true;
+    // Rule 2: Vehicle-based flow requires manufacturer and model
+    if (manufacturer && model.length > 0) return true;
+    // Rule 3: Year-based flow
+    if (year && region) return true;
+    
     return false;
   }, [debouncedFilters]);
-
-  // Effect for initial data load (only filter options)
-  useEffect(() => {
-    const fetchInitialOptions = async () => {
-      setIsLoading(true);
-      try {
-        const options = await getInitialFilterOptions();
-        setFilterOptions(options);
-      } catch (error) {
-        console.error(error);
-        const errorMessage = error instanceof Error ? error.message : 'Failed to load initial data.';
-        toast({ variant: 'destructive', title: t('error'), description: errorMessage });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchInitialOptions();
-  }, [t, toast]);
-
 
   // Effect for fetching DASHBOARD DATA based on DEBOUNCED filters
   useEffect(() => {
     if (!isSearchEnabled) {
       setDashboardData(emptyDashboardData);
+      setIsLoading(false);
       return;
     }
+    
+    let isCancelled = false;
 
     const fetchData = async () => {
+      setIsLoading(true);
       startTransition(async () => {
         try {
           const data = await getFleetData(debouncedFilters);
-          setDashboardData(data);
+          if (!isCancelled) {
+            setDashboardData(data);
+          }
         } catch (error) {
           console.error(error);
           toast({ variant: 'destructive', title: t('error'), description: 'Failed to load dashboard data.' });
-          setDashboardData(emptyDashboardData);
+          if (!isCancelled) {
+            setDashboardData(emptyDashboardData);
+          }
+        } finally {
+          if (!isCancelled) {
+            setIsLoading(false);
+          }
         }
       });
     };
 
     fetchData();
-  }, [debouncedFilters, isSearchEnabled, toast]);
+    
+    return () => {
+        isCancelled = true;
+    }
+  }, [debouncedFilters, isSearchEnabled, t, toast]);
 
 
   // Effect for fetching FILTER OPTIONS immediately when a filter changes
   useEffect(() => {
-    if (isLoading) return;
-
+    let isCancelled = false;
+    
     const fetchOptions = async () => {
         try {
             const options = await getInitialFilterOptions(filters);
-            // This ensures we only update the options lists, not touch the existing filter selections.
-            setFilterOptions(currentOptions => ({...currentOptions, ...options}));
+            if (!isCancelled) {
+                // Preserve selected values that still exist in the new options
+                setFilterOptions(prevOptions => ({
+                    regions: options.regions.length > 0 ? options.regions : prevOptions.regions,
+                    states: options.states.length > 0 ? options.states : prevOptions.states,
+                    cities: options.cities.length > 0 ? options.cities : prevOptions.cities,
+                    manufacturers: options.manufacturers.length > 0 ? options.manufacturers : prevOptions.manufacturers,
+                    models: options.models.length > 0 ? options.models : prevOptions.models,
+                    versions: options.versions.length > 0 ? options.versions : prevOptions.versions,
+                    years: options.years.length > 0 ? options.years : prevOptions.years,
+                }));
+            }
         } catch (error) {
              console.error('Failed to fetch dynamic filter options:', error);
              toast({ variant: 'destructive', title: t('error'), description: 'Failed to update filter options.' });
@@ -201,8 +208,12 @@ const DashboardClient: FC = () => {
     };
     
     fetchOptions();
+    
+    return () => {
+        isCancelled = true;
+    }
 
-  }, [filters, isLoading, toast]);
+  }, [filters, toast]);
 
 
   const handleFilterChange = useCallback((key: keyof Filters, value: any) => {
@@ -213,23 +224,23 @@ const DashboardClient: FC = () => {
         updated[key] = finalValue;
 
         // --- Cascading Logic ---
-        if (key === 'region') {
+        if (key === 'region' && finalValue !== prev.region) {
             updated.state = '';
             updated.city = '';
         }
-        if (key === 'state') {
+        if (key === 'state' && finalValue !== prev.state) {
             updated.city = '';
         }
         
-        if (key === 'manufacturer') {
+        if (key === 'manufacturer' && finalValue !== prev.manufacturer) {
             updated.model = [];
             updated.version = [];
         }
-        if (key === 'model') {
+        if (key === 'model' && finalValue !== prev.model) {
             updated.version = [];
         }
         
-        if (key === 'year' && finalValue !== '') {
+        if (key === 'year' && finalValue !== '' && typeof finalValue === 'string') {
             updated.year = Number(finalValue);
         } else if (key === 'year' && finalValue === '') {
             updated.year = '';
@@ -294,7 +305,7 @@ const DashboardClient: FC = () => {
       y += 8;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
-      const formattedText = formatTextForPdf(generalAnalysis);
+      const formattedText = formatTextForPdf(generalAnalysis.executiveSummary);
       const splitText = doc.splitTextToSize(formattedText, 180);
       doc.text(splitText, 14, y);
       y += (splitText.length * 5) + 10;
@@ -437,25 +448,18 @@ const DashboardClient: FC = () => {
 
 
   const renderContent = () => {
-    if (isLoading && !isPending) {
-      return (
-        <div className="flex h-full w-full items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    if (!isSearchEnabled) {
-      return <WelcomePlaceholder titleKey={welcomeState.titleKey} />;
-    }
-
-    if (isPending) {
+    if (isLoading || isPending) {
         return (
-            <div className="flex h-full w-full items-center justify-center">
+            <div className="flex flex-1 h-full w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         );
     }
+
+    if (!isSearchEnabled) {
+      return <div className="flex-1"><WelcomePlaceholder titleKey={welcomeState.titleKey} /></div>;
+    }
+
 
     return (
       <div className="flex flex-col gap-4 md:gap-8">
