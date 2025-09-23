@@ -24,7 +24,7 @@ const prompt = ai.definePrompt({
   output: { schema: PredictPartsDemandOutputSchema },
   prompt: `O Frota.AI, com base em seu conhecimento da indústria de autopeças do Brasil, irá prever a demanda por peças com base nos dados da frota de veículos fornecida e em uma categoria de peças específica. A análise deve ser curta, direta e focada em valor mensurável.
 
-A análise é *estritamente* baseada nos dados a seguir, que representam uma frota filtrada.
+A análise é *estritamente* baseada nos dados a seguir, que representam uma frota filtrada. A resposta final não pode ser cortada.
 
 **Filtros Atuais Aplicados (Contexto):**
 - Montadora: {{{filters.manufacturer}}}
