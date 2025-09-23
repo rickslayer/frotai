@@ -7,7 +7,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { FleetAgeBracketSchema, RegionDataSchema, ChartDataSchema } from '@/types';
+import { FleetAgeBracketSchema, RegionDataSchema, ChartDataSchema, CompareFleetDataOutputSchema } from '@/types';
+import type { CompareFleetDataOutput } from '@/types';
 
 // Defines the explicit schema for the filters
 const ComparisonFilterSchema = z.object({
@@ -35,12 +36,6 @@ const CompareFleetDataInputSchema = z.object({
 
 export type CompareFleetDataInput = z.infer<typeof CompareFleetDataInputSchema>;
 
-// Defines the output of the comparison flow
-const CompareFleetDataOutputSchema = z.object({
-  comparison: z.string().describe('A detailed, critical, and insightful comparison of the two scenarios in Markdown format.'),
-});
-
-export type CompareFleetDataOutput = z.infer<typeof CompareFleetDataOutputSchema>;
 
 export async function compareFleetData(
   input: CompareFleetDataInput
@@ -56,7 +51,7 @@ const prompt = ai.definePrompt({
   config: {
     maxOutputTokens: 2048,
   },
-  prompt: `A Frota.AI, apresenta uma análise direta e focada nas oportunidades:
+  prompt: `O Frota.AI, como um analista de mercado especialista, deve comparar os dois cenários de frota de veículos a seguir e gerar insights estratégicos.
 
 **Cenário A (Filtros: {{{json scenarioA.filters}}})**
 - **Frota por Idade:** {{{json scenarioA.fleetAgeBrackets}}}
@@ -66,12 +61,12 @@ const prompt = ai.definePrompt({
 - **Frota por Idade:** {{{json scenarioB.fleetAgeBrackets}}}
 - **Frota por Região:** {{{json scenarioB.regionalData}}}
 
-**Instruções para sua Análise Estratégica (Seja Conciso):**
+**Instruções para sua Análise Estratégica (Seja Conciso e preencha TODOS os campos do JSON de saída):**
 
-1.  **Visão Geral:** Qual cenário tem o maior volume de veículos? Destaque a diferença percentual.
-2.  **Análise Comparativa de Idade:** Qual cenário tem a frota mais antiga? **Gere um Insight Crítico:** O que isso significa em termos de oportunidade de peças? (Ex: "Cenário A, com 40% de sua frota na faixa 'Usados', indica uma demanda imediata e forte por peças de manutenção e reparo, como suspensão e freios.")
-3.  **Análise Comparativa Regional:** Qual cenário possui uma frota mais concentrada geograficamente? **Gere uma Implicação Estratégica:** Qual a vantagem disso? (Ex: "A concentração de 80% da frota do Cenário B no Sudeste simplifica a logística e permite uma estratégia de distribuição mais agressiva e de menor custo.")
-4.  **Conclusão e Recomendação Final:** Com base nos pontos acima, qual cenário representa a **melhor oportunidade de negócio *agora* para um fabricante de autopeças?** Justifique sua recomendação em uma única frase.
+1.  **overview:** Qual cenário tem o maior volume de veículos? Destaque a diferença percentual de forma clara.
+2.  **ageComparison:** Qual cenário tem a frota mais antiga? **Gere um Insight Crítico:** O que isso significa em termos de oportunidade de peças? (Ex: "Cenário A, com 40% de sua frota na faixa 'Usados', indica uma demanda imediata e forte por peças de manutenção e reparo, como suspensão e freios.")
+3.  **regionalComparison:** Qual cenário possui uma frota mais concentrada geograficamente? **Gere uma Implicação Estratégica:** Qual a vantagem disso? (Ex: "A concentração de 80% da frota do Cenário B no Sudeste simplifica a logística e permite uma estratégia de distribuição mais agressiva e de menor custo.")
+4.  **recommendation:** Com base nos pontos acima, qual cenário representa a **melhor oportunidade de negócio *agora* para um fabricante de autopeças?** Justifique sua recomendação em uma única frase.
 
 **Formato:** Use Markdown (negrito, listas). A linguagem deve ser profissional, assertiva e extremamente concisa. A resposta deve ser completa, não pode ser cortada e deve estar em português.
 `,

@@ -7,7 +7,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { FleetAgeBracketSchema, RegionDataSchema, ChartDataSchema } from '@/types';
+import { FleetAgeBracketSchema, RegionDataSchema, ChartDataSchema, AnswerFleetQuestionOutputSchema } from '@/types';
 import type { AnswerFleetQuestionOutput } from '@/types';
 
 const AnswerFleetQuestionInputSchema = z.object({
@@ -20,10 +20,6 @@ const AnswerFleetQuestionInputSchema = z.object({
 });
 
 export type AnswerFleetQuestionInput = z.infer<typeof AnswerFleetQuestionInputSchema>;
-
-const AnswerFleetQuestionOutputSchema = z.object({
-  answer: z.string().describe('The answer to the user\'s question in Markdown format.'),
-});
 
 
 export async function answerFleetQuestion(
@@ -41,7 +37,7 @@ const prompt = ai.definePrompt({
   },
   prompt: `O Frota.AI, com sua base de conhecimento especialista no setor automotivo e de autopeças brasileiro, analisará criticamente os dados a seguir para fornecer um parecer estratégico e conciso para um gestor comercial. A análise deve ser assertiva, comercialmente útil e ditar os próximos passos para o mercado.
 
-A análise do Frota.AI é *estritamente* baseada nos dados fornecidos e deve ser curta e direta. A resposta final deve ser completa e não pode ser cortada.
+A análise do Frota.AI é *estritamente* baseada nos dados fornecidos. A resposta final deve ser completa e não pode ser cortada.
 
 **Contexto da Análise (Filtros Aplicados):**
 {{question}}
@@ -63,13 +59,13 @@ A análise do Frota.AI é *estritamente* baseada nos dados fornecidos e deve ser
     {{{json data.fleetByYearData}}}
     \`\`\`
 
-**Instruções para a Análise Crítica e Assertiva do Frota.AI (seja direto e conciso):**
+**Instruções para a Análise Crítica e Assertiva do Frota.AI (seja direto e conciso e preencha TODOS os campos do JSON de saída):**
 
-1.  **Síntese Executiva:** Comece com um parágrafo curto resumindo a principal conclusão da análise.
-2.  **Análise por Idade da Frota:** Identifique a faixa etária predominante e traduza isso em uma **oportunidade de negócio clara e direta**. Exemplo: "A concentração de veículos com 8-12 anos indica forte demanda por peças de manutenção de alta quilometragem (ex: embreagem, amortecedores)."
-3.  **Análise Regional:** Aponte a região dominante e sua **implicação estratégica**. Exemplo: "O Sudeste concentra 80% da frota, exigindo foco logístico e de distribuição nesta região."
-4.  **Análise por Ano de Fabricação:** Identifique picos significativos e conecte com o ciclo de vida do veículo. Exemplo: "O pico de vendas em 2016 significa que esta safra entra agora na fase de grande manutenção, demandando peças mais complexas."
-5.  **Recomendação Estratégica Final:** Conclua com 2-3 recomendações acionáveis e diretas para um fabricante ou distribuidor de autopeças.
+1.  **executiveSummary:** Comece com um parágrafo curto resumindo a principal conclusão da análise.
+2.  **ageAnalysis:** Identifique a faixa etária predominante e traduza isso em uma **oportunidade de negócio clara e direta**. Exemplo: "A concentração de veículos com 8-12 anos indica forte demanda por peças de manutenção de alta quilometragem (ex: embreagem, amortecedores)."
+3.  **regionalAnalysis:** Aponte a região dominante e sua **implicação estratégica**. Exemplo: "O Sudeste concentra 80% da frota, exigindo foco logístico e de distribuição nesta região."
+4.  **yearAnalysis:** Identifique picos significativos e conecte com o ciclo de vida do veículo. Exemplo: "O pico de vendas em 2016 significa que esta safra entra agora na fase de grande manutenção, demandando peças mais complexas."
+5.  **strategicRecommendation:** Conclua com 2-3 recomendações acionáveis e diretas para um fabricante ou distribuidor de autopeças, em formato de lista (markdown).
 
 **Formato:** Use Markdown (negrito, listas). Linguagem profissional, direta e confiante. A resposta final deve estar em português e ser concisa.
 `,

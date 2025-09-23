@@ -181,7 +181,13 @@
   "attention_title": "Attention",
   "comparison_warning": "If the comparison text seems incomplete, please generate it again. If the error persists, contact our support.",
   "ok_close": "OK, close",
-  "calculating": "Calculating..."
+  "calculating": "Calculating...",
+  "executive_summary": "Executive Summary",
+  "age_analysis": "Fleet Age Analysis",
+  "regional_analysis": "Regional Analysis",
+  "year_analysis": "Manufacturing Year Analysis",
+  "strategic_recommendation": "Strategic Recommendation",
+  "comparison_overview": "Comparative Overview",
+  "age_comparison": "Fleet Age Comparison",
+  "regional_comparison": "Regional Comparison"
 }
-
-    

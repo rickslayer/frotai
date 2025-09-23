@@ -181,7 +181,13 @@
   "attention_title": "Atenção",
   "comparison_warning": "Se a comparação estiver faltando continuidade no texto, por favor gere novamente, se o erro persistir entre em contato com o nosso suporte.",
   "ok_close": "OK, fechar",
-  "calculating": "Contabilizando..."
+  "calculating": "Contabilizando...",
+  "executive_summary": "Síntese Executiva",
+  "age_analysis": "Análise por Idade da Frota",
+  "regional_analysis": "Análise Regional",
+  "year_analysis": "Análise por Ano de Fabricação",
+  "strategic_recommendation": "Recomendação Estratégica",
+  "comparison_overview": "Visão Geral Comparativa",
+  "age_comparison": "Comparativo de Idade da Frota",
+  "regional_comparison": "Comparativo Regional"
 }
-
-    

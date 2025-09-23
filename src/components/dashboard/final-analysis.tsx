@@ -8,10 +8,12 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { answerFleetQuestion } from '@/ai/flows/answer-fleet-question';
-import type { Filters, ChartData, FleetAgeBracket, RegionData } from '@/types';
+import type { Filters, ChartData, FleetAgeBracket, RegionData, AnswerFleetQuestionOutput } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Download, Loader2, Sparkles, Terminal } from 'lucide-react';
+import { Download, Loader2, Sparkles, FileText, History, Map, Calendar, Rocket, Lightbulb } from 'lucide-react';
 import jsPDF from 'jspdf';
+import {marked} from 'marked';
+
 
 interface FinalAnalysisProps {
   filters: Filters;
@@ -19,14 +21,22 @@ interface FinalAnalysisProps {
   fleetAgeBrackets: FleetAgeBracket[];
   regionalData: RegionData[];
   fleetByYearData: ChartData[];
-  onAnalysisGenerated: (analysis: string | null) => void;
+  onAnalysisGenerated: (analysis: AnswerFleetQuestionOutput | null) => void;
 }
+
+const analysisSections = (t: any) => [
+    { key: 'executiveSummary', title: 'executive_summary', icon: FileText, color: 'text-primary' },
+    { key: 'ageAnalysis', title: 'age_analysis', icon: History, color: 'text-blue-500' },
+    { key: 'regionalAnalysis', title: 'regional_analysis', icon: Map, color: 'text-green-500' },
+    { key: 'yearAnalysis', title: 'year_analysis', icon: Calendar, color: 'text-orange-500' },
+    { key: 'strategicRecommendation', title: 'strategic_recommendation', icon: Rocket, color: 'text-purple-500' }
+] as const;
 
 const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrackets, regionalData, fleetByYearData, onAnalysisGenerated }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<AnswerFleetQuestionOutput | null>(null);
 
   const handleGenerateAnalysis = async () => {
     setLoading(true);
@@ -51,8 +61,8 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
         },
       });
 
-      setAnalysis(result.answer);
-      onAnalysisGenerated(result.answer);
+      setAnalysis(result);
+      onAnalysisGenerated(result);
     } catch (error) {
       console.error('Error generating final analysis:', error);
       toast({
@@ -65,35 +75,41 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
     }
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!analysis) return;
-
-    const doc = new jsPDF();
     
+    const doc = new jsPDF();
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.text(t('ai_analysis_title'), 14, 22);
-
-    const plainText = analysis
-        .replace(/<br \/>/g, '\n')
-        .replace(/\*\*(.*?)\*\*/g, '$1') 
-        .replace(/<h[1-6]>/g, '\n') 
-        .replace(/<\/h[1-6]>/g, '\n\n')
-        .replace(/<p>/g, '')
-        .replace(/<\/p>/g, '\n\n')
-        .replace(/<li>/g, '  - ') 
-        .replace(/<\/li>/g, '\n')
-        .replace(/<ul>|<\/ul>|<ol>|<\/ol>/g, '\n');
-
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
     
-    const splitText = doc.splitTextToSize(plainText, 180);
-    doc.text(splitText, 14, 35);
+    let y = 35;
+
+    for (const section of analysisSections(t)) {
+        const content = analysis[section.key];
+        if (content) {
+            if (y > 260) {
+                doc.addPage();
+                y = 20;
+            }
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text(t(section.title), 14, y);
+            y += 7;
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            
+            const html = await marked.parse(content);
+            const plainText = new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
+            const splitText = doc.splitTextToSize(plainText, 180);
+            doc.text(splitText, 14, y);
+            y += splitText.length * 5 + 10;
+        }
+    }
     
     doc.save('frota-ai-analysis.pdf');
-  };
+};
 
 
   return (
@@ -116,19 +132,31 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
         )}
 
         {analysis && (
-          <div className="space-y-4 pt-4">
-             <Alert>
-              <div className="flex justify-between items-center mb-2">
-                 <AlertTitle className="font-bold">{t('ai_analysis_title')}</AlertTitle>
-                <Button variant="ghost" size="icon" onClick={handleDownloadPdf} className="h-6 w-6">
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-              <AlertDescription>
-                <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br />') }} />
-              </AlertDescription>
-            </Alert>
-          </div>
+            <div className="space-y-4 pt-4">
+                <div className='flex justify-end'>
+                    <Button variant="ghost" size="icon" onClick={handleDownloadPdf} className="h-8 w-8">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                </div>
+
+                {analysisSections(t).map(({key, title, icon: Icon, color}) => {
+                    const content = analysis[key];
+                    if (!content) return null;
+                    return (
+                        <Alert key={key}>
+                            <div className="flex items-start gap-4">
+                                <Icon className={`h-5 w-5 mt-1 flex-shrink-0 ${color}`} />
+                                <div className="flex-1">
+                                    <AlertTitle className="font-bold mb-1">{t(title)}</AlertTitle>
+                                    <AlertDescription>
+                                        <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }} />
+                                    </AlertDescription>
+                                </div>
+                            </div>
+                        </Alert>
+                    )
+                })}
+            </div>
         )}
       </CardContent>
     </Card>

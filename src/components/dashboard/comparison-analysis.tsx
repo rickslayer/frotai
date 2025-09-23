@@ -7,11 +7,13 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { useToast } from '@/hooks/use-toast';
-import type { AnalysisSnapshot, Filters } from '@/types';
+import type { AnalysisSnapshot, Filters, CompareFleetDataOutput } from '@/types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Download, Loader2, Sparkles, Terminal, X, AlertCircle } from 'lucide-react';
+import { Download, Loader2, Sparkles, X, AlertCircle, Users, History, Map, Rocket } from 'lucide-react';
 import { compareFleetData } from '@/ai/flows/compare-fleet-data';
 import jsPDF from 'jspdf';
+import {marked} from 'marked';
+
 
 interface ComparisonAnalysisProps {
   snapshots: [AnalysisSnapshot | null, AnalysisSnapshot | null];
@@ -62,12 +64,19 @@ const SnapshotCard: FC<{ snapshot: AnalysisSnapshot | null; onClear: () => void;
     )
 }
 
+const comparisonSections = (t: any) => [
+    { key: 'overview', title: 'comparison_overview', icon: Users, color: 'text-primary' },
+    { key: 'ageComparison', title: 'age_comparison', icon: History, color: 'text-blue-500' },
+    { key: 'regionalComparison', title: 'regional_comparison', icon: Map, color: 'text-green-500' },
+    { key: 'recommendation', title: 'strategic_recommendation', icon: Rocket, color: 'text-purple-500' }
+] as const;
+
 
 const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, onClearAll }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<CompareFleetDataOutput | null>(null);
 
   const canCompare = snapshots[0] && snapshots[1];
 
@@ -113,10 +122,10 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
           fleetByYearData: snapshots[1]!.fleetByYearData,
         }
       });
-      if (!result.comparison) {
+      if (!result) {
           throw new Error('AI response was empty.');
       }
-      setAnalysis(result.comparison);
+      setAnalysis(result);
     } catch (error) {
       console.error('Error generating comparison analysis:', error);
       toast({
@@ -129,7 +138,7 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
     }
   };
 
-   const handleDownloadPdf = () => {
+   const handleDownloadPdf = async () => {
     if (!analysis) return;
 
     const doc = new jsPDF();
@@ -138,23 +147,29 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
     doc.setFontSize(16);
     doc.text(t('ai_comparison_title'), 14, 22);
 
-    const plainText = analysis
-        .replace(/<br \/>/g, '\n')
-        .replace(/\*\*(.*?)\*\*/g, '$1') 
-        .replace(/<h[1-6]>/g, '\n') 
-        .replace(/<\/h[1-6]>/g, '\n\n')
-        .replace(/<p>/g, '')
-        .replace(/<\/p>/g, '\n\n')
-        .replace(/<li>/g, '  - ') 
-        .replace(/<\/li>/g, '\n')
-        .replace(/<ul>|<\/ul>|<ol>|<\/ol>/g, '\n');
+    let y = 35;
+    for (const section of comparisonSections(t)) {
+        const content = analysis[section.key];
+        if (content) {
+            if (y > 260) {
+                doc.addPage();
+                y = 20;
+            }
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text(t(section.title), 14, y);
+            y += 7;
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
 
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    
-    const splitText = doc.splitTextToSize(plainText, 180);
-    doc.text(splitText, 14, 35);
+            const html = await marked.parse(content);
+            const plainText = new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
+            const splitText = doc.splitTextToSize(plainText, 180);
+            doc.text(splitText, 14, y);
+            y += splitText.length * 5 + 10;
+        }
+    }
     
     doc.save('frota-ai-comparative-analysis.pdf');
   };
@@ -187,17 +202,30 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
 
          {analysis && (
           <div className="space-y-4 pt-4">
-             <Alert>
-              <div className="flex justify-between items-center mb-2">
-                 <AlertTitle className="font-bold">{t('ai_comparison_title')}</AlertTitle>
-                <Button variant="ghost" size="icon" onClick={handleDownloadPdf} className="h-6 w-6">
+            <div className='flex justify-end'>
+                <Button variant="ghost" size="icon" onClick={handleDownloadPdf} className="h-8 w-8">
                   <Download className="h-4 w-4" />
                 </Button>
-              </div>
-              <AlertDescription>
-                <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: analysis.replace(/\n/g, '<br />') }} />
-              </AlertDescription>
-            </Alert>
+            </div>
+             
+             {comparisonSections(t).map(({key, title, icon: Icon, color}) => {
+                 const content = analysis[key];
+                 if (!content) return null;
+                 return (
+                    <Alert key={key}>
+                        <div className="flex items-start gap-4">
+                            <Icon className={`h-5 w-5 mt-1 flex-shrink-0 ${color}`} />
+                            <div className="flex-1">
+                                <AlertTitle className="font-bold mb-1">{t(title)}</AlertTitle>
+                                <AlertDescription>
+                                    <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }} />
+                                </AlertDescription>
+                            </div>
+                        </div>
+                    </Alert>
+                 )
+             })}
+
             <Alert variant="destructive" className="bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-300 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>{t('attention_title')}</AlertTitle>

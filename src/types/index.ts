@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 export type Vehicle = {
@@ -83,11 +82,25 @@ export type PredictPartsDemandOutput = z.infer<typeof PredictPartsDemandOutputSc
 
 
 // Types for Final Analysis Flow
-export type AnswerFleetQuestionOutput = {
-  answer: string;
-};
+export const AnswerFleetQuestionOutputSchema = z.object({
+  executiveSummary: z.string().describe("A short executive summary of the main conclusion from the analysis."),
+  ageAnalysis: z.string().describe("Analysis based on the fleet's age distribution, identifying the predominant age group and the resulting business opportunity."),
+  regionalAnalysis: z.string().describe("Analysis of the regional distribution, pointing out the dominant region and its strategic implication."),
+  yearAnalysis: z.string().describe("Analysis based on the manufacturing year, identifying significant peaks and connecting them to the vehicle's lifecycle."),
+  strategicRecommendation: z.string().describe("2-3 actionable and direct recommendations for an auto parts manufacturer or distributor."),
+});
+export type AnswerFleetQuestionOutput = z.infer<typeof AnswerFleetQuestionOutputSchema>;
 
 // Types for Comparison Analysis
+export const CompareFleetDataOutputSchema = z.object({
+    overview: z.string().describe("A general comparison of which scenario has the largest vehicle volume, including the percentage difference."),
+    ageComparison: z.string().describe("A critical insight into which scenario has the older fleet and what this means in terms of parts opportunities."),
+    regionalComparison: z.string().describe("A strategic implication of which scenario has a more geographically concentrated fleet and its advantages."),
+    recommendation: z.string().describe("A final, one-sentence recommendation on which scenario represents the best immediate business opportunity and why."),
+});
+export type CompareFleetDataOutput = z.infer<typeof CompareFleetDataOutputSchema>;
+
+
 export type AnalysisSnapshot = {
   filters: Filters;
   totalVehicles: number;
