@@ -27,11 +27,9 @@ async function connectToMongo() {
 
 // Helper to build the match object, excluding certain fields
 const buildMatchExcept = (baseMatch: any, exclude: string[]) => {
-    const match: any = {};
-    for (const key in baseMatch) {
-        if (!exclude.includes(key)) {
-            match[key] = baseMatch[key];
-        }
+    const match = { ...baseMatch };
+    for (const key of exclude) {
+        delete match[key];
     }
     return match;
 };
@@ -52,7 +50,7 @@ const getAllDistinctValues = async (collection: import('mongodb').Collection, ba
         },
     ];
 
-    const results = await collection.aggregate(pipeline).toArray();
+    const results = await collection.aggregate(pipeline, { maxTimeMS: 60000 }).toArray();
     const data = results[0];
 
     // Helper to process and sort the results from the facet stage
