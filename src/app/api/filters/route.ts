@@ -25,38 +25,47 @@ async function connectToMongo() {
   }
 }
 
-// Helper to build the match object, excluding certain fields
-const buildMatchExcept = (baseMatch: any, exclude: string[]) => {
-    const match: any = { ...baseMatch };
-    for (const key of exclude) {
-        delete match[key];
+const buildMatchQuery = (body: any) => {
+    const { manufacturer, model, version, year, region, state, city } = body;
+    const match: any = {};
+
+    if (manufacturer) {
+        if (manufacturer === 'Mitsubishi') {
+            match.manufacturer = { $in: [/^Mitsubishi/i, /^MMC/i] };
+        } else {
+            match.manufacturer = manufacturer;
+        }
     }
+    if (model && model.length > 0) match.model = { $in: model };
+    if (version && version.length > 0) match.version = { $in: version };
+    if (year) match.year = parseInt(String(year));
+    if (region) match.region = region;
+    if (state) match.state = state;
+    if (city) match.city = city;
+    
     return match;
 };
 
-// This function now uses a single aggregation pipeline to fetch all distinct values, which is more performant.
-const getAllDistinctValues = async (collection: import('mongodb').Collection, baseMatch: any): Promise<FilterOptions> => {
-    const pipeline: Document[] = [
-        {
-            $facet: {
-                manufacturers: [{ $match: buildMatchExcept(baseMatch, ['manufacturer', 'model', 'version']) }, { $group: { _id: '$manufacturer' } }],
-                models: [{ $match: buildMatchExcept(baseMatch, ['model', 'version']) }, { $group: { _id: '$model' } }],
-                versions: [{ $match: buildMatchExcept(baseMatch, ['version']) }, { $group: { _id: '$version' } }],
-                years: [{ $match: buildMatchExcept(baseMatch, ['year']) }, { $group: { _id: '$year' } }],
-                regions: [{ $match: buildMatchExcept(baseMatch, ['region', 'state', 'city']) }, { $group: { _id: '$region' } }],
-                states: [{ $match: buildMatchExcept(baseMatch, ['state', 'city']) }, { $group: { _id: '$state' } }],
-                cities: [{ $match: buildMatchExcept(baseMatch, ['city']) }, { $group: { _id: '$city' } }],
-            },
-        },
-    ];
+const getDistinctValues = async (collection: import('mongodb').Collection, match: any, field: string) => {
+    // When fetching options for a field, we don't filter by that field itself.
+    const query = { ...match };
+    delete query[field];
 
-    const results = await collection.aggregate(pipeline, { maxTimeMS: 60000 }).toArray();
-    const data = results[0];
+    // Special cascading logic
+    if (field === 'state') delete query.city;
+    if (field === 'region') { delete query.state; delete query.city; }
+    if (field === 'model') delete query.version;
+    if (field === 'manufacturer') { delete query.model; delete query.version; }
 
-    // Helper to process and sort the results from the facet stage
-    const processFacet = (facetResult: { _id: any }[] | undefined, field: string) => {
-        if (!facetResult) return [];
-        let values = facetResult.map(item => item._id).filter(item => item !== null && item !== "");
+
+    try {
+        const pipeline: Document[] = [
+            { $match: query },
+            { $group: { _id: `$${field}` } },
+            { $sort: { _id: 1 } },
+        ];
+        const results = await collection.aggregate(pipeline, { maxTimeMS: 15000 }).toArray();
+        let values = results.map(item => item._id).filter(item => item !== null && item !== "" && item !== 0);
 
         if (field === 'manufacturer') {
             const primaryNames = new Set<string>();
@@ -67,25 +76,18 @@ const getAllDistinctValues = async (collection: import('mongodb').Collection, ba
                     primaryNames.add(val);
                 }
             });
-            values = Array.from(primaryNames);
+            values = Array.from(primaryNames).sort();
         }
-        
-        if (field === 'year') {
-             return (values as number[]).sort((a, b) => b - a);
-        }
-        
-        return (values as string[]).sort();
-    };
 
-    return {
-        manufacturers: processFacet(data.manufacturers, 'manufacturer'),
-        models: processFacet(data.models, 'model'),
-        versions: processFacet(data.versions, 'version'),
-        years: processFacet(data.years, 'year') as number[],
-        regions: processFacet(data.regions, 'region'),
-        states: processFacet(data.states, 'state'),
-        cities: processFacet(data.cities, 'city'),
-    };
+        if (field === 'year') {
+            return (values as number[]).sort((a, b) => b - a);
+        }
+
+        return values;
+    } catch (e) {
+        console.error(`Error fetching distinct values for ${field}:`, e);
+        return []; // Return empty array on error/timeout for this specific field
+    }
 };
 
 
@@ -94,33 +96,27 @@ export async function POST(request: NextRequest) {
     const db = await connectToMongo();
     const collection = db.collection(collectionName);
     const body = await request.json();
+    const match = buildMatchQuery(body);
 
-    const manufacturer = body.manufacturer;
-    const modelsParam = body.model;
-    const versionsParam = body.version;
-    const year = body.year;
-    const region = body.region;
-    const state = body.state;
-    const city = body.city;
-    
-    // Base match query with ALL active filters
-    const baseMatch: any = {};
-    if (manufacturer) {
-        if (manufacturer === 'Mitsubishi') {
-            baseMatch.manufacturer = { $in: [/^Mitsubishi/i, /^MMC/i] };
-        } else {
-            baseMatch.manufacturer = manufacturer;
-        }
-    }
-    if (modelsParam && modelsParam.length > 0) baseMatch.model = { $in: modelsParam };
-    if (versionsParam && versionsParam.length > 0) baseMatch.version = { $in: versionsParam };
-    if (year) baseMatch.year = parseInt(String(year));
-    if (region) baseMatch.region = region;
-    if (state) baseMatch.state = state;
-    if (city) baseMatch.city = city;
-    
-    // Fetch all distinct values in a single, more efficient aggregation
-    const filterOptions = await getAllDistinctValues(collection, baseMatch);
+    const [manufacturers, models, versions, years, regions, states, cities] = await Promise.all([
+        getDistinctValues(collection, match, 'manufacturer'),
+        getDistinctValues(collection, match, 'model'),
+        getDistinctValues(collection, match, 'version'),
+        getDistinctValues(collection, match, 'year'),
+        getDistinctValues(collection, match, 'region'),
+        getDistinctValues(collection, match, 'state'),
+        getDistinctValues(collection, match, 'city'),
+    ]);
+
+    const filterOptions: FilterOptions = {
+      manufacturers: manufacturers as string[],
+      models: models as string[],
+      versions: versions as string[],
+      years: years as number[],
+      regions: regions as string[],
+      states: states as string[],
+      cities: cities as string[],
+    };
 
     return NextResponse.json(filterOptions);
   } catch (err) {
