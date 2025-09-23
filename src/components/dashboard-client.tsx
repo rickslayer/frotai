@@ -24,6 +24,7 @@ import { getFleetData, getInitialFilterOptions } from '@/lib/api-logic';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
+import { SidebarProvider } from './ui/sidebar';
 
 
 const emptyDashboardData: DashboardData = {
@@ -515,62 +516,62 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
 
 
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[280px_1fr]">
-      <div className="sticky top-0 h-screen hidden border-r bg-card md:block">
+    <SidebarProvider>
+        <div className="grid min-h-screen w-full md:grid-cols-[280px_1fr]">
         <DashboardSidebar
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          onClearFilters={handleClearFilters}
-          filterOptions={filterOptions}
-          disabledFilters={disabledFilters}
-          highlightedFilters={highlightedFilters}
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            onClearFilters={handleClearFilters}
+            filterOptions={filterOptions}
+            disabledFilters={disabledFilters}
+            highlightedFilters={highlightedFilters}
         />
-      </div>
-      <div className="flex flex-col">
-        <DashboardHeader 
-          onExport={handleExportPDF} 
-          isFiltered={isFiltered && dashboardData.totalVehicles > 0}
-        />
-        <main className="flex flex-col flex-1 overflow-auto p-4 md:p-8 bg-muted/20">
-             <div className="flex justify-between items-center gap-4">
-                <div>
-                  {isFiltered && (
-                    <Button onClick={handleSaveSnapshot} disabled={!isFiltered || dashboardData.totalVehicles === 0}>
-                      <BookCopy className="mr-2 h-4 w-4"/>
-                      {t('save_for_comparison')}
-                    </Button>
-                  )}
+        <div className="flex flex-col">
+            <DashboardHeader 
+            onExport={handleExportPDF} 
+            isFiltered={isFiltered && dashboardData.totalVehicles > 0}
+            />
+            <main className="flex flex-col flex-1 overflow-auto p-4 md:p-8 bg-muted/20">
+                <div className="flex justify-between items-center gap-4">
+                    <div>
+                    {isFiltered && (
+                        <Button onClick={handleSaveSnapshot} disabled={!isFiltered || dashboardData.totalVehicles === 0}>
+                        <BookCopy className="mr-2 h-4 w-4"/>
+                        {t('save_for_comparison')}
+                        </Button>
+                    )}
+                    </div>
                 </div>
-            </div>
 
-            {isComparing && (
-                <div className="mt-4">
-                    <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
+                {isComparing && (
+                    <div className="mt-4">
+                        <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
+                    </div>
+                )}
+                
+                <AlertDialog open={isVersionLimitModalOpen} onOpenChange={setIsVersionLimitModalOpen}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                        <AlertDialogTitle>{t('attention_title')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t('version_limit_error', { limit: 5 })}
+                        </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => setIsVersionLimitModalOpen(false)}>
+                            {t('ok_close')}
+                        </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+                
+                <div className="flex flex-col gap-4 md:gap-8 mt-4 flex-1">
+                {renderContent()}
                 </div>
-            )}
-            
-            <AlertDialog open={isVersionLimitModalOpen} onOpenChange={setIsVersionLimitModalOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>{t('attention_title')}</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        {t('version_limit_error', { limit: 5 })}
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogAction onClick={() => setIsVersionLimitModalOpen(false)}>
-                        {t('ok_close')}
-                    </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-            
-            <div className="flex flex-col gap-4 md:gap-8 mt-4 flex-1">
-              {renderContent()}
-            </div>
-        </main>
-      </div>
-    </div>
+            </main>
+        </div>
+        </div>
+    </SidebarProvider>
   );
 };
 

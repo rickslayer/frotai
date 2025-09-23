@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 import { useTranslation } from 'react-i18next';
-import { SidebarHeader, SidebarContent, SidebarFooter } from '../ui/sidebar';
+import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
 import { MultiSelectDropdown } from '../ui/multi-select-dropdown';
 import { cn } from '@/lib/utils';
@@ -48,7 +48,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
   const highlightClass = (key: keyof Filters) => highlightedFilters.includes(key) ? 'animate-pulse-bright' : '';
 
   return (
-    <>
+    <Sidebar>
       <SidebarHeader>
         <div className="flex h-14 items-center justify-between px-4 lg:h-[60px] lg:px-2">
             <Link href="/" className="flex items-center gap-3 font-semibold text-primary">
@@ -145,7 +145,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
           </Button>
         </div>
       </SidebarFooter>
-    </>
+    </Sidebar>
   );
 };
 
