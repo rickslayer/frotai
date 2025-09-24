@@ -1,13 +1,8 @@
 'use client';
 
 import React from 'react';
-import { I18nextProvider } from 'react-i18next';
-import i18n from '../lib/i18n';
 
+// This component is not currently in use but can be utilized for wrapping other client-side providers if needed in the future.
 export function Providers({ children }: { children: React.ReactNode }) {
-  return (
-    <I18nextProvider i18n={i18n}>
-        {children}
-    </I18nextProvider>
-  );
+  return <>{children}</>;
 }
