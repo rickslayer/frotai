@@ -189,5 +189,9 @@
   "strategic_recommendation": "Recomendación Estratégica",
   "comparison_overview": "Visión General Comparativa",
   "age_comparison": "Comparativa de Edad de la Flota",
-  "regional_comparison": "Comparativa Regional"
+  "regional_comparison": "Comparativa Regional",
+  "state_disabled_tooltip": "Seleccione primero una región",
+  "city_disabled_tooltip": "Seleccione primero un estado",
+  "model_disabled_tooltip": "Seleccione primero un fabricante",
+  "version_disabled_tooltip": "Seleccione al menos un modelo"
 }

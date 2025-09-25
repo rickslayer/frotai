@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { Car, FilterX, MapPin } from 'lucide-react';
+import { Car, FilterX, MapPin, AlertCircle } from 'lucide-react';
 import type { Filters } from '@/types';
 import type { FilterOptions } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,6 +14,8 @@ import { Sidebar, SidebarHeader, SidebarContent, SidebarFooter } from '../ui/sid
 import { Separator } from '../ui/separator';
 import { MultiSelectDropdown } from '../ui/multi-select-dropdown';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+
 
 interface DashboardSidebarProps {
   filters: Filters;
@@ -28,6 +30,26 @@ interface DashboardSidebarProps {
   };
   highlightedFilters: (keyof Filters)[];
 }
+
+const FilterTooltip: FC<{ disabled: boolean; message: string; children: React.ReactNode }> = ({ disabled, message, children }) => {
+    if (!disabled) {
+        return <>{children}</>;
+    }
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    {children}
+                </TooltipTrigger>
+                <TooltipContent side="right" align="center" className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-yellow-500" />
+                    <span>{message}</span>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+};
+
 
 const DashboardSidebar: FC<DashboardSidebarProps> = ({
     filters,
@@ -73,24 +95,28 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div data-testid="state-filter" className={cn("rounded-md", highlightClass('state'))}>
-                    <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value as string)} disabled={disabledFilters.state}>
-                      <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t('all_states')}</SelectItem>
-                        {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div data-testid="city-filter" className={cn("rounded-md", highlightClass('city'))}>
-                      <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value as string)} disabled={disabledFilters.city}>
-                      <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t('all_cities')}</SelectItem>
-                        {(filterOptions.cities || []).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <FilterTooltip disabled={disabledFilters.state} message={t('state_disabled_tooltip')}>
+                    <div data-testid="state-filter" className={cn("rounded-md", highlightClass('state'))}>
+                      <Select value={filters.state} onValueChange={(value) => handleFilterValueChange('state', value as string)} disabled={disabledFilters.state}>
+                        <SelectTrigger><SelectValue placeholder={t('select_state')} /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t('all_states')}</SelectItem>
+                          {(filterOptions.states || []).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </FilterTooltip>
+                  <FilterTooltip disabled={disabledFilters.city} message={t('city_disabled_tooltip')}>
+                    <div data-testid="city-filter" className={cn("rounded-md", highlightClass('city'))}>
+                        <Select value={filters.city} onValueChange={(value) => handleFilterValueChange('city', value as string)} disabled={disabledFilters.city}>
+                        <SelectTrigger><SelectValue placeholder={t('select_city')} /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t('all_cities')}</SelectItem>
+                          {(filterOptions.cities || []).map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </FilterTooltip>
               </div>
                <Separator />
                <div className="space-y-2">
@@ -104,24 +130,28 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
                         </SelectContent>
                       </Select>
                    </div>
-                   <div data-testid="model-filter" className={cn("rounded-md", highlightClass('model'))}>
-                      <MultiSelectDropdown
-                          options={(filterOptions.models || []).map(m => ({ value: m || 'null_model', label: m || t('base_model')}))}
-                          selectedValues={filters.model}
-                          onChange={(selected) => handleFilterValueChange('model', selected)}
-                          placeholder={t('select_model')}
-                          disabled={disabledFilters.model}
-                        />
-                    </div>
-                    <div data-testid="version-filter" className={cn("rounded-md", highlightClass('version'))}>
+                   <FilterTooltip disabled={disabledFilters.model} message={t('model_disabled_tooltip')}>
+                      <div data-testid="model-filter" className={cn("rounded-md", highlightClass('model'))}>
                         <MultiSelectDropdown
-                          options={(filterOptions.versions || []).map(v => ({ value: v || 'null_version', label: v || t('base_model_version')}))}
-                          selectedValues={filters.version}
-                          onChange={(selected) => handleFilterValueChange('version', selected)}
-                          placeholder={t('select_version_multi')}
-                          disabled={disabledFilters.version}
-                        />
-                    </div>
+                            options={(filterOptions.models || []).map(m => ({ value: m || 'null_model', label: m || t('base_model')}))}
+                            selectedValues={filters.model}
+                            onChange={(selected) => handleFilterValueChange('model', selected)}
+                            placeholder={t('select_model')}
+                            disabled={disabledFilters.model}
+                          />
+                      </div>
+                   </FilterTooltip>
+                    <FilterTooltip disabled={disabledFilters.version} message={t('version_disabled_tooltip')}>
+                      <div data-testid="version-filter" className={cn("rounded-md", highlightClass('version'))}>
+                          <MultiSelectDropdown
+                            options={(filterOptions.versions || []).map(v => ({ value: v || 'null_version', label: v || t('base_model_version')}))}
+                            selectedValues={filters.version}
+                            onChange={(selected) => handleFilterValueChange('version', selected)}
+                            placeholder={t('select_version_multi')}
+                            disabled={disabledFilters.version}
+                          />
+                      </div>
+                    </FilterTooltip>
                     <div data-testid="year-filter" className={cn("rounded-md", highlightClass('year'))}>
                         <Select value={String(filters.year)} onValueChange={(value) => handleFilterValueChange('year', value)}>
                         <SelectTrigger><SelectValue placeholder={t('select_year')} /></SelectTrigger>

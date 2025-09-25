@@ -59,13 +59,9 @@ const getDistinctValues = async (collection: import('mongodb').Collection, match
 
 
     try {
-        const pipeline: Document[] = [
-            { $match: query },
-            { $group: { _id: `$${field}` } },
-            { $sort: { _id: 1 } },
-        ];
-        const results = await collection.aggregate(pipeline, { maxTimeMS: 15000 }).toArray();
-        let values = results.map(item => item._id).filter(item => item !== null && item !== "" && item !== 0);
+        let values = await collection.distinct(field, query);
+        
+        values = values.filter(item => item !== null && item !== "" && item !== 0);
 
         if (field === 'manufacturer') {
             const primaryNames = new Set<string>();
@@ -83,7 +79,7 @@ const getDistinctValues = async (collection: import('mongodb').Collection, match
             return (values as number[]).sort((a, b) => b - a);
         }
 
-        return values;
+        return (values as string[]).sort();
     } catch (e) {
         console.error(`Error fetching distinct values for ${field}:`, e);
         return []; // Return empty array on error/timeout for this specific field
