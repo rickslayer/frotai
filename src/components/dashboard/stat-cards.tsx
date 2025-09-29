@@ -91,7 +91,7 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
           description={t('main_city_description')}
           icon={<Map className="h-4 w-4 text-muted-foreground" />}
           isLoading={isCardLoading(data.topCity)}
-          className={cn(data.topCity?.name && "transition-colors hover:bg-muted/50")}
+          className={cn(data.topCity?.name && "transition-colors border-2 border-transparent hover:border-primary")}
         />
        </div>
     </div>
