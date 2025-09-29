@@ -354,50 +354,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
         });
     }
     
-    doc.addPage();
-    let chartY = 20;
-    let chartCountOnPage = 0;
-
-    const addBase64ImageToPdf = async (doc: jsPDF, elementId: string, title: string) => {
-      const element = document.getElementById(elementId);
-      if (element) {
-        if (chartCountOnPage >= 2) {
-          doc.addPage();
-          chartY = 20;
-          chartCountOnPage = 0;
-        }
-        
-        const canvas = await html2canvas(element, { 
-            scale: 2, 
-            useCORS: true, 
-            logging: false,
-            backgroundColor: '#FFFFFF'
-        });
-        
-        const imgData = canvas.toDataURL('image/png');
-        const imgWidth = 130; 
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        const xPos = (chartCountOnPage % 2) * 148 + 14; 
-        
-        if (chartCountOnPage > 0 && chartCountOnPage % 2 === 0) {
-            doc.addPage();
-            chartY = 20;
-            chartCountOnPage = 0;
-        }
-
-        doc.setFontSize(14);
-        doc.text(title, xPos, chartY);
-        doc.addImage(imgData, 'PNG', xPos, chartY + 5, imgWidth, imgHeight);
-
-        if (chartCountOnPage % 2 !== 0) {
-            chartY += imgHeight + 20; 
-        }
-
-        chartCountOnPage++;
-      }
-    };
-
     const charts = [
         { id: 'regional-analysis-chart', title: t('regional_fleet_analysis') },
         { id: 'fleet-age-chart', title: t('fleet_by_age_bracket') },
@@ -407,6 +363,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
 
     let currentY = 20;
     let pageChartCount = 0;
+    let newPage = true;
 
     for (const chart of charts) {
         const element = document.getElementById(chart.id);
@@ -415,9 +372,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
                 doc.addPage();
                 currentY = 20;
                 pageChartCount = 0;
+                newPage = true;
             }
 
-            const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#FFFFFF' });
             const imgData = canvas.toDataURL('image/png');
             const contentWidth = (doc.internal.pageSize.getWidth() / 2) - 20;
             const contentHeight = (canvas.height * contentWidth) / canvas.width;
@@ -430,9 +388,12 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
 
             if (pageChartCount % 2 !== 0) {
                  currentY += contentHeight + 15;
+            } else if (pageChartCount === charts.length - 1) { // If it's the last chart and it's on the left
+                currentY += contentHeight + 15;
             }
             
             pageChartCount++;
+            newPage = false;
         }
     }
     
@@ -440,7 +401,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
     if (currentY > 150) { 
         doc.addPage();
         currentY = 20;
-    } else {
+    } else if (!newPage) { // If we are on a page with charts, move to the bottom
         currentY = 170;
     }
     
@@ -650,5 +611,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
 };
 
 export default DashboardClient;
+
+    
 
     
