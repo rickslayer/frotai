@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FC } from 'react';
@@ -57,6 +56,13 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
     }
   }
 
+  const handleModelImageSearch = () => {
+    if (data.topOverallModel?.name) {
+        const query = encodeURIComponent(data.topOverallModel.name);
+        window.open(`https://www.google.com/search?tbm=isch&q=${query}`, '_blank');
+    }
+  };
+
   return (
     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
       <StatCard
@@ -66,13 +72,20 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
         icon={<Users2 className="h-4 w-4 text-muted-foreground" />}
         isLoading={isLoading}
       />
-      <StatCard
-        title={t('main_overall_model')}
-        value={data.topOverallModel?.name || null}
-        description={t('main_overall_model_description')}
-        icon={<Car className="h-4 w-4 text-muted-foreground" />}
-        isLoading={isCardLoading(data.topOverallModel)}
-      />
+      <div 
+        onClick={handleModelImageSearch} 
+        className={data.topOverallModel?.name ? "cursor-pointer" : "cursor-default"}
+        title={data.topOverallModel?.name ? `${t('main_overall_model')}: ${data.topOverallModel.name}`: t('main_overall_model')}
+       >
+        <StatCard
+          title={t('main_overall_model')}
+          value={data.topOverallModel?.name || null}
+          description={t('main_overall_model_description')}
+          icon={<Car className="h-4 w-4 text-muted-foreground" />}
+          isLoading={isCardLoading(data.topOverallModel)}
+          className={cn(data.topOverallModel?.name && "transition-colors border-2 border-transparent hover:border-primary")}
+        />
+      </div>
       <StatCard
         title={t('main_state')}
         value={data.topState?.name || null}
