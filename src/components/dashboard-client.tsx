@@ -25,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import { SidebarProvider } from './ui/sidebar';
-import { Alert } from './ui/alert';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 
 const emptyDashboardData: DashboardData = {
@@ -519,7 +519,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
 
         <Alert variant="destructive" className="bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-300 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400">
             <AlertCircle className="h-4 w-4" />
-            <AlertDialogTitle>{t('attention_title')}</AlertDialogTitle>
+            <AlertTitle>{t('attention_title')}</AlertTitle>
             <AlertDescription>
                 {t('comparison_warning')}
             </AlertDescription>
