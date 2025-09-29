@@ -100,9 +100,11 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(11);
             
-            const html = await marked.parse(content);
+            // Convert markdown to HTML then to plain text to strip markdown for PDF
+            const html = await marked.parse(content.replace(/\*/g, '')); // Remove asterisks for bold etc.
             const plainText = new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
             const splitText = doc.splitTextToSize(plainText, 180);
+            
             doc.text(splitText, 14, y);
             y += splitText.length * 5 + 10;
         }
@@ -149,7 +151,7 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
                                 <div className="flex-1">
                                     <AlertTitle className="font-bold mb-1">{t(title)}</AlertTitle>
                                     <AlertDescription>
-                                        <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }} />
+                                        <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: marked.parse(content) }} />
                                     </AlertDescription>
                                 </div>
                             </div>
