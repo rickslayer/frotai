@@ -54,10 +54,7 @@ A análise do Frota.AI é *estritamente* baseada nos dados fornecidos. A respost
     {{{json data.regionalData}}}
     \`\`\`
     
-3.  **Frota por Ano de Fabricação:** Aqui estão os dados da frota por ano de fabricação. O campo 'name' é o ano e 'quantity' é o total de veículos.
-    \`\`\`json
-    {{{json data.fleetByYearData}}}
-    \`\`\`
+3.  **Frota por Ano de Fabricação:** Analise os dados da frota por ano de fabricação, disponíveis no input 'data.fleetByYearData'. O campo 'name' é o ano e 'quantity' é o total de veículos.
 
 **Instruções para a Análise Crítica e Assertiva do Frota.AI (seja direto e conciso e preencha TODOS os campos do JSON de saída):**
 
@@ -86,3 +83,4 @@ const answerFleetQuestionFlow = ai.defineFlow(
     return output;
   }
 );
+
