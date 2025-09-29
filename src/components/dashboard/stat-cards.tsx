@@ -49,6 +49,13 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
     return false;
   }
 
+  const handleCityClick = () => {
+    if (data.topCity?.name) {
+      const query = encodeURIComponent(data.topCity.name);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+    }
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
       <StatCard
@@ -72,13 +79,19 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
         icon={<Flag className="h-4 w-4 text-muted-foreground" />}
         isLoading={isCardLoading(data.topState)}
       />
-       <StatCard
-        title={t('main_city')}
-        value={data.topCity?.name || null}
-        description={t('main_city_description')}
-        icon={<Map className="h-4 w-4 text-muted-foreground" />}
-        isLoading={isCardLoading(data.topCity)}
-      />
+       <div 
+        onClick={handleCityClick} 
+        className={data.topCity?.name ? "cursor-pointer" : "cursor-default"}
+        title={data.topCity?.name ? `${t('main_city')}: ${data.topCity.name}`: t('main_city')}
+       >
+        <StatCard
+          title={t('main_city')}
+          value={data.topCity?.name || null}
+          description={t('main_city_description')}
+          icon={<Map className="h-4 w-4 text-muted-foreground" />}
+          isLoading={isCardLoading(data.topCity)}
+        />
+       </div>
     </div>
   );
 };
