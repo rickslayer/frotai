@@ -258,7 +258,7 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
   }, []);
   
   const handleExportPDF = async () => {
-    const doc = new jsPDF('p', 'mm', 'a4');
+    const doc = new jsPDF('l', 'mm', 'a4');
     let y = 20;
 
     doc.setFont('helvetica', 'bold');
@@ -300,28 +300,42 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
     };
 
     if (generalAnalysis) {
-      if (y > 250) { doc.addPage(); y = 20; }
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text(t('ai_analysis_title'), 14, y);
-      y += 8;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
-      const formattedText = formatTextForPdf(generalAnalysis.executiveSummary);
-      const splitText = doc.splitTextToSize(formattedText, 180);
-      doc.text(splitText, 14, y);
-      y += (splitText.length * 5) + 10;
+        if (y > 180) { doc.addPage(); y = 20; }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(t('ai_analysis_title'), 14, y);
+        y += 8;
+
+        const addTextSection = (title: string, content: string | null | undefined) => {
+            if (!content) return;
+            if (y > 180) { doc.addPage(); y = 20; }
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text(title, 14, y);
+            y += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            const formattedText = formatTextForPdf(content);
+            const splitText = doc.splitTextToSize(formattedText, doc.internal.pageSize.getWidth() - 28);
+            doc.text(splitText, 14, y);
+            y += (splitText.length * 5) + 10;
+        };
+
+        addTextSection(t('executive_summary'), generalAnalysis.executiveSummary);
+        addTextSection(t('age_analysis'), generalAnalysis.ageAnalysis);
+        addTextSection(t('regional_analysis'), generalAnalysis.regionalAnalysis);
+        addTextSection(t('strategic_recommendation'), generalAnalysis.strategicRecommendation);
     }
 
     if (demandAnalysis && demandAnalysis.predictions.length > 0) {
-        if (y > 200) { doc.addPage(); y = 20; }
+        if (y > 150) { doc.addPage(); y = 20; }
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
         doc.text(t('part_demand_forecast_title'), 14, y);
         y += 10;
 
         demandAnalysis.predictions.forEach(pred => {
-            if (y > 270) { doc.addPage(); y = 20; }
+            if (y > 180) { doc.addPage(); y = 20; }
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(11);
             doc.text(`${pred.partName} (Demanda: ${pred.demandLevel})`, 14, y);
@@ -330,15 +344,18 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
             
-            const reasonText = doc.splitTextToSize(`Razão: ${formatTextForPdf(pred.reason)}`, 180);
+            const reasonText = doc.splitTextToSize(`Razão: ${formatTextForPdf(pred.reason)}`, doc.internal.pageSize.getWidth() - 28);
             doc.text(reasonText, 14, y);
             y += (reasonText.length * 4) + 2;
             
-            const opportunityText = doc.splitTextToSize(`Oportunidade: ${formatTextForPdf(pred.opportunity)}`, 180);
+            const opportunityText = doc.splitTextToSize(`Oportunidade: ${formatTextForPdf(pred.opportunity)}`, doc.internal.pageSize.getWidth() - 28);
             doc.text(opportunityText, 14, y);
             y += (opportunityText.length * 4) + 8;
         });
     }
+    
+    doc.addPage();
+    y = 20;
 
     const addBase64ImageToPdf = async (doc: jsPDF, elementId: string, y: number, title: string): Promise<number> => {
       const element = document.getElementById(elementId);
@@ -384,10 +401,10 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
     y = await addBase64ImageToPdf(doc, 'fleet-age-chart', y, t('fleet_by_age_bracket'));
     y = await addBase64ImageToPdf(doc, 'top-models-chart', y, t('top_models_by_volume', { count: 10 }));
 
-    if (y > 270) { doc.addPage(); y = 20; }
+    if (y > 180) { doc.addPage(); y = 20; }
     doc.setFontSize(10);
     doc.setTextColor(150);
-    const warningText = doc.splitTextToSize(t('comparison_warning'), 180);
+    const warningText = doc.splitTextToSize(t('comparison_warning'), doc.internal.pageSize.getWidth() - 28);
     doc.text(warningText, 14, y);
 
     doc.save(`frota-ai-report-${new Date().toISOString().slice(0, 10)}.pdf`);
@@ -590,3 +607,5 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
 };
 
 export default DashboardClient;
+
+    

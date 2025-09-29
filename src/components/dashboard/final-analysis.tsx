@@ -28,7 +28,6 @@ const analysisSections = (t: any) => [
     { key: 'executiveSummary', title: 'executive_summary', icon: FileText, color: 'text-primary' },
     { key: 'ageAnalysis', title: 'age_analysis', icon: History, color: 'text-blue-500' },
     { key: 'regionalAnalysis', title: 'regional_analysis', icon: Map, color: 'text-green-500' },
-    { key: 'yearAnalysis', title: 'year_analysis', icon: Calendar, color: 'text-orange-500' },
     { key: 'strategicRecommendation', title: 'strategic_recommendation', icon: Rocket, color: 'text-purple-500' }
 ] as const;
 
@@ -86,6 +85,7 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
     let y = 35;
 
     for (const section of analysisSections(t)) {
+        //@ts-ignore
         const content = analysis[section.key];
         if (content) {
             if (y > 260) {
@@ -142,6 +142,7 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
                 </div>
 
                 {analysisSections(t).map(({key, title, icon: Icon, color}) => {
+                    //@ts-ignore
                     const content = analysis[key];
                     if (!content) return null;
                     return (
@@ -166,3 +167,5 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
 };
 
 export default FinalAnalysis;
+
+    
