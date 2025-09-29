@@ -257,103 +257,78 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
     setDashboardData(emptyDashboardData);
   }, []);
   
-  const handleExportPDF = async () => {
-    const doc = new jsPDF('l', 'mm', 'a4');
+const handleExportPDF = async () => {
+    const doc = new jsPDF({
+        orientation: 'p', // 'p' for portrait
+        unit: 'mm',
+        format: 'a4'
+    });
     let y = 20;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 15;
 
+    const addText = (text: string, size: number, isBold: boolean, newY?: number) => {
+        if (newY) y = newY;
+        if (y > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+        }
+        doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+        doc.setFontSize(size);
+        const splitText = doc.splitTextToSize(text, pageWidth - margin * 2);
+        doc.text(splitText, margin, y);
+        y += (splitText.length * (size / 2.5)) + 4;
+    };
+
+    addText('Relatório de Análise de Frota - Frota.AI', 18, true);
+    addText(new Date().toLocaleDateString('pt-BR', { dateStyle: 'full' }), 10, false);
+    y += 5;
+
+    // --- Resumo dos Dados ---
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text('Relatório de Análise de Frota - Frota.AI', 14, y);
-    y += 10;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(new Date().toLocaleDateString('pt-BR', { dateStyle: 'full' }), 14, y);
-    y += 15;
-
-    const addSection = (title: string, value: string | undefined | null) => {
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text(title, 14, y);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(11);
-      doc.text(value || '-', 80, y);
-      y += 8;
+    doc.setFontSize(12);
+    const addSummaryLine = (label: string, value: string | undefined | null) => {
+        if (y > pageHeight - margin) { doc.addPage(); y = margin; }
+        doc.text(`${label}:`, margin, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(value || '-', 70, y);
+        y += 8;
     };
     
-    addSection(t('total_vehicles'), dashboardData.totalVehicles.toLocaleString());
-    addSection(t('main_region'), dashboardData.topRegion?.name);
-    addSection(t('main_state'), dashboardData.topState?.name);
-    addSection(t('main_overall_model'), dashboardData.topOverallModel.name);
+    addSummaryLine(t('total_vehicles'), dashboardData.totalVehicles.toLocaleString());
+    addSummaryLine(t('main_region'), dashboardData.topRegion?.name);
+    addSummaryLine(t('main_state'), dashboardData.topState?.name);
+    addSummaryLine(t('main_overall_model'), dashboardData.topOverallModel.name);
     y += 5;
+
 
     const formatTextForPdf = (htmlText: string | null | undefined): string => {
         if (!htmlText) return '';
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlText
-            .replace(/<br\s*\/?>/gi, '\n')
-            .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, '\n**$1**\n')
-            .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n')
-            .replace(/<li[^>]*>(.*?)<\/li>/gi, '  - $1\n')
-            .replace(/<\/?(ul|ol)[^>]*>/gi, '\n');
-
-        return (tempDiv.textContent || tempDiv.innerText || "").replace(/(\n){3,}/g, '\n\n').trim();
+        tempDiv.innerHTML = htmlText.replace(/<\/li>/g, '</li>\n'); // Add newline after list items for jspdf
+        return (tempDiv.textContent || tempDiv.innerText || "").trim();
     };
 
+    // --- Análise da IA ---
     if (generalAnalysis) {
-        if (y > 180) { doc.addPage(); y = 20; }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text(t('ai_analysis_title'), 14, y);
-        y += 8;
-
-        const addTextSection = (title: string, content: string | null | undefined) => {
+        y += 5;
+        addText(t('ai_analysis_title'), 14, true);
+        
+        const addAnalysisSection = (title: string, content: string | null | undefined) => {
             if (!content) return;
-            if (y > 180) { doc.addPage(); y = 20; }
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(12);
-            doc.text(title, 14, y);
-            y += 7;
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(11);
-            const formattedText = formatTextForPdf(content);
-            const splitText = doc.splitTextToSize(formattedText, doc.internal.pageSize.getWidth() - 28);
-            doc.text(splitText, 14, y);
-            y += (splitText.length * 5) + 10;
+            addText(title, 12, true);
+            addText(formatTextForPdf(content), 10, false);
+            y += 4;
         };
 
-        addTextSection(t('executive_summary'), generalAnalysis.executiveSummary);
-        addTextSection(t('age_analysis'), generalAnalysis.ageAnalysis);
-        addTextSection(t('regional_analysis'), generalAnalysis.regionalAnalysis);
-        addTextSection(t('strategic_recommendation'), generalAnalysis.strategicRecommendation);
-    }
-
-    if (demandAnalysis && demandAnalysis.predictions.length > 0) {
-        if (y > 150) { doc.addPage(); y = 20; }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text(t('part_demand_forecast_title'), 14, y);
-        y += 10;
-
-        demandAnalysis.predictions.forEach(pred => {
-            if (y > 180) { doc.addPage(); y = 20; }
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.text(`${pred.partName} (Demanda: ${pred.demandLevel})`, 14, y);
-            y += 6;
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            
-            const reasonText = doc.splitTextToSize(`Razão: ${formatTextForPdf(pred.reason)}`, doc.internal.pageSize.getWidth() - 28);
-            doc.text(reasonText, 14, y);
-            y += (reasonText.length * 4) + 2;
-            
-            const opportunityText = doc.splitTextToSize(`Oportunidade: ${formatTextForPdf(pred.opportunity)}`, doc.internal.pageSize.getWidth() - 28);
-            doc.text(opportunityText, 14, y);
-            y += (opportunityText.length * 4) + 8;
-        });
+        addAnalysisSection(t('executive_summary'), generalAnalysis.executiveSummary);
+        addAnalysisSection(t('age_analysis'), generalAnalysis.ageAnalysis);
+        addAnalysisSection(t('regional_analysis'), generalAnalysis.regionalAnalysis);
+        addAnalysisSection(t('strategic_recommendation'), generalAnalysis.strategicRecommendation);
     }
     
+    // --- Gráficos ---
     const charts = [
         { id: 'regional-analysis-chart', title: t('regional_fleet_analysis') },
         { id: 'fleet-age-chart', title: t('fleet_by_age_bracket') },
@@ -361,58 +336,37 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
         { id: 'fleet-by-year-chart', title: t('fleet_by_year') }
     ];
 
-    let currentY = 20;
-    let pageChartCount = 0;
-    let newPage = true;
-
-    for (const chart of charts) {
-        const element = document.getElementById(chart.id);
+    for (const chartInfo of charts) {
+        const element = document.getElementById(chartInfo.id);
         if (element) {
-            if (pageChartCount >= 2) {
-                doc.addPage();
-                currentY = 20;
-                pageChartCount = 0;
-                newPage = true;
-            }
-
             const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#FFFFFF' });
             const imgData = canvas.toDataURL('image/png');
-            const contentWidth = (doc.internal.pageSize.getWidth() / 2) - 20;
-            const contentHeight = (canvas.height * contentWidth) / canvas.width;
             
-            const x = 14 + (pageChartCount % 2) * (doc.internal.pageSize.getWidth() / 2);
+            const imgWidth = pageWidth - margin * 2;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-            doc.setFontSize(12);
-            doc.text(chart.title, x, currentY);
-            doc.addImage(imgData, 'PNG', x, currentY + 5, contentWidth, contentHeight);
-
-            if (pageChartCount % 2 !== 0) {
-                 currentY += contentHeight + 15;
-            } else if (pageChartCount === charts.length - 1) { // If it's the last chart and it's on the left
-                currentY += contentHeight + 15;
+            if (y + imgHeight + 15 > pageHeight) {
+                doc.addPage();
+                y = margin;
+            } else {
+                y += 10;
             }
-            
-            pageChartCount++;
-            newPage = false;
+
+            addText(chartInfo.title, 12, true);
+            doc.addImage(imgData, 'PNG', margin, y, imgWidth, imgHeight);
+            y += imgHeight + 5;
         }
     }
-    
-    // Add legal text on a new page if needed, or at the bottom of the last one.
-    if (currentY > 150) { 
-        doc.addPage();
-        currentY = 20;
-    } else if (!newPage) { // If we are on a page with charts, move to the bottom
-        currentY = 170;
-    }
-    
-    doc.setFontSize(8);
-    doc.setTextColor(100);
+
+    // --- Texto Legal ---
+    doc.addPage();
+    y = margin;
     const legalText = `O Frota.AI utiliza um banco de dados confiável e algoritmos de análise avançada.\nOs resultados apresentados são sugestões baseadas nos filtros aplicados e gráficos gerados.\nO sistema não substitui a avaliação humana nem deve ser considerado como única fonte para decisões.\nNosso propósito é fornecer clareza de dados, evidenciar oportunidades e ajudar a prevenir desperdícios ou custos desnecessários.`;
-    const splitText = doc.splitTextToSize(legalText, doc.internal.pageSize.getWidth() - 28);
-    doc.text(splitText, 14, currentY);
+    addText(legalText, 8, false);
 
     doc.save(`frota-ai-report-${new Date().toISOString().slice(0, 10)}.pdf`);
-  };
+};
+
 
   const fleetAgeBracketsWithLabels = useMemo(() => {
     const bracketLabels: Record<string, string> = {
