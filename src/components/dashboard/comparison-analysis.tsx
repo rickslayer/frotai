@@ -218,7 +218,7 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
                             <div className="flex-1">
                                 <AlertTitle className="font-bold mb-1">{t(title)}</AlertTitle>
                                 <AlertDescription>
-                                    <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br />') }} />
+                                    <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: marked.parse(content) }} />
                                 </AlertDescription>
                             </div>
                         </div>

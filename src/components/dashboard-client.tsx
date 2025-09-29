@@ -16,7 +16,7 @@ import PartDemandForecast from './dashboard/part-demand-forecast';
 import FinalAnalysis from './dashboard/final-analysis';
 import jsPDF from 'jspdf';
 import { Button } from './ui/button';
-import { BookCopy, Loader2 } from 'lucide-react';
+import { AlertCircle, BookCopy, Loader2 } from 'lucide-react';
 import ComparisonAnalysis from './dashboard/comparison-analysis';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import html2canvas from 'html2canvas';
@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import FleetAgeBracketChart from './dashboard/fleet-age-bracket-chart';
 import { SidebarProvider } from './ui/sidebar';
+import { Alert } from './ui/alert';
 
 
 const emptyDashboardData: DashboardData = {
@@ -383,6 +384,11 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
     y = await addBase64ImageToPdf(doc, 'fleet-age-chart', y, t('fleet_by_age_bracket'));
     y = await addBase64ImageToPdf(doc, 'top-models-chart', y, t('top_models_by_volume', { count: 10 }));
 
+    if (y > 270) { doc.addPage(); y = 20; }
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    const warningText = doc.splitTextToSize(t('comparison_warning'), 180);
+    doc.text(warningText, 14, y);
 
     doc.save(`frota-ai-report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
@@ -510,6 +516,14 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
               />
           </div>
         </div>
+
+        <Alert variant="destructive" className="bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-300 [&>svg]:text-yellow-600 dark:[&>svg]:text-yellow-400">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDialogTitle>{t('attention_title')}</AlertDialogTitle>
+            <AlertDescription>
+                {t('comparison_warning')}
+            </AlertDescription>
+        </Alert>
       </div>
     );
   }
