@@ -101,7 +101,7 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
             doc.setFontSize(11);
             
             // Convert markdown to HTML then to plain text to strip markdown for PDF
-            const html = await marked.parse(content.replace(/\*/g, '')); // Remove asterisks for bold etc.
+            const html = await marked.parse(content);
             const plainText = new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
             const splitText = doc.splitTextToSize(plainText, 180);
             
