@@ -7,17 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users2, Map, Globe, Flag, Star, Car } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '../ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface StatCardsProps {
   data: DashboardData;
   isLoading?: boolean;
 }
 
-const StatCard: FC<{title: string, value: string | null, description: string, icon: React.ReactNode, isLoading?: boolean}> = ({ title, value, description, icon, isLoading }) => {
+const StatCard: FC<{title: string, value: string | null, description: string, icon: React.ReactNode, isLoading?: boolean, className?: string}> = ({ title, value, description, icon, isLoading, className }) => {
   const { t } = useTranslation();
   
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         {icon}
@@ -90,6 +91,7 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
           description={t('main_city_description')}
           icon={<Map className="h-4 w-4 text-muted-foreground" />}
           isLoading={isCardLoading(data.topCity)}
+          className={cn(data.topCity?.name && "transition-colors hover:bg-muted/50")}
         />
        </div>
     </div>
