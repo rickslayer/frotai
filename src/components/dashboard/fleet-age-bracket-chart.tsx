@@ -99,7 +99,7 @@ const FleetAgeBracketChart: FC<FleetAgeBracketChartProps> = ({ data, totalVehicl
                     <Legend
                         content={({ payload }) => {
                         return (
-                            <ul className="flex flex-col gap-3 max-w-[200px] text-xs">
+                            <ul className="flex flex-col gap-3 max-w-none text-xs">
                             {payload?.map((entry) => {
                                 const item = chartData.find(d => d.name === entry.value);
                                 if (!item) return null;
@@ -109,7 +109,8 @@ const FleetAgeBracketChart: FC<FleetAgeBracketChartProps> = ({ data, totalVehicl
                                 return (
                                 <li
                                     key={item.name}
-                                    className="flex items-start gap-2 truncate"
+                                    className="flex items-start gap-2"
+                                    style={{wordBreak: 'break-word'}}
                                 >
                                     <div className="flex items-center gap-2 mt-0.5">
                                         <span
@@ -119,7 +120,7 @@ const FleetAgeBracketChart: FC<FleetAgeBracketChartProps> = ({ data, totalVehicl
                                         {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="font-medium text-foreground truncate">{entry.value}</span>
+                                        <span className="font-medium text-foreground">{entry.value}</span>
                                         <span className="text-muted-foreground">
                                            {item.quantity.toLocaleString()} ({item.percentage.toFixed(1)}%)
                                         </span>
@@ -133,7 +134,7 @@ const FleetAgeBracketChart: FC<FleetAgeBracketChartProps> = ({ data, totalVehicl
                         layout="vertical"
                         align="right"
                         verticalAlign="middle"
-                        wrapperStyle={{ paddingLeft: '20px' }}
+                        wrapperStyle={{ paddingLeft: '16px' }}
                     />
                     </PieChart>
                 </ResponsiveContainer>
