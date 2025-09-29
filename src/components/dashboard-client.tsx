@@ -355,57 +355,100 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
     }
     
     doc.addPage();
-    y = 20;
+    let chartY = 20;
+    let chartCountOnPage = 0;
 
-    const addBase64ImageToPdf = async (doc: jsPDF, elementId: string, y: number, title: string): Promise<number> => {
+    const addBase64ImageToPdf = async (doc: jsPDF, elementId: string, title: string) => {
       const element = document.getElementById(elementId);
       if (element) {
-        const originalBg = element.style.backgroundColor;
-        element.style.backgroundColor = '#FFFFFF';
-
-        try {
-          const canvas = await html2canvas(element, { 
-              scale: 2, 
-              useCORS: true, 
-              logging: false,
-              backgroundColor: '#FFFFFF'
-          });
-          
-          const imgData = canvas.toDataURL('image/png');
-          const contentWidth = doc.internal.pageSize.getWidth() - 28;
-          const ratio = canvas.width / canvas.height;
-          const imgHeight = contentWidth / ratio;
-
-          if (y + imgHeight + 20 > doc.internal.pageSize.getHeight()) {
-              doc.addPage();
-              y = 20;
-          }
-
-          doc.setFontSize(14);
-          doc.text(title, 14, y);
-          y += 10;
-          
-          doc.addImage(imgData, 'PNG', 14, y, contentWidth, imgHeight);
-          y += imgHeight + 15;
-        } catch (error) {
-          console.error(`Error capturing element ${elementId}:`, error);
-        } finally {
-           element.style.backgroundColor = originalBg;
+        if (chartCountOnPage >= 2) {
+          doc.addPage();
+          chartY = 20;
+          chartCountOnPage = 0;
         }
+        
+        const canvas = await html2canvas(element, { 
+            scale: 2, 
+            useCORS: true, 
+            logging: false,
+            backgroundColor: '#FFFFFF'
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const imgWidth = 130; 
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        const xPos = (chartCountOnPage % 2) * 148 + 14; 
+        
+        if (chartCountOnPage > 0 && chartCountOnPage % 2 === 0) {
+            doc.addPage();
+            chartY = 20;
+            chartCountOnPage = 0;
+        }
+
+        doc.setFontSize(14);
+        doc.text(title, xPos, chartY);
+        doc.addImage(imgData, 'PNG', xPos, chartY + 5, imgWidth, imgHeight);
+
+        if (chartCountOnPage % 2 !== 0) {
+            chartY += imgHeight + 20; 
+        }
+
+        chartCountOnPage++;
       }
-      return y;
     };
 
-    y = await addBase64ImageToPdf(doc, 'regional-analysis-chart', y, t('regional_fleet_analysis'));
-    y = await addBase64ImageToPdf(doc, 'fleet-by-year-chart', y, t('fleet_by_year'));
-    y = await addBase64ImageToPdf(doc, 'fleet-age-chart', y, t('fleet_by_age_bracket'));
-    y = await addBase64ImageToPdf(doc, 'top-models-chart', y, t('top_models_by_volume', { count: 10 }));
+    const charts = [
+        { id: 'regional-analysis-chart', title: t('regional_fleet_analysis') },
+        { id: 'fleet-age-chart', title: t('fleet_by_age_bracket') },
+        { id: 'top-models-chart', title: t('top_models_by_volume', { count: 10 }) },
+        { id: 'fleet-by-year-chart', title: t('fleet_by_year') }
+    ];
 
-    if (y > 180) { doc.addPage(); y = 20; }
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    const warningText = doc.splitTextToSize(t('comparison_warning'), doc.internal.pageSize.getWidth() - 28);
-    doc.text(warningText, 14, y);
+    let currentY = 20;
+    let pageChartCount = 0;
+
+    for (const chart of charts) {
+        const element = document.getElementById(chart.id);
+        if (element) {
+            if (pageChartCount >= 2) {
+                doc.addPage();
+                currentY = 20;
+                pageChartCount = 0;
+            }
+
+            const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+            const imgData = canvas.toDataURL('image/png');
+            const contentWidth = (doc.internal.pageSize.getWidth() / 2) - 20;
+            const contentHeight = (canvas.height * contentWidth) / canvas.width;
+            
+            const x = 14 + (pageChartCount % 2) * (doc.internal.pageSize.getWidth() / 2);
+
+            doc.setFontSize(12);
+            doc.text(chart.title, x, currentY);
+            doc.addImage(imgData, 'PNG', x, currentY + 5, contentWidth, contentHeight);
+
+            if (pageChartCount % 2 !== 0) {
+                 currentY += contentHeight + 15;
+            }
+            
+            pageChartCount++;
+        }
+    }
+    
+    // Add legal text on a new page if needed, or at the bottom of the last one.
+    if (currentY > 150) { 
+        doc.addPage();
+        currentY = 20;
+    } else {
+        currentY = 170;
+    }
+    
+    doc.setFontSize(8);
+    doc.setTextColor(100);
+    const legalText = `O Frota.AI utiliza um banco de dados confiável e algoritmos de análise avançada.\nOs resultados apresentados são sugestões baseadas nos filtros aplicados e gráficos gerados.\nO sistema não substitui a avaliação humana nem deve ser considerado como única fonte para decisões.\nNosso propósito é fornecer clareza de dados, evidenciar oportunidades e ajudar a prevenir desperdícios ou custos desnecessários.`;
+    const splitText = doc.splitTextToSize(legalText, doc.internal.pageSize.getWidth() - 28);
+    doc.text(splitText, 14, currentY);
 
     doc.save(`frota-ai-report-${new Date().toISOString().slice(0, 10)}.pdf`);
   };
