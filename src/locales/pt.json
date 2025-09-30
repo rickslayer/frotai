@@ -193,5 +193,14 @@
   "state_disabled_tooltip": "Selecione uma região primeiro",
   "city_disabled_tooltip": "Selecione um estado primeiro",
   "model_disabled_tooltip": "Selecione uma montadora primeiro",
-  "version_disabled_tooltip": "Selecione ao menos um modelo"
+  "version_disabled_tooltip": "Selecione ao menos um modelo",
+  "persona_dialog_title": "Para quem é esta análise?",
+  "persona_dialog_description": "Selecione seu perfil para que a IA adapte os insights e recomendações à sua realidade.",
+  "persona_dialog_back_to_filters": "Voltar aos Filtros",
+  "cancel": "Cancelar",
+  "persona_manufacturer": "Fabricante",
+  "persona_representative": "Representante",
+  "persona_distributor": "Distribuidor",
+  "persona_retailer": "Lojista",
+  "persona_mechanic": "Mecânico"
 }

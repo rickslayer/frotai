@@ -7,10 +7,11 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { FleetAgeBracketSchema, RegionDataSchema, ChartDataSchema, AnswerFleetQuestionOutputSchema } from '@/types';
+import { FleetAgeBracketSchema, RegionDataSchema, ChartDataSchema, AnswerFleetQuestionOutputSchema, PersonaSchema } from '@/types';
 import type { AnswerFleetQuestionOutput } from '@/types';
 
 const AnswerFleetQuestionInputSchema = z.object({
+  persona: PersonaSchema.describe('The user profile for whom the analysis is being generated (e.g., manufacturer, retailer). This will tailor the language and focus of the analysis.'),
   question: z.string().describe("The user's question about the fleet data, including the filter context."),
   data: z.object({
     fleetAgeBrackets: z.array(FleetAgeBracketSchema).describe('An array of objects representing the age distribution of the vehicle fleet.'),
@@ -35,36 +36,39 @@ const prompt = ai.definePrompt({
   config: {
     maxOutputTokens: 2048,
   },
-  prompt: `O Frota.AI, com sua base de conhecimento especialista no setor automotivo e de autopeças brasileiro, analisará criticamente os dados a seguir para fornecer um parecer estratégico e conciso para um gestor comercial. A análise deve ser assertiva, comercialmente útil e ditar os próximos passos para o mercado.
+  prompt: `O Frota.AI, com sua base de conhecimento especialista no setor automotivo, analisará os dados a seguir para fornecer um parecer estratégico para um(a) **{{persona}}**. A análise deve ser assertiva, comercialmente útil e adaptada à perspectiva dessa persona.
 
 A análise do Frota.AI é *estritamente* baseada nos dados fornecidos. A resposta final deve ser completa e não pode ser cortada.
 
 **Contexto da Análise (Filtros Aplicados):**
 {{question}}
 
-**Dados Agregados para Análise Crítica:**
+**Dados Agregados para Análise:**
 
-1.  **Distribuição da Frota por Idade:** Aqui estão os dados da frota por faixas de idade. O campo 'range' representa a faixa, 'label' é a descrição e 'quantity' é o total de veículos.
+1.  **Distribuição da Frota por Idade:** Dados da frota por faixas de idade.
     \`\`\`json
     {{{json data.fleetAgeBrackets}}}
     \`\`\`
 
-2.  **Distribuição Regional da Frota:** Aqui estão os dados da frota por região ou estado. O campo 'name' é a localidade e 'quantity' é o total de veículos.
+2.  **Distribuição Regional da Frota:** Dados da frota por região ou estado.
     \`\`\`json
     {{{json data.regionalData}}}
     \`\`\`
     
-3.  **Frota por Ano de Fabricação:** Analise os dados da frota por ano de fabricação, disponíveis no input 'data.fleetByYearData', para entender os picos de produção e como eles impactam as oportunidades de manutenção hoje.
+3.  **Frota por Ano de Fabricação:** Dados da frota por ano de fabricação.
+    \`\`\`json
+    {{{json data.fleetByYearData}}}
+    \`\`\`
 
-**Instruções para a Análise Crítica e Assertiva do Frota.AI (seja direto e conciso e preencha TODOS os campos do JSON de saída):**
+**Instruções para a Análise (seja direto, conciso e adapte a linguagem para a persona "{{persona}}"):**
 
-1.  **executiveSummary:** Comece com um parágrafo curto resumindo a principal conclusão da análise.
-2.  **ageAnalysis:** Identifique a faixa etária predominante e traduza isso em uma **oportunidade de negócio clara e direta**. Exemplo: "A concentração de veículos com 8-12 anos indica forte demanda por peças de manutenção de alta quilometragem (ex: embreagem, amortecedores)."
-3.  **regionalAnalysis:** Aponte a região dominante e sua **implicação estratégica**. Exemplo: "O Sudeste concentra 80% da frota, exigindo foco logístico e de distribuição nesta região."
-4.  **yearAnalysis:** Identifique picos significativos no histórico de anos de fabricação e conecte com o ciclo de vida do veículo. Exemplo: "O pico de vendas em 2016 significa que esta safra entra agora na fase de grande manutenção, demandando peças mais complexas."
-5.  **strategicRecommendation:** Conclua com 2-3 recomendações acionáveis e diretas para um fabricante ou distribuidor de autopeças, em formato de lista (markdown).
+1.  **executiveSummary:** Resuma a principal conclusão da análise em um parágrafo curto, focando no que é mais importante para um(a) **{{persona}}**.
+2.  **ageAnalysis:** Identifique a faixa etária predominante e traduza isso em uma **oportunidade de negócio clara para a persona**. Exemplo para Lojista: "A concentração de veículos com 8-12 anos indica forte demanda no balcão por peças de manutenção (ex: embreagem, amortecedores)." Exemplo para Fabricante: "A frota jovem sugere oportunidade para desenvolver kits de revisão para concessionárias."
+3.  **regionalAnalysis:** Aponte a região dominante e sua **implicação estratégica para a persona**. Exemplo para Representante: "O Sudeste concentra 80% da frota, indicando a necessidade de fortalecer a carteira de clientes nessa região." Exemplo para Distribuidor: "A pulverização no Nordeste pode exigir um centro de distribuição local para agilizar a entrega."
+4.  **yearAnalysis:** Identifique picos significativos no histórico de anos e conecte com o ciclo de vida do veículo, **sob a ótica da persona**. Exemplo para Mecânico: "O pico de vendas em 2016 significa que esta safra chega agora na oficina para grande manutenção, demandando serviços mais complexos."
+5.  **strategicRecommendation:** Conclua com 2-3 recomendações acionáveis e diretas para a persona **{{persona}}**, em formato de lista (markdown).
 
-**Formato:** Use Markdown (negrito, listas). Linguagem profissional, direta e confiante. A resposta final deve estar em português e ser concisa.
+**Formato:** Use Markdown (negrito, listas). Linguagem profissional, direta e confiante. A resposta final deve estar em português.
 `,
 });
 

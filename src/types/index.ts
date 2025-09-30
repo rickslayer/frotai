@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export type Vehicle = {
@@ -56,6 +57,10 @@ export const RegionDataSchema = z.object({
 });
 export type RegionData = z.infer<typeof RegionDataSchema>;
 
+// Persona Schema
+export const PersonaSchema = z.enum(['manufacturer', 'representative', 'distributor', 'retailer', 'mechanic']);
+export type Persona = z.infer<typeof PersonaSchema>;
+
 
 // Types for Part Demand Prediction Flow
 const PartPredictionSchema = z.object({
@@ -66,6 +71,7 @@ const PartPredictionSchema = z.object({
 });
 
 export const PredictPartsDemandInputSchema = z.object({
+  persona: PersonaSchema.describe('The user profile for whom the analysis is being generated.'),
   fleetAgeBrackets: z.array(FleetAgeBracketSchema).describe('An array of objects representing the age distribution of the vehicle fleet.'),
   partCategory: z.string().optional().describe('An optional, user-specified category of parts to focus the analysis on (e.g., "Freios", "Suspensão", "Cabos").'),
   filters: z.object({
