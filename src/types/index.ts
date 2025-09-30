@@ -72,7 +72,11 @@ const PartPredictionSchema = z.object({
 
 export const PredictPartsDemandInputSchema = z.object({
   persona: PersonaSchema.describe('The user profile for whom the analysis is being generated.'),
-  fleetAgeBrackets: z.array(FleetAgeBracketSchema).describe('An array of objects representing the age distribution of the vehicle fleet.'),
+  fleetAgeBrackets: z.array(z.object({
+      range: z.string(),
+      label: z.string(),
+      quantity: z.number(),
+  })).describe('An array of objects representing the age distribution of the vehicle fleet.'),
   partCategory: z.string().optional().describe('An optional, user-specified category of parts to focus the analysis on (e.g., "Freios", "Suspensão", "Cabos").'),
   filters: z.object({
     manufacturer: z.string(),
@@ -87,15 +91,15 @@ export const PredictPartsDemandOutputSchema = z.object({
 export type PredictPartsDemandOutput = z.infer<typeof PredictPartsDemandOutputSchema>;
 
 
-// Types for Final Analysis Flow
+// Schema for Final Analysis Flow
 export const AnswerFleetQuestionOutputSchema = z.object({
   executiveSummary: z.string().describe("A short executive summary of the main conclusion from the analysis."),
   ageAnalysis: z.string().describe("Analysis based on the fleet's age distribution, identifying the predominant age group and the resulting business opportunity."),
   regionalAnalysis: z.string().describe("Analysis of the regional distribution, pointing out the dominant region and its strategic implication."),
   yearAnalysis: z.string().describe("Analysis based on the manufacturing year, identifying significant peaks and connecting them to the vehicle's lifecycle."),
-  strategicRecommendation: z.string().describe("2-3 actionable and direct recommendations for an auto parts manufacturer or distributor."),
+  strategicRecommendation: z.string().describe("2-3 actionable and direct recommendations based on the analysis, tailored to the user's persona."),
 });
-export type AnswerFleetQuestionOutput = z.infer<typeof AnswerFleetQuestionOutputSchema>;
+
 
 // Types for Comparison Analysis
 export const CompareFleetDataOutputSchema = z.object({

@@ -7,32 +7,24 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import { FleetAgeBracketSchema, RegionDataSchema, ChartDataSchema, AnswerFleetQuestionOutputSchema, PersonaSchema } from '@/types';
-import type { AnswerFleetQuestionOutput, Persona } from '@/types';
+import { AnswerFleetQuestionOutputSchema, PersonaSchema } from '@/types';
+import type { Persona } from '@/types';
 
+// Simplified input schema expecting summarized data
 const AnswerFleetQuestionInputSchema = z.object({
   persona: PersonaSchema.describe('The user profile for whom the analysis is being generated (e.g., manufacturer, retailer). This will tailor the language and focus of the analysis.'),
-  question: z.string().describe("The user's question about the fleet data, including the filter context."),
-  data: z.object({
-    fleetAgeBrackets: z.array(FleetAgeBracketSchema).describe('An array of objects representing the age distribution of the vehicle fleet.'),
-    regionalData: z.array(RegionDataSchema).describe('An array of objects representing the regional distribution of the vehicle fleet.'),
-    fleetByYearData: z.array(ChartDataSchema).describe('An array of objects representing the fleet distribution by year.'),
-  }),
-});
-
-const InternalPromptInputSchema = AnswerFleetQuestionInputSchema.extend({
-  persona: z.object({
-    manufacturer: z.boolean().optional(),
-    representative: z.boolean().optional(),
-    distributor: z.boolean().optional(),
-    retailer: z.boolean().optional(),
-    mechanic: z.boolean().optional(),
-  }).describe('The user profile for whom the analysis is being generated (e.g., manufacturer, retailer). This will tailor the language and focus of the analysis.'),
+  filters: z.string().describe("A summary of the user's applied filters."),
+  summary: z.object({
+      totalVehicles: z.string().describe("Total number of vehicles in the filtered selection."),
+      predominantAgeBracket: z.string().describe("The most common vehicle age bracket and its quantity."),
+      predominantRegion: z.string().describe("The most relevant region or state and its quantity."),
+      yearPeaks: z.string().describe("The most significant manufacturing years (peaks) and their quantities.")
+  })
 });
 
 
 export type AnswerFleetQuestionInput = z.infer<typeof AnswerFleetQuestionInputSchema>;
-
+export type AnswerFleetQuestionOutput = z.infer<typeof AnswerFleetQuestionOutputSchema>;
 
 export async function answerFleetQuestion(
   input: AnswerFleetQuestionInput
@@ -50,21 +42,13 @@ const prompt = ai.definePrompt({
   prompt: `Você é o Frota.AI, um sistema especialista no mercado de autopeças. Sua tarefa é analisar os dados de frota fornecidos e gerar um parecer estratégico, adaptado para a persona específica do usuário. A linguagem deve ser profissional, direta e confiante, utilizando Markdown para formatação (negrito, listas).
 
 **Análise Solicitada (Filtros Aplicados):**
-{{question}}
+{{filters}}
 
-**Dados Agregados para Análise:**
-- **Frota por Idade:**
-\`\`\`json
-{{{json data.fleetAgeBrackets}}}
-\`\`\`
-- **Frota por Região:**
-\`\`\`json
-{{{json data.regionalData}}}
-\`\`\`
-- **Frota por Ano de Fabricação:**
-\`\`\`json
-{{{json data.fleetByYearData}}}
-\`\`\`
+**Dados Resumidos para Análise:**
+- **Volume Total:** {{summary.totalVehicles}}
+- **Faixa Etária Predominante:** {{summary.predominantAgeBracket}}
+- **Localização Principal:** {{summary.predominantRegion}}
+- **Picos de Ano/Safra:** {{summary.yearPeaks}}
 
 **Instruções Gerais:**
 - Seja **direto** e **conciso**.
@@ -105,7 +89,6 @@ const prompt = ai.definePrompt({
 `,
 });
 
-
 const answerFleetQuestionFlow = ai.defineFlow(
   {
     name: 'answerFleetQuestionFlow',
@@ -120,5 +103,3 @@ const answerFleetQuestionFlow = ai.defineFlow(
     return output;
   }
 );
-
-    

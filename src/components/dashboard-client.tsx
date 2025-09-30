@@ -477,6 +477,7 @@ const handleExportPDF = async () => {
                   fleetAgeBrackets={fleetAgeBracketsWithLabels}
                   regionalData={dashboardData.regionalData}
                   fleetByYearData={dashboardData.fleetByYearChart.map(d => ({ name: String(d.year), quantity: d.quantity }))}
+                  totalVehicles={dashboardData.totalVehicles}
                   onAnalysisGenerated={setGeneralAnalysis}
               />
           </div>
@@ -523,7 +524,7 @@ const handleExportPDF = async () => {
             <main className="flex flex-col flex-1 overflow-auto p-4 md:p-8 bg-muted/20">
                 <div className="flex justify-between items-center gap-4">
                     <div>
-                    {isFiltered && (
+                    {isFiltered && !isComparing && (
                         <Button onClick={handleSaveSnapshot} disabled={!isFiltered || dashboardData.totalVehicles === 0}>
                         <BookCopy className="mr-2 h-4 w-4"/>
                         {t('save_for_comparison')}
@@ -563,8 +564,3 @@ const handleExportPDF = async () => {
 };
 
 export default DashboardClient;
-
-    
-
-    
-

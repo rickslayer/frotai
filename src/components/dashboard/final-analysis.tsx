@@ -22,6 +22,7 @@ interface FinalAnalysisProps {
   fleetAgeBrackets: FleetAgeBracket[];
   regionalData: RegionData[];
   fleetByYearData: ChartData[];
+  totalVehicles: number;
   onAnalysisGenerated: (analysis: AnswerFleetQuestionOutput | null) => void;
 }
 
@@ -33,7 +34,7 @@ const analysisSections = (t: any) => [
     { key: 'strategicRecommendation', title: 'strategic_recommendation', icon: Rocket, color: 'text-purple-500' }
 ] as const;
 
-const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrackets, regionalData, fleetByYearData, onAnalysisGenerated }) => {
+const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrackets, regionalData, fleetByYearData, totalVehicles, onAnalysisGenerated }) => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -52,22 +53,31 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
     setLoading(true);
     try {
       const activeFilters = Object.entries(filters)
-        .filter(([, value]) => value && value !== 'all')
-        .map(([key, value]) => `${t(key as any)}: ${value}`)
-        .join(', ');
+        .filter(([, value]) => value && value !== 'all' && (Array.isArray(value) ? value.length > 0 : true))
+        .map(([key, value]) => `${t(key as any)}: ${Array.isArray(value) ? value.join(', ') : value}`)
+        .join('; ');
+      
+      const filtersText = activeFilters || t('no_specific_filters');
 
-      const question = t('final_analysis_question', {
-        filters: activeFilters || t('no_specific_filters'),
-      });
+      const sortedAges = [...fleetAgeBrackets].sort((a,b) => b.quantity - a.quantity);
+      const predominantAgeBracket = sortedAges.length > 0 ? `${sortedAges[0].label}: ${sortedAges[0].quantity.toLocaleString()}` : t('no_data_available');
+
+      const sortedRegions = [...regionalData].sort((a,b) => b.quantity - a.quantity);
+      const predominantRegion = sortedRegions.length > 0 ? `${sortedRegions[0].name}: ${sortedRegions[0].quantity.toLocaleString()}` : t('no_data_available');
+
+      const sortedYears = [...fleetByYearData].sort((a,b) => b.quantity - a.quantity).slice(0, 2);
+      const yearPeaks = sortedYears.length > 0 ? sortedYears.map(y => `${y.name}: ${y.quantity.toLocaleString()}`).join('; ') : t('no_data_available');
+
 
       const result = await answerFleetQuestion({
         persona,
-        question,
-        data: {
-          fleetAgeBrackets,
-          regionalData,
-          fleetByYearData,
-        },
+        filters: filtersText,
+        summary: {
+          totalVehicles: totalVehicles.toLocaleString(),
+          predominantAgeBracket,
+          predominantRegion,
+          yearPeaks
+        }
       });
 
       setAnalysis(result);

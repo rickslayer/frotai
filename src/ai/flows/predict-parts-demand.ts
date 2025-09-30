@@ -7,7 +7,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { PredictPartsDemandInputSchema, PredictPartsDemandOutputSchema, PersonaSchema } from '@/types';
+import { PredictPartsDemandInputSchema, PredictPartsDemandOutputSchema } from '@/types';
 import type { PredictPartsDemandInput, PredictPartsDemandOutput } from '@/types';
 import { z } from 'zod';
 
@@ -106,5 +106,3 @@ const predictPartsDemandFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    
