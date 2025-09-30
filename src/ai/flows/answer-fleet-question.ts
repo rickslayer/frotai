@@ -53,9 +53,18 @@ const prompt = ai.definePrompt({
 {{question}}
 
 **Dados Agregados para Análise:**
-1.  **Frota por Idade:** {{{json data.fleetAgeBrackets}}}
-2.  **Frota por Região:** {{{json data.regionalData}}}
-3.  **Frota por Ano de Fabricação:** {{{json data.fleetByYearData}}}
+- **Frota por Idade:**
+\`\`\`json
+{{{json data.fleetAgeBrackets}}}
+\`\`\`
+- **Frota por Região:**
+\`\`\`json
+{{{json data.regionalData}}}
+\`\`\`
+- **Frota por Ano de Fabricação:**
+\`\`\`json
+{{{json data.fleetByYearData}}}
+\`\`\`
 
 **Instruções Gerais:**
 - Seja **direto** e **conciso**.
