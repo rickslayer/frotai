@@ -56,7 +56,7 @@ const prompt = ai.definePrompt({
 
 ---
 
-{{#if (eq persona 'manufacturer')}}
+{{#if (eq persona "manufacturer")}}
 **Diretrizes para Fabricante:**
 - **Tom:** Técnico, objetivo, focado em dados (volume, escala, ROI).
 - **Foco:** Viabilidade de produção, oportunidades de mercado em larga escala, potencial para desenvolvimento de novos produtos.
@@ -67,7 +67,7 @@ const prompt = ai.definePrompt({
 - **strategicRecommendation:** Recomendações devem ser sobre produção, desenvolvimento de SKU, ou estratégia de entrada em mercado. Ex: "1. Desenvolver um kit de suspensão para o modelo X, focado na safra 2015-2017. 2. Avaliar a importação de um lote piloto da peça Y para testar a demanda na região Sudeste."
 {{/if}}
 
-{{#if (eq persona 'representative')}}
+{{#if (eq persona "representative")}}
 **Diretrizes para Representante Comercial:**
 - **Tom:** Relacional, persuasivo, focado em fechar negócio e bater metas.
 - **Foco:** Oportunidades de venda imediatas na sua carteira, argumentos para convencer clientes (distribuidores, lojistas).
@@ -78,7 +78,7 @@ const prompt = ai.definePrompt({
 - **strategicRecommendation:** Recomendações devem ser ações de venda práticas. Ex: "1. Leve esta análise ao cliente Y para justificar um aumento de 20% no pedido de filtros. 2. Crie um combo promocional focado nos modelos de 2017-2019."
 {{/if}}
 
-{{#if (eq persona 'distributor')}}
+{{#if (eq persona "distributor")}}
 **Diretrizes para Distribuidor:**
 - **Tom:** Pragmático, numérico, focado em logística, estoque e risco.
 - **Foco:** Otimização de inventário (giro vs. cobertura), previsão de demanda, eficiência logística.
@@ -89,7 +89,7 @@ const prompt = ai.definePrompt({
 - **strategicRecommendation:** Recomendações devem ser sobre gestão de estoque e logística. Ex: "1. Aumente em 15% o estoque do SKU X para atender à demanda da safra 2018. 2. Negocie com seus fornecedores a compra de lotes maiores de peças para freios e suspensão."
 {{/if}}
 
-{{#if (eq persona 'retailer')}}
+{{#if (eq persona "retailer")}}
 **Diretrizes para Lojista (Varejista):**
 - **Tom:** Comercial, prático, orientado a vendas de balcão e margem.
 - **Foco:** Giro rápido, ticket médio, atendimento à demanda local imediata.
@@ -100,7 +100,7 @@ const prompt = ai.definePrompt({
 - **strategicRecommendation:** Recomendações devem ser ações de venda para o balcão. Ex: "1. Faça uma promoção 'Compre 4 amortecedores e ganhe alinhamento'. 2. Coloque os kits de freio para o modelo Y em destaque no seu balcão."
 {{/if}}
 
-{{#if (eq persona 'mechanic')}}
+{{#if (eq persona "mechanic")}}
 **Diretrizes para Mecânico / Oficina:**
 - **Tom:** Técnico, direto, focado na resolução do problema e na qualidade da peça.
 - **Foco:** Confiabilidade, facilidade de instalação (fit), evitar retrabalho.
@@ -128,5 +128,3 @@ const answerFleetQuestionFlow = ai.defineFlow(
     return output;
   }
 );
-
-    
