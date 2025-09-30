@@ -5,16 +5,15 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { answerFleetQuestion } from '@/ai/flows/answer-fleet-question';
 import type { Filters, ChartData, FleetAgeBracket, RegionData, AnswerFleetQuestionOutput, Persona } from '@/types';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
-import { Download, Loader2, Sparkles, FileText, History, Map, Calendar, Rocket, Lightbulb } from 'lucide-react';
+import { Download, Loader2, Sparkles, FileText, History, Map, Calendar, Rocket } from 'lucide-react';
 import jsPDF from 'jspdf';
 import {marked} from 'marked';
 import PersonaSelectorDialog from './persona-selector-dialog';
-
+import { Separator } from '../ui/separator';
 
 interface FinalAnalysisProps {
   filters: Filters;
@@ -147,47 +146,57 @@ const FinalAnalysis: FC<FinalAnalysisProps> = ({ filters, disabled, fleetAgeBrac
           <CardDescription>{t('analysis_placeholder')}</CardDescription>
         </CardHeader>
         <CardContent className="flex-grow flex flex-col gap-4">
-          <Button onClick={handleOpenDialog} disabled={disabled || loading} className="w-full">
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              {loading ? t('generating_analysis') : t('generate_analysis')}
-          </Button>
+          {!analysis && !loading && (
+            <div className="flex flex-col items-center justify-center text-center text-muted-foreground flex-grow p-8">
+              <Sparkles className="h-12 w-12 mb-4 text-primary/30" />
+              <p>{t('analysis_initial_prompt')}</p>
+            </div>
+          )}
 
           {loading && (
-            <div className="flex items-center justify-center gap-2 text-muted-foreground pt-4">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>{t('generating_analysis')}</span>
+            <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground flex-grow p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="mt-2 text-lg font-medium">{t('generating_analysis')}</p>
+              <p className="text-sm">{t('generating_analysis_subtitle')}</p>
             </div>
           )}
 
           {analysis && (
-              <div className="space-y-4 pt-4">
-                  <div className='flex justify-end'>
-                      <Button variant="ghost" size="icon" onClick={handleDownloadPdf} className="h-8 w-8">
+              <div className="space-y-6 pt-4">
+                  <div className='flex justify-end -mt-4 -mr-2'>
+                      <Button variant="ghost" size="icon" onClick={handleDownloadPdf} title={t('export')}>
                         <Download className="h-4 w-4" />
                       </Button>
                   </div>
 
-                  {analysisSections(t).map(({key, title, icon: Icon, color}) => {
+                  {analysisSections(t).map(({key, title, icon: Icon, color}, index) => {
                       //@ts-ignore
                       const content = analysis[key];
                       if (!content) return null;
                       return (
-                          <Alert key={key}>
-                              <div className="flex items-start gap-4">
-                                  <Icon className={`h-5 w-5 mt-1 flex-shrink-0 ${color}`} />
-                                  <div className="flex-1">
-                                      <AlertTitle className="font-bold mb-1">{t(title)}</AlertTitle>
-                                      <AlertDescription>
-                                          <div className="prose prose-sm dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: marked.parse(content) }} />
-                                      </AlertDescription>
-                                  </div>
-                              </div>
-                          </Alert>
+                          <div key={key}>
+                            <div className="flex items-start gap-4">
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted flex-shrink-0">
+                                  <Icon className={`h-5 w-5 ${color}`} />
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-semibold text-foreground mb-1">{t(title)}</h3>
+                                    <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground" dangerouslySetInnerHTML={{ __html: marked.parse(content) }} />
+                                </div>
+                            </div>
+                            {index < analysisSections(t).length - 1 && <Separator className="mt-6" />}
+                          </div>
                       )
                   })}
               </div>
           )}
         </CardContent>
+        <CardFooter className="border-t pt-6">
+           <Button onClick={handleOpenDialog} disabled={disabled || loading} className="w-full">
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              {loading ? t('generating_analysis') : (analysis ? t('regenerate_analysis') : t('generate_analysis'))}
+          </Button>
+        </CardFooter>
       </Card>
     </>
   );
