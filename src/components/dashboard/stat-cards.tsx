@@ -13,11 +13,22 @@ interface StatCardsProps {
   isLoading?: boolean;
 }
 
-const StatCard: FC<{title: string, value: string | null, description: string, icon: React.ReactNode, isLoading?: boolean, className?: string}> = ({ title, value, description, icon, isLoading, className }) => {
+const StatCard: FC<{
+    title: string, 
+    value: string | null, 
+    description: string, 
+    icon: React.ReactNode, 
+    isLoading?: boolean, 
+    className?: string,
+    onClick?: () => void 
+}> = ({ title, value, description, icon, isLoading, className, onClick }) => {
   const { t } = useTranslation();
   
   return (
-    <Card className={className}>
+    <Card 
+        className={cn(className, onClick && 'cursor-pointer')}
+        onClick={onClick}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         {icon}
@@ -48,7 +59,7 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
     if (entity === undefined) return true;
     return false;
   }
-
+  
   const handleCityClick = () => {
     if (data.topCity?.name) {
       const query = encodeURIComponent(data.topCity.name);
@@ -72,20 +83,15 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
         icon={<Users2 className="h-4 w-4 text-muted-foreground" />}
         isLoading={isLoading}
       />
-      <div 
-        onClick={handleModelImageSearch} 
-        className={data.topOverallModel?.name ? "cursor-pointer" : "cursor-default"}
-        title={data.topOverallModel?.name ? `${t('main_overall_model')}: ${data.topOverallModel.name}`: t('main_overall_model')}
-       >
-        <StatCard
-          title={t('main_overall_model')}
-          value={data.topOverallModel?.name || null}
-          description={t('main_overall_model_description')}
-          icon={<Car className="h-4 w-4 text-muted-foreground" />}
-          isLoading={isCardLoading(data.topOverallModel)}
-          className={cn(data.topOverallModel?.name && "transition-colors border-2 border-transparent hover:border-primary")}
-        />
-      </div>
+      <StatCard
+        title={t('main_overall_model')}
+        value={data.topOverallModel?.name || null}
+        description={t('main_overall_model_description')}
+        icon={<Car className="h-4 w-4 text-muted-foreground" />}
+        isLoading={isCardLoading(data.topOverallModel)}
+        onClick={data.topOverallModel?.name ? handleModelImageSearch : undefined}
+        className={cn(data.topOverallModel?.name && "transition-colors border-2 border-transparent hover:border-primary")}
+      />
       <StatCard
         title={t('main_state')}
         value={data.topState?.name || null}
@@ -93,20 +99,15 @@ const StatCards: FC<StatCardsProps> = ({ data, isLoading }) => {
         icon={<Flag className="h-4 w-4 text-muted-foreground" />}
         isLoading={isCardLoading(data.topState)}
       />
-       <div 
-        onClick={handleCityClick} 
-        className={data.topCity?.name ? "cursor-pointer" : "cursor-default"}
-        title={data.topCity?.name ? `${t('main_city')}: ${data.topCity.name}`: t('main_city')}
-       >
-        <StatCard
-          title={t('main_city')}
-          value={data.topCity?.name || null}
-          description={t('main_city_description')}
-          icon={<Map className="h-4 w-4 text-muted-foreground" />}
-          isLoading={isCardLoading(data.topCity)}
-          className={cn(data.topCity?.name && "transition-colors border-2 border-transparent hover:border-primary")}
-        />
-       </div>
+      <StatCard
+        title={t('main_city')}
+        value={data.topCity?.name || null}
+        description={t('main_city_description')}
+        icon={<Map className="h-4 w-4 text-muted-foreground" />}
+        isLoading={isCardLoading(data.topCity)}
+        onClick={data.topCity?.name ? handleCityClick : undefined}
+        className={cn(data.topCity?.name && "transition-colors border-2 border-transparent hover:border-primary")}
+      />
     </div>
   );
 };
