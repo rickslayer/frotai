@@ -166,7 +166,8 @@
   "top_10": "Top 10",
   "final_analysis_question": "Provide a concise and professional market analysis of the vehicle fleet with the following filters: {{filters}}.",
   "no_specific_filters": "no specific filters",
-  "save_for_comparison": "Save for Comparison",
+  "save_for_comparison": "Save to Compare",
+  "save_scenario_b": "Save as Scenario B",
   "comparison_title": "Comparative Analysis",
   "comparison_description": "Save up to two analysis snapshots to compare them side-by-side.",
   "clear_comparison": "Clear Comparison",
@@ -193,5 +194,16 @@
   "state_disabled_tooltip": "Select a region first",
   "city_disabled_tooltip": "Select a state first",
   "model_disabled_tooltip": "Select a manufacturer first",
-  "version_disabled_tooltip": "Select at least one model"
+  "version_disabled_tooltip": "Select at least one model",
+  "persona_dialog_title": "Who is this analysis for?",
+  "persona_dialog_description": "Select your profile so that Frota.AI can adapt the insights and recommendations to your reality.",
+  "persona_dialog_back_to_filters": "Back to Filters",
+  "cancel": "Cancel",
+  "persona_manufacturer": "Manufacturer",
+  "persona_representative": "Representative",
+  "persona_distributor": "Distributor",
+  "persona_retailer": "Retailer",
+  "persona_mechanic": "Mechanic"
 }
+
+    

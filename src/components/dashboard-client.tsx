@@ -67,7 +67,6 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
   const [filters, setFilters] = useState<Filters>(initialFilters);
   const debouncedFilters = useDebounce(filters, 300);
 
-  const [isComparing, setIsComparing] = useState(false);
   const [snapshots, setSnapshots] = useState<[AnalysisSnapshot | null, AnalysisSnapshot | null]>([null, null]);
   const [isVersionLimitModalOpen, setIsVersionLimitModalOpen] = useState(false);
   
@@ -89,6 +88,9 @@ const DashboardClient: FC<DashboardClientProps> = ({ initialFilterOptions }) => 
     state: !filters.region,
     city: !filters.state
   }), [filters]);
+  
+  const isComparing = useMemo(() => snapshots[0] !== null || snapshots[1] !== null, [snapshots]);
+
 
   // This logic defines which filters to highlight to guide the user.
   const getWelcomeTitleAndHighlights = useCallback((): WelcomeState => {
@@ -394,28 +396,27 @@ const handleExportPDF = async () => {
       fleetByYearData: dashboardData.fleetByYearChart.map(d => ({ name: String(d.year), quantity: d.quantity })),
       availableVersionsCount: filterOptions.versions.length
     };
+    
     setSnapshots(prev => {
-      if (!prev[0]) return [snapshot, prev[1]];
-      if (!prev[1]) return [prev[0], snapshot];
-      return [prev[0], snapshot];
+        // If snapshot A is empty, fill it.
+        if (!prev[0]) {
+            return [snapshot, null];
+        }
+        // Otherwise, fill/overwrite snapshot B.
+        return [prev[0], snapshot];
     });
-    setIsComparing(true);
   };
   
   const handleClearSnapshot = (index: 0 | 1) => {
     setSnapshots(prev => {
         const newSnapshots = [...prev] as [AnalysisSnapshot | null, AnalysisSnapshot | null];
         newSnapshots[index] = null;
-        if (newSnapshots[0] === null && newSnapshots[1] === null) {
-            setIsComparing(false);
-        }
         return newSnapshots;
     });
   };
 
   const handleClearAllSnapshots = () => {
       setSnapshots([null, null]);
-      setIsComparing(false);
   }
 
   const welcomeState = useMemo(() => getWelcomeTitleAndHighlights(), [getWelcomeTitleAndHighlights]);
@@ -440,6 +441,10 @@ const handleExportPDF = async () => {
 
     if (!isSearchEnabled) {
       return <div className="flex-1"><WelcomePlaceholder titleKey={welcomeState.titleKey} /></div>;
+    }
+
+    if (dashboardData.totalVehicles === 0) {
+       return <div className="flex-1"><WelcomePlaceholder titleKey={'no_data_for_filters'} /></div>;
     }
 
 
@@ -504,6 +509,7 @@ const handleExportPDF = async () => {
     );
   }
 
+  const showSaveForComparison = isFiltered && !snapshots[1];
 
   return (
     <SidebarProvider>
@@ -524,10 +530,10 @@ const handleExportPDF = async () => {
             <main className="flex flex-col flex-1 overflow-auto p-4 md:p-8 bg-muted/20">
                 <div className="flex justify-between items-center gap-4">
                     <div>
-                    {isFiltered && !isComparing && (
+                    {showSaveForComparison && (
                         <Button onClick={handleSaveSnapshot} disabled={!isFiltered || dashboardData.totalVehicles === 0}>
                         <BookCopy className="mr-2 h-4 w-4"/>
-                        {t('save_for_comparison')}
+                        {snapshots[0] ? t('save_scenario_b') : t('save_for_comparison')}
                         </Button>
                     )}
                     </div>
@@ -564,3 +570,6 @@ const handleExportPDF = async () => {
 };
 
 export default DashboardClient;
+
+
+    

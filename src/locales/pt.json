@@ -167,6 +167,7 @@
   "final_analysis_question": "Faça uma análise de mercado sucinta e profissional sobre a frota de veículos com os seguintes filtros: {{filters}}.",
   "no_specific_filters": "sem filtros específicos",
   "save_for_comparison": "Salvar para Comparar",
+  "save_scenario_b": "Salvar como Cenário B",
   "comparison_title": "Análise Comparativa",
   "comparison_description": "Salve até dois 'snapshots' de análise para compará-los lado a lado.",
   "clear_comparison": "Limpar Comparação",
@@ -204,3 +205,5 @@
   "persona_retailer": "Lojista",
   "persona_mechanic": "Mecânico"
 }
+
+    

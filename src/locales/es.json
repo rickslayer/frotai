@@ -167,6 +167,7 @@
   "final_analysis_question": "Proporcione un análisis de mercado conciso y profesional sobre la flota de vehículos con los siguientes filtros: {{filters}}.",
   "no_specific_filters": "sin filtros específicos",
   "save_for_comparison": "Guardar para Comparar",
+  "save_scenario_b": "Guardar como Escenario B",
   "comparison_title": "Análisis Comparativo",
   "comparison_description": "Guarde hasta dos 'instantáneas' de análisis para compararlas una al lado de la otra.",
   "clear_comparison": "Limpiar Comparación",
@@ -193,5 +194,16 @@
   "state_disabled_tooltip": "Seleccione primero una región",
   "city_disabled_tooltip": "Seleccione primero un estado",
   "model_disabled_tooltip": "Seleccione primero un fabricante",
-  "version_disabled_tooltip": "Seleccione al menos un modelo"
+  "version_disabled_tooltip": "Seleccione al menos un modelo",
+  "persona_dialog_title": "¿Para quién es este análisis?",
+  "persona_dialog_description": "Seleccione su perfil para que Frota.AI adapte los conocimientos y recomendaciones a su realidad.",
+  "persona_dialog_back_to_filters": "Volver a los Filtros",
+  "cancel": "Cancelar",
+  "persona_manufacturer": "Fabricante",
+  "persona_representative": "Representante",
+  "persona_distributor": "Distribuidor",
+  "persona_retailer": "Minorista",
+  "persona_mechanic": "Mecánico"
 }
+
+    
