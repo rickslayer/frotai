@@ -8,7 +8,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 import { FleetAgeBracketSchema, RegionDataSchema, ChartDataSchema, AnswerFleetQuestionOutputSchema, PersonaSchema } from '@/types';
-import type { AnswerFleetQuestionOutput } from '@/types';
+import type { AnswerFleetQuestionOutput, Persona } from '@/types';
 
 const AnswerFleetQuestionInputSchema = z.object({
   persona: PersonaSchema.describe('The user profile for whom the analysis is being generated (e.g., manufacturer, retailer). This will tailor the language and focus of the analysis.'),
@@ -19,6 +19,17 @@ const AnswerFleetQuestionInputSchema = z.object({
     fleetByYearData: z.array(ChartDataSchema).describe('An array of objects representing the fleet distribution by year.'),
   }),
 });
+
+const InternalPromptInputSchema = AnswerFleetQuestionInputSchema.extend({
+  persona: z.object({
+    manufacturer: z.boolean().optional(),
+    representative: z.boolean().optional(),
+    distributor: z.boolean().optional(),
+    retailer: z.boolean().optional(),
+    mechanic: z.boolean().optional(),
+  }).describe('The user profile for whom the analysis is being generated (e.g., manufacturer, retailer). This will tailor the language and focus of the analysis.'),
+});
+
 
 export type AnswerFleetQuestionInput = z.infer<typeof AnswerFleetQuestionInputSchema>;
 
@@ -31,14 +42,14 @@ export async function answerFleetQuestion(
 
 const prompt = ai.definePrompt({
   name: 'answerFleetQuestionPrompt',
-  input: {schema: AnswerFleetQuestionInputSchema},
+  input: {schema: InternalPromptInputSchema},
   output: {schema: AnswerFleetQuestionOutputSchema},
   config: {
     maxOutputTokens: 2048,
   },
   prompt: `Você é o Frota.AI, um sistema especialista no mercado de autopeças. Sua tarefa é analisar os dados de frota fornecidos e gerar um parecer estratégico, adaptado para a persona específica do usuário. A linguagem deve ser profissional, direta e confiante, utilizando Markdown para formatação (negrito, listas).
 
-**Persona do Usuário:** {{persona}}
+**Persona do Usuário:** {{question}}
 
 **Contexto da Análise (Filtros Aplicados):**
 {{question}}
@@ -56,7 +67,7 @@ const prompt = ai.definePrompt({
 
 ---
 
-{{#if (eq persona "manufacturer")}}
+{{#if persona.manufacturer}}
 **Diretrizes para Fabricante:**
 - **Tom:** Técnico, objetivo, focado em dados (volume, escala, ROI).
 - **Foco:** Viabilidade de produção, oportunidades de mercado em larga escala, potencial para desenvolvimento de novos produtos.
@@ -67,7 +78,7 @@ const prompt = ai.definePrompt({
 - **strategicRecommendation:** Recomendações devem ser sobre produção, desenvolvimento de SKU, ou estratégia de entrada em mercado. Ex: "1. Desenvolver um kit de suspensão para o modelo X, focado na safra 2015-2017. 2. Avaliar a importação de um lote piloto da peça Y para testar a demanda na região Sudeste."
 {{/if}}
 
-{{#if (eq persona "representative")}}
+{{#if persona.representative}}
 **Diretrizes para Representante Comercial:**
 - **Tom:** Relacional, persuasivo, focado em fechar negócio e bater metas.
 - **Foco:** Oportunidades de venda imediatas na sua carteira, argumentos para convencer clientes (distribuidores, lojistas).
@@ -78,7 +89,7 @@ const prompt = ai.definePrompt({
 - **strategicRecommendation:** Recomendações devem ser ações de venda práticas. Ex: "1. Leve esta análise ao cliente Y para justificar um aumento de 20% no pedido de filtros. 2. Crie um combo promocional focado nos modelos de 2017-2019."
 {{/if}}
 
-{{#if (eq persona "distributor")}}
+{{#if persona.distributor}}
 **Diretrizes para Distribuidor:**
 - **Tom:** Pragmático, numérico, focado em logística, estoque e risco.
 - **Foco:** Otimização de inventário (giro vs. cobertura), previsão de demanda, eficiência logística.
@@ -89,7 +100,7 @@ const prompt = ai.definePrompt({
 - **strategicRecommendation:** Recomendações devem ser sobre gestão de estoque e logística. Ex: "1. Aumente em 15% o estoque do SKU X para atender à demanda da safra 2018. 2. Negocie com seus fornecedores a compra de lotes maiores de peças para freios e suspensão."
 {{/if}}
 
-{{#if (eq persona "retailer")}}
+{{#if persona.retailer}}
 **Diretrizes para Lojista (Varejista):**
 - **Tom:** Comercial, prático, orientado a vendas de balcão e margem.
 - **Foco:** Giro rápido, ticket médio, atendimento à demanda local imediata.
@@ -100,7 +111,7 @@ const prompt = ai.definePrompt({
 - **strategicRecommendation:** Recomendações devem ser ações de venda para o balcão. Ex: "1. Faça uma promoção 'Compre 4 amortecedores e ganhe alinhamento'. 2. Coloque os kits de freio para o modelo Y em destaque no seu balcão."
 {{/if}}
 
-{{#if (eq persona "mechanic")}}
+{{#if persona.mechanic}}
 **Diretrizes para Mecânico / Oficina:**
 - **Tom:** Técnico, direto, focado na resolução do problema e na qualidade da peça.
 - **Foco:** Confiabilidade, facilidade de instalação (fit), evitar retrabalho.
@@ -120,8 +131,15 @@ const answerFleetQuestionFlow = ai.defineFlow(
     inputSchema: AnswerFleetQuestionInputSchema,
     outputSchema: AnswerFleetQuestionOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async (input) => {
+    const internalInput = {
+      ...input,
+      persona: {
+        [input.persona]: true,
+      }
+    };
+
+    const {output} = await prompt(internalInput);
     if (!output) {
       throw new Error('AI failed to generate a response. The output was null.');
     }
