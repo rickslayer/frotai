@@ -80,26 +80,24 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
 
   const canCompare = snapshots[0] && snapshots[1];
 
-  const prepareFiltersForAI = (snapshot: AnalysisSnapshot): Record<string, string | string[]> => {
-    const prepared: Record<string, any> = {};
-    const filters = snapshot.filters;
+  const prepareDataForAI = (snapshot: AnalysisSnapshot) => {
+    if (!snapshot) return null;
 
-    for (const key in filters) {
-        const filterKey = key as keyof Filters;
-        let value = filters[filterKey];
+    const filters = Object.entries(snapshot.filters)
+        .filter(([, value]) => value && value !== 'all' && (Array.isArray(value) ? value.length > 0 : true))
+        .map(([key, value]) => `${t(key as any)}: ${Array.isArray(value) ? value.join(', ') : value}`)
+        .join('; ');
+    
+    const topAgeBracket = [...snapshot.fleetAgeBrackets].sort((a,b) => b.quantity - a.quantity)[0];
+    const topRegion = [...snapshot.regionalData].sort((a,b) => b.quantity - a.quantity)[0];
 
-        if (filterKey === 'version') {
-             if (snapshot.availableVersionsCount && Array.isArray(value) && value.length === snapshot.availableVersionsCount) {
-                 prepared[key] = [t('all_versions')]; // Send a single-element array
-            } else {
-                 prepared[key] = Array.isArray(value) ? value : [String(value)];
-            }
-        } else {
-            prepared[key] = String(value);
-        }
-    }
-    return prepared;
-  };
+    return {
+        filters: filters || t('no_specific_filters'),
+        totalVehicles: snapshot.totalVehicles,
+        topAgeBracket: `${topAgeBracket?.label}: ${topAgeBracket?.quantity.toLocaleString()} ${t('vehicles')}`,
+        topRegion: `${topRegion?.name}: ${topRegion?.quantity.toLocaleString()} ${t('vehicles')}`,
+    };
+  }
 
 
   const handleGenerateComparison = async () => {
@@ -108,20 +106,18 @@ const ComparisonAnalysis: FC<ComparisonAnalysisProps> = ({ snapshots, onClear, o
     setLoading(true);
     setAnalysis(null);
     try {
+      const scenarioA_data = prepareDataForAI(snapshots[0]!);
+      const scenarioB_data = prepareDataForAI(snapshots[1]!);
+
+      if (!scenarioA_data || !scenarioB_data) {
+        throw new Error("Failed to prepare snapshot data for AI.");
+      }
+
       const result = await compareFleetData({
-        scenarioA: {
-          filters: prepareFiltersForAI(snapshots[0]!) as any,
-          fleetAgeBrackets: snapshots[0]!.fleetAgeBrackets,
-          regionalData: snapshots[0]!.regionalData,
-          fleetByYearData: snapshots[0]!.fleetByYearData,
-        },
-        scenarioB: {
-          filters: prepareFiltersForAI(snapshots[1]!) as any,
-          fleetAgeBrackets: snapshots[1]!.fleetAgeBrackets,
-          regionalData: snapshots[1]!.regionalData,
-          fleetByYearData: snapshots[1]!.fleetByYearData,
-        }
+        scenarioA: scenarioA_data,
+        scenarioB: scenarioB_data,
       });
+
       if (!result) {
           throw new Error('AI response was empty.');
       }
