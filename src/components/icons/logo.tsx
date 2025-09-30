@@ -8,9 +8,9 @@ const Logo = ({ className, ...props }: React.SVGProps<SVGSVGElement>) => (
     {...props}
   >
     {/*
-      Por favor, substitua o conteúdo deste SVG pelo conteúdo do seu arquivo 'logo-frotaai.svg'.
-      Abra o arquivo .svg em um editor de texto, copie todo o código e cole aqui,
-      substituindo este comentário e o <text> abaixo.
+      Este arquivo não está mais em uso, mas é mantido para referência futura.
+      O logo foi movido diretamente para 'src/components/dashboard/sidebar.tsx'
+      para permitir a estilização de parte do texto.
     */}
     <text x="50" y="15" fontSize="14" textAnchor="middle" fill="currentColor">
       Frota.AI

@@ -73,10 +73,11 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex h-14 items-center justify-between px-4 lg:h-[60px] lg:px-2">
-            <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
-              <Logo className="h-7 w-auto" />
-            </Link>
+        <div className="flex h-14 items-center justify-start px-4 lg:h-[60px] lg:px-4">
+          <Link href="/" className="flex items-center gap-2 font-semibold text-sidebar-primary">
+            <Car className="h-7 w-7 text-primary" />
+            <span className="text-lg text-foreground">Frota<span className="text-primary">.AI</span></span>
+          </Link>
         </div>
         <Separator />
       </SidebarHeader>
