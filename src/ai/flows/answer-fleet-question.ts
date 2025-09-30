@@ -49,9 +49,7 @@ const prompt = ai.definePrompt({
   },
   prompt: `Você é o Frota.AI, um sistema especialista no mercado de autopeças. Sua tarefa é analisar os dados de frota fornecidos e gerar um parecer estratégico, adaptado para a persona específica do usuário. A linguagem deve ser profissional, direta e confiante, utilizando Markdown para formatação (negrito, listas).
 
-**Persona do Usuário:** {{question}}
-
-**Contexto da Análise (Filtros Aplicados):**
+**Análise Solicitada (Filtros Aplicados):**
 {{question}}
 
 **Dados Agregados para Análise:**
@@ -132,7 +130,7 @@ const answerFleetQuestionFlow = ai.defineFlow(
     outputSchema: AnswerFleetQuestionOutputSchema,
   },
   async (input) => {
-    const internalInput = {
+    const internalInput: z.infer<typeof InternalPromptInputSchema> = {
       ...input,
       persona: {
         [input.persona]: true,
