@@ -121,7 +121,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
               </div>
                <Separator />
                <div className="space-y-2">
-                  <h3 className='font-semibold flex items-center gap-2'><Car className="h-4 w-4 text-primary" />{t('vehicle')}</h3>
+                  <h3 className='font-semibold flex items-center gap-2'><Car className="h-4 w-4" />{t('vehicle')}</h3>
                    <div data-testid="manufacturer-filter" className={cn("rounded-md", highlightClass('manufacturer'))}>
                       <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
                         <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
