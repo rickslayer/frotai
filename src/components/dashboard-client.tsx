@@ -429,7 +429,7 @@ const handleExportPDF = async () => {
   }, [welcomeState.highlights, isSearchEnabled]);
 
 
-  const renderContent = () => {
+  const renderDashboardContent = () => {
     if (isLoading || isPending) {
         return (
             <div className="flex flex-1 h-full w-full items-center justify-center">
@@ -532,12 +532,6 @@ const handleExportPDF = async () => {
                     </div>
                 </div>
 
-                {isComparing && (
-                    <div className="mt-4">
-                        <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
-                    </div>
-                )}
-                
                 <AlertDialog open={isVersionLimitModalOpen} onOpenChange={setIsVersionLimitModalOpen}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
@@ -555,7 +549,11 @@ const handleExportPDF = async () => {
                 </AlertDialog>
                 
                 <div className="flex flex-col gap-4 md:gap-8 mt-4 flex-1">
-                {renderContent()}
+                    {isComparing ? (
+                        <ComparisonAnalysis snapshots={snapshots} onClear={handleClearSnapshot} onClearAll={handleClearAllSnapshots} />
+                    ) : (
+                        renderDashboardContent()
+                    )}
                 </div>
             </main>
         </div>
@@ -569,3 +567,4 @@ export default DashboardClient;
     
 
     
+
