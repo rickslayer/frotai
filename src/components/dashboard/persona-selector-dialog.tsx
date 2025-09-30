@@ -31,7 +31,9 @@ const PersonaSelectorDialog: FC<PersonaSelectorDialogProps> = ({ open, onOpenCha
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('persona_dialog_title')}</DialogTitle>
-          <DialogDescription>{t('persona_dialog_description')}</DialogDescription>
+          <DialogDescription>
+            Selecione seu perfil para que o Frota.Ai adapte os insights e recomendações à sua realidade.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
           {personas.map(({ id, labelKey, icon: Icon }) => (
