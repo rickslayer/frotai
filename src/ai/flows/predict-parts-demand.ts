@@ -35,7 +35,6 @@ const prompt = ai.definePrompt({
   output: { schema: PredictPartsDemandOutputSchema },
   prompt: `Você é o Frota.AI, um sistema especialista na indústria de autopeças. Sua tarefa é prever a demanda por peças para a frota filtrada, gerando insights acionáveis e adaptados para a persona do usuário.
 
-**Persona do Usuário:** {{persona}}
 **Filtros Atuais:**
 - Montadora: {{{filters.manufacturer}}}
 - Modelo: {{{filters.model}}}
@@ -93,7 +92,7 @@ const predictPartsDemandFlow = ai.defineFlow(
     outputSchema: PredictPartsDemandOutputSchema,
   },
   async (input) => {
-    const internalInput = {
+    const internalInput: z.infer<typeof InternalPredictPartsDemandInputSchema> = {
       ...input,
       persona: {
         [input.persona]: true,
@@ -107,3 +106,5 @@ const predictPartsDemandFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
