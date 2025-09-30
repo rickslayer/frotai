@@ -15,6 +15,7 @@ import { Separator } from '../ui/separator';
 import { MultiSelectDropdown } from '../ui/multi-select-dropdown';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import Logo from '../icons/logo';
 
 
 interface DashboardSidebarProps {
@@ -73,9 +74,8 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
     <Sidebar>
       <SidebarHeader>
         <div className="flex h-14 items-center justify-between px-4 lg:h-[60px] lg:px-2">
-            <Link href="/" className="flex items-center gap-3 font-semibold text-primary">
-              <Car className="h-6 w-6" />
-              <span className="text-lg text-foreground">Frota.AI</span>
+            <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
+              <Logo className="h-7 w-auto" />
             </Link>
         </div>
         <Separator />
