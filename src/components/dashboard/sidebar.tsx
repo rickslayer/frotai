@@ -3,7 +3,7 @@
 
 import type { FC } from 'react';
 import Link from 'next/link';
-import { FilterX, MapPin, AlertCircle } from 'lucide-react';
+import { FilterX, MapPin, AlertCircle, Car } from 'lucide-react';
 import type { Filters } from '@/types';
 import type { FilterOptions } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -121,7 +121,7 @@ const DashboardSidebar: FC<DashboardSidebarProps> = ({
               </div>
                <Separator />
                <div className="space-y-2">
-                  <h3 className='font-semibold flex items-center gap-2'><Logo className="h-4 w-4" />{t('vehicle')}</h3>
+                  <h3 className='font-semibold flex items-center gap-2'><Car className="h-4 w-4 text-primary" />{t('vehicle')}</h3>
                    <div data-testid="manufacturer-filter" className={cn("rounded-md", highlightClass('manufacturer'))}>
                       <Select value={filters.manufacturer} onValueChange={(value) => handleFilterValueChange('manufacturer', value as string)}>
                         <SelectTrigger><SelectValue placeholder={t('select_manufacturer')} /></SelectTrigger>
